@@ -49,7 +49,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Tipi</label>
           <select
             name="type"
             value={formData.type}
@@ -57,29 +57,29 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="task">Task</option>
-            <option value="ticket">Ticket</option>
+            <option value="ticket">Tiket</option>
           </select>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Prioriteti</label>
           <select
             name="priority"
             value={formData.priority}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
+            <option value="low">Ulët</option>
+            <option value="medium">Mesatar</option>
+            <option value="high">Lartë</option>
+            <option value="urgent">Urgjent</option>
           </select>
         </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          {formData.type === 'task' ? 'Task Title' : 'Request Title'}
+          {formData.type === 'task' ? 'Titulli i Taskut' : 'Titulli i Kërkesës'}
         </label>
         <input
           type="text"
@@ -92,7 +92,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
         <textarea
           name="description"
           value={formData.description}
@@ -104,7 +104,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Cakto Për</label>
           <select
             name="assignedTo"
             value={formData.assignedTo}
@@ -112,7 +112,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
-            <option value="">Select User</option>
+            <option value="">Zgjidh Përdoruesin</option>
             {mockUsers.map(user => (
               <option key={user.id} value={user.name}>{user.name} ({user.role})</option>
             ))}
@@ -120,7 +120,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
           <select
             name="category"
             value={formData.category}
@@ -128,13 +128,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
-            <option value="">Select Category</option>
-            <option value="System Maintenance">System Maintenance</option>
-            <option value="Customer Service">Customer Service</option>
-            <option value="Development">Development</option>
-            <option value="Design">Design</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Support">Support</option>
+            <option value="">Zgjidh Kategorinë</option>
+            <option value="System Maintenance">Mirëmbajtja e Sistemit</option>
+            <option value="Customer Service">Shërbimi i Klientit</option>
+            <option value="Development">Zhvillimi</option>
+            <option value="Design">Dizajni</option>
+            <option value="Marketing">Marketingu</option>
+            <option value="Support">Mbështetja</option>
           </select>
         </div>
       </div>
@@ -143,14 +143,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
         <>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Klienti (Opsionale)</label>
               <select
                 name="customerId"
                 value={formData.customerId}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Select Customer</option>
+                <option value="">Zgjidh Klientin</option>
                 {mockCustomers.map(customer => (
                   <option key={customer.id} value={customer.id}>{customer.name}</option>
                 ))}
@@ -158,7 +158,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Related Order (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Porosia e Lidhur (Opsionale)</label>
               <input
                 type="text"
                 name="relatedOrderId"
@@ -171,80 +171,79 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>
             <select
               name="source"
               value={formData.source}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Select Source</option>
+              <option value="">Zgjidh Burimin</option>
               <option value="Email">Email</option>
-              <option value="Phone">Phone</option>
+              <option value="Phone">Telefon</option>
               <option value="Website">Website</option>
-              <option value="Social Media">Social Media</option>
-              <option value="In Person">In Person</option>
+              <option value="Social Media">Rrjetet Sociale</option>
+              <option value="In Person">Personalisht</option>
             </select>
           </div>
         </>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Attachments</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Shtesa</label>
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
           <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600">Click to upload files or drag and drop</p>
-          <p className="text-xs text-gray-500 mt-1">Images, documents up to 10MB each</p>
+          <p className="text-sm text-gray-600">Kliko për të ngarkuar skedarë apo ngjitni dhe lëshoni</p>
+          <p className="text-xs text-gray-500 mt-1">Imazhe, dokumente deri në 10MB secili</p>
           <input
             type="file"
             multiple
-            accept="image/*,.pdf,.doc,.docx,.txt"
+            onChange={handleFileSelect}
             className="hidden"
             id="file-upload"
-            onChange={handleFileSelect}
           />
           <label
             htmlFor="file-upload"
-            className="mt-2 inline-block px-4 py-2 bg-blue-50 text-blue-600 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors"
+            className="mt-2 inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
           >
-            Choose Files
+            Zgjidh Skedarët
           </label>
         </div>
-        
-        {selectedFiles.length > 0 && (
-          <div className="mt-3 space-y-2">
+      </div>
+
+      {selectedFiles.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Skedarët e Zgjedhur</label>
+          <div className="space-y-2">
             {selectedFiles.map((file, index) => (
               <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-700">{file.name}</span>
-                  <span className="text-xs text-gray-500">({(file.size / 1024).toFixed(1)} KB)</span>
-                </div>
+                <span className="text-sm text-gray-700">{file.name}</span>
                 <button
                   type="button"
                   onClick={() => removeFile(index)}
-                  className="p-1 hover:bg-gray-200 rounded"
+                  className="text-red-500 hover:text-red-700"
                 >
-                  <X className="w-4 h-4 text-gray-500" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="flex justify-end gap-3 mt-6">
+      <div className="flex justify-end gap-3 pt-4">
         <button
           type="button"
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
-          Cancel
+          Anulo
         </button>
         <button
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Create {formData.type === 'task' ? 'Task' : 'Ticket'}
+          {formData.type === 'task' ? 'Krijo Task' : 'Krijo Tiket'}
         </button>
       </div>
     </form>

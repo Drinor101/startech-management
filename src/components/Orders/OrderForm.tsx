@@ -70,7 +70,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Customer</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Klienti</label>
         <select
           name="customerId"
           value={formData.customerId}
@@ -78,7 +78,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         >
-          <option value="">Select Customer</option>
+          <option value="">Zgjidh Klientin</option>
           {mockCustomers.map(customer => (
             <option key={customer.id} value={customer.id}>{customer.name}</option>
           ))}
@@ -87,14 +87,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <label className="block text-sm font-medium text-gray-700">Products</label>
+          <label className="block text-sm font-medium text-gray-700">Produktet</label>
           <button
             type="button"
             onClick={addItem}
             className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
           >
             <Plus className="w-4 h-4" />
-            Add Product
+            Shto Produkt
           </button>
         </div>
         
@@ -108,7 +108,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
-                  <option value="">Select Product</option>
+                  <option value="">Zgjidh Produktin</option>
                   {mockProducts.map(product => (
                     <option key={product.id} value={product.id}>
                       {product.title} - ${product.finalPrice}
@@ -123,7 +123,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Qty"
+                  placeholder="Sasi"
                 />
               </div>
               <div className="col-span-2">
@@ -143,14 +143,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Shipping Information</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Informacioni i Dërgimit</label>
         <div className="space-y-3">
           <input
             type="text"
             name="shippingAddress"
             value={formData.shippingAddress}
             onChange={handleChange}
-            placeholder="Street Address"
+            placeholder="Adresa e Rrugës"
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           />
@@ -160,7 +160,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
               name="shippingCity"
               value={formData.shippingCity}
               onChange={handleChange}
-              placeholder="City"
+              placeholder="Qyteti"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
@@ -169,14 +169,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
               name="shippingZipCode"
               value={formData.shippingZipCode}
               onChange={handleChange}
-              placeholder="ZIP Code"
+              placeholder="Kodi Postar"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Method</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Metoda e Dërgimit</label>
           <select
             name="shippingMethod"
             value={formData.shippingMethod}
@@ -184,23 +184,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
-            <option value="Standard Post">Standard Post</option>
-            <option value="Express Post">Express Post</option>
-            <option value="Overnight">Overnight</option>
-            <option value="Pickup">Customer Pickup</option>
+            <option value="Standard Post">Posta Standarde</option>
+            <option value="Express Post">Posta e Shpejtë</option>
+            <option value="Overnight">Gjatë Natës</option>
+            <option value="Pickup">Marrja nga Klienti</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Notes (Optional)</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Shënime (Opsionale)</label>
         <textarea
           name="notes"
           value={formData.notes}
           onChange={handleChange}
           rows={3}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Additional notes or special instructions..."
+          placeholder="Shënime shtesë ose udhëzime të veçanta..."
         />
       </div>
 
@@ -212,12 +212,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
           onChange={handleChange}
           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
-        <label className="ml-2 block text-sm text-gray-900">Send email notifications to customer</label>
+        <label className="ml-2 block text-sm text-gray-900">Dërgo njoftime në email për klientin</label>
       </div>
 
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex justify-between items-center">
-          <span className="text-lg font-medium text-gray-900">Total</span>
+          <span className="text-lg font-medium text-gray-900">Totali</span>
           <span className="text-lg font-bold text-gray-900">${calculateTotal().toFixed(2)}</span>
         </div>
       </div>
@@ -228,13 +228,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
           onClick={onClose}
           className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
-          Cancel
+          Anulo
         </button>
         <button
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Create Order
+          Krijo Porosi
         </button>
       </div>
     </form>

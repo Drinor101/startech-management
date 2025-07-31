@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, Calendar } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, MessageCircle, Phone } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { mockTasks } from '../../data/mockData';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 
-const TasksList: React.FC = () => {
+const TicketsList: React.FC = () => {
   const [allTasks] = useState<Task[]>(mockTasks);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Filter only tasks (not tickets)
-  const tasks = allTasks.filter(task => task.type === 'task');
+  // Filter only tickets (not tasks)
+  const tickets = allTasks.filter(task => task.type === 'ticket');
 
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -31,7 +31,8 @@ const TasksList: React.FC = () => {
       'todo': 'bg-gray-100 text-gray-800',
       'in-progress': 'bg-blue-100 text-blue-800',
       'review': 'bg-purple-100 text-purple-800',
-      'done': 'bg-green-100 text-green-800'
+      'done': 'bg-green-100 text-green-800',
+      'resolved': 'bg-green-100 text-green-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -39,10 +40,11 @@ const TasksList: React.FC = () => {
   // Function to translate status values to Albanian
   const translateStatus = (status: string) => {
     const translations: { [key: string]: string } = {
-      'todo': 'Për të bërë',
-      'in-progress': 'Në Progres',
-      'review': 'Rishikim',
-      'done': 'Përfunduar',
+      'todo': 'Hapur',
+      'in-progress': 'Në progres',
+      'review': 'Në rishikim',
+      'done': 'Zgjidhur',
+      'resolved': 'Zgjidhur',
       'received': 'Marrë'
     };
     return translations[status] || status;
@@ -59,86 +61,80 @@ const TasksList: React.FC = () => {
     return translations[priority] || priority;
   };
 
-  const formatCompletionTime = (completedAt: string) => {
-    const date = new Date(completedAt);
-    return date.toLocaleDateString('sq-AL', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const handleViewTask = (task: Task) => {
-    setSelectedTask(task);
+  const handleViewTicket = (ticket: Task) => {
+    setSelectedTicket(ticket);
     setIsModalOpen(true);
   };
 
-  // Kanban columns
+  // Kanban columns for tickets
   const kanbanColumns = [
     {
       id: 'todo',
-      title: 'Për të bërë',
-      items: tasks.filter(task => task.status === 'todo'),
+      title: 'Hapur',
+      items: tickets.filter(ticket => ticket.status === 'todo'),
       color: 'bg-gray-400'
     },
     {
       id: 'in-progress',
-      title: 'Në Progres',
-      items: tasks.filter(task => task.status === 'in-progress'),
+      title: 'Në progres',
+      items: tickets.filter(ticket => ticket.status === 'in-progress'),
       color: 'bg-blue-400'
     },
     {
       id: 'review',
-      title: 'Rishikim',
-      items: tasks.filter(task => task.status === 'review'),
+      title: 'Në rishikim',
+      items: tickets.filter(ticket => ticket.status === 'review'),
       color: 'bg-purple-400'
     },
     {
-      id: 'done',
-      title: 'Përfunduar',
-      items: tasks.filter(task => task.status === 'done'),
+      id: 'resolved',
+      title: 'Zgjidhur',
+      items: tickets.filter(ticket => ticket.status === 'done' || ticket.status === 'resolved'),
       color: 'bg-green-400'
     }
   ];
 
-  const renderTaskCard = (task: Task) => (
+  const renderTicketCard = (ticket: Task) => (
     <div className="space-y-3">
       <div className="flex items-start justify-between">
-        <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-          {translatePriority(task.priority)}
+        <h4 className="font-medium text-gray-900 text-sm">{ticket.title}</h4>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+          {translatePriority(ticket.priority)}
         </span>
       </div>
       
-      {task.description && (
-        <p className="text-sm text-gray-600 line-clamp-2">{task.description}</p>
+      {ticket.description && (
+        <p className="text-sm text-gray-600 line-clamp-2">{ticket.description}</p>
       )}
       
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1">
           <User className="w-3 h-3" />
-          <span>{task.assignedTo}</span>
+          <span>{ticket.assignedTo}</span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+          <span>{new Date(ticket.createdAt).toLocaleDateString()}</span>
         </div>
       </div>
       
       <div className="flex items-center gap-2">
-        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-          Task
+        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+          Tiket
         </span>
-        {task.status === 'done' && task.completedAt && (
+        {ticket.status === 'done' && ticket.completedAt && (
           <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Calendar className="w-3 h-3" />
-            <span>Përfunduar: {formatCompletionTime(task.completedAt)}</span>
+            <Clock className="w-3 h-3" />
+            <span>Zgjidhur: {new Date(ticket.completedAt).toLocaleDateString()}</span>
           </div>
         )}
+        {ticket.source && (
+          <span className="inline-flex px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+            {ticket.source}
+          </span>
+        )}
         <button
-          onClick={() => handleViewTask(task)}
+          onClick={() => handleViewTicket(ticket)}
           className="ml-auto p-1 hover:bg-gray-100 rounded"
         >
           <Eye className="w-4 h-4 text-gray-400" />
@@ -150,7 +146,7 @@ const TasksList: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Taskat</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Tiketat</h2>
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -174,10 +170,10 @@ const TasksList: React.FC = () => {
           </div>
           <button 
             onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Task i Ri
+            Tiket i Ri
           </button>
         </div>
       </div>
@@ -201,7 +197,7 @@ const TasksList: React.FC = () => {
                     Përshkrues
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kategoria
+                    Burimi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Krijuar
@@ -212,64 +208,56 @@ const TasksList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {tasks.map((task) => (
-                  <tr key={task.id} className="hover:bg-gray-50">
+                {tickets.map((ticket) => (
+                  <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                          Task
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                          Tiket
                         </span>
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{task.title}</div>
-                          <div className="text-sm text-gray-500">{task.id}</div>
+                          <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
+                          <div className="text-sm text-gray-500">{ticket.id}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <AlertCircle className="w-4 h-4 text-gray-400" />
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
-                          {translatePriority(task.priority)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+                          {translatePriority(ticket.priority)}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span 
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(task.status)}`}
-                          title={task.status === 'done' && task.completedAt ? `Përfunduar më: ${formatCompletionTime(task.completedAt)}` : undefined}
-                        >
-                          {translateStatus(task.status)}
-                        </span>
-                        {task.status === 'done' && task.completedAt && (
-                          <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Calendar className="w-3 h-3" />
-                            <span>{formatCompletionTime(task.completedAt)}</span>
-                          </div>
-                        )}
-                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
+                        {translateStatus(ticket.status)}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">{task.assignedTo}</span>
+                        <span className="text-sm text-gray-900">{ticket.assignedTo}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{task.category}</span>
+                      <div className="flex items-center gap-2">
+                        <MessageCircle className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">{ticket.source || 'N/A'}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900">
-                          {new Date(task.createdAt).toLocaleDateString()}
+                          {new Date(ticket.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleViewTask(task)}
+                          onClick={() => handleViewTicket(ticket)}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           <Eye className="w-4 h-4" />
@@ -288,86 +276,85 @@ const TasksList: React.FC = () => {
       ) : (
         <KanbanBoard
           columns={kanbanColumns}
-          renderCard={renderTaskCard}
+          renderCard={renderTicketCard}
           onAddItem={(columnId) => console.log('Add item to', columnId)}
         />
       )}
 
-      {/* Task Details Modal */}
+      {/* Ticket Details Modal */}
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Task Details"
+        title="Ticket Details"
         size="lg"
       >
-        {selectedTask && (
+        {selectedTicket && (
           <div className="space-y-6">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-lg font-medium text-gray-900">{selectedTask.title}</h3>
-                <p className="text-sm text-gray-500 mt-1">{selectedTask.id}</p>
+                <h3 className="text-lg font-medium text-gray-900">{selectedTicket.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">{selectedTicket.id}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                  Task
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                  Tiket
                 </span>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(selectedTask.priority)}`}>
-                  {translatePriority(selectedTask.priority)}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(selectedTicket.priority)}`}>
+                  {translatePriority(selectedTicket.priority)}
                 </span>
               </div>
             </div>
 
-            {selectedTask.description && (
+            {selectedTicket.description && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <p className="text-sm text-gray-900">{selectedTask.description}</p>
+                <p className="text-sm text-gray-900">{selectedTicket.description}</p>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <div className="flex items-center gap-2">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedTask.status)}`}>
-                    {translateStatus(selectedTask.status)}
-                  </span>
-                  {selectedTask.status === 'done' && selectedTask.completedAt && (
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="w-3 h-3" />
-                      <span>Përfunduar: {formatCompletionTime(selectedTask.completedAt)}</span>
-                    </div>
-                  )}
-                </div>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedTicket.status)}`}>
+                  {translateStatus(selectedTicket.status)}
+                </span>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <p className="text-sm text-gray-900">{selectedTask.category}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Source</label>
+                <p className="text-sm text-gray-900">{selectedTicket.source || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-                <p className="text-sm text-gray-900">{selectedTask.assignedTo}</p>
+                <p className="text-sm text-gray-900">{selectedTicket.assignedTo}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                <p className="text-sm text-gray-900">{new Date(selectedTask.createdAt).toLocaleString()}</p>
+                <p className="text-sm text-gray-900">{new Date(selectedTicket.createdAt).toLocaleString()}</p>
               </div>
             </div>
 
-            {selectedTask.completedAt && (
+            {selectedTicket.customerId && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Completed At</label>
-                <p className="text-sm text-gray-900">{formatCompletionTime(selectedTask.completedAt)}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Customer ID</label>
+                <p className="text-sm text-gray-900">{selectedTicket.customerId}</p>
               </div>
             )}
 
-            {selectedTask.comments.length > 0 && (
+            {selectedTicket.relatedOrderId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Related Order</label>
+                <p className="text-sm text-gray-900">{selectedTicket.relatedOrderId}</p>
+              </div>
+            )}
+
+            {selectedTicket.comments.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
                 <div className="space-y-3">
-                  {selectedTask.comments.map((comment) => (
+                  {selectedTicket.comments.map((comment) => (
                     <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
                       <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-medium text-gray-900">{comment.userName}</span>
@@ -383,11 +370,11 @@ const TasksList: React.FC = () => {
         )}
       </Modal>
 
-      {/* Task Form Modal */}
+      {/* Ticket Form Modal */}
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="New Task"
+        title="New Ticket"
         size="lg"
       >
         <TaskForm onClose={() => setIsFormOpen(false)} />
@@ -396,4 +383,4 @@ const TasksList: React.FC = () => {
   );
 };
 
-export default TasksList;
+export default TicketsList; 

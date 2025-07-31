@@ -6,7 +6,7 @@ export interface User {
   avatar?: string;
   isActive: boolean;
   lastLogin?: string;
-  twoFactorEnabled: boolean;
+  credits: number; // Credits in euros
 }
 
 export interface Customer {
@@ -38,6 +38,7 @@ export interface Order {
   customer: Customer;
   products: OrderProduct[];
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+  source: 'Manual' | 'Woo'; // Order source - Manual or WooCommerce
   shippingInfo: {
     address: string;
     city: string;
@@ -71,6 +72,7 @@ export interface Service {
   qrCode: string;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string; // Time when service was completed
   emailNotificationsSent: boolean;
 }
 
@@ -97,6 +99,7 @@ export interface Task {
   attachments: FileAttachment[];
   createdAt: string;
   updatedAt: string;
+  completedAt?: string; // Time when task was completed
   customerId?: string;
   relatedOrderId?: string;
   source?: 'Email' | 'Phone' | 'Website' | 'Social Media' | 'In Person' | 'Internal';

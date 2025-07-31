@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter } from 'lucide-react';
 import { Product } from '../../types';
 import { mockProducts } from '../../data/mockData';
 
@@ -7,8 +7,17 @@ const ProductsList: React.FC = () => {
   const [products] = useState<Product[]>(mockProducts);
   const [lastSync] = useState('2024-01-15T12:00:00Z');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  const groupedProducts = products.reduce((acc, product) => {
+  // Get unique categories from products
+  const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
+
+  // Filter products by selected category
+  const filteredProducts = selectedCategory === 'all' 
+    ? products 
+    : products.filter(product => product.category === selectedCategory);
+
+  const groupedProducts = filteredProducts.reduce((acc, product) => {
     if (!acc[product.supplier]) {
       acc[product.supplier] = [];
     }
@@ -42,24 +51,59 @@ const ProductsList: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Products</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Produktet</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Last sync: {new Date(lastSync).toLocaleString()}
+            Sinkronizimi i fundit: {new Date(lastSync).toLocaleString()}
           </p>
           <div className="flex items-center gap-2 mt-1">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">Auto-sync every 30 minutes</span>
+            <span className="text-xs text-gray-500">Sinkronizim automatik çdo 30 minuta</span>
           </div>
         </div>
-        <button 
-          onClick={handleSync}
-          disabled={syncStatus === 'syncing'}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <Sync className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
-          {syncStatus === 'syncing' ? 'Syncing...' : 'Sync with WooCommerce'}
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Category Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            >
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category === 'all' ? 'Të gjitha kategoritë' : category}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button 
+            onClick={handleSync}
+            disabled={syncStatus === 'syncing'}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sync className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
+            {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 'Sinkronizo me WooCommerce'}
+          </button>
+        </div>
       </div>
+
+      {/* Filter Summary */}
+      {selectedCategory !== 'all' && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <Tag className="w-4 h-4 text-blue-600" />
+            <span className="text-sm text-blue-800">
+              Duke shfaqur produktet në kategorinë: <strong>{selectedCategory}</strong> ({filteredProducts.length} produkte)
+            </span>
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              Fshij filtrin
+            </button>
+          </div>
+        </div>
+      )}
 
       {syncStatus === 'success' && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -78,7 +122,7 @@ const ProductsList: React.FC = () => {
                 <Building className="w-5 h-5 text-gray-400" />
                 <h3 className="text-lg font-medium text-gray-900">{supplier}</h3>
                 <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">
-                  {supplierProducts.length} products
+                  {supplierProducts.length} produkte
                 </span>
               </div>
             </div>
@@ -88,28 +132,28 @@ const ProductsList: React.FC = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product
+                      Produkti
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Category
+                      Kategoria
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Base Price
+                      Çmimi Bazë
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Additional Cost
+                      Kostoja Shtesë
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Final Price
+                      Çmimi Final
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      WC Status
+                      Statusi WC
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      WC Category
+                      Kategoria WC
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Last Sync
+                      Sinkronizimi i Fundit
                     </th>
                   </tr>
                 </thead>
@@ -186,6 +230,20 @@ const ProductsList: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* No results message */}
+      {Object.keys(groupedProducts).length === 0 && (
+        <div className="text-center py-12">
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Nuk u gjetën produkte</h3>
+          <p className="text-gray-500">
+            {selectedCategory !== 'all' 
+              ? `Nuk u gjetën produkte në kategorinë "${selectedCategory}"`
+              : 'Nuk ka produkte të disponueshme'
+            }
+          </p>
+        </div>
+      )}
     </div>
   );
 };

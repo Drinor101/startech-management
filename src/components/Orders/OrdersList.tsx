@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, Edit, Package, User, Calendar, DollarSign } from 'lucide-react';
+import { Eye, Edit, Package, User, Calendar, DollarSign, Globe, ShoppingCart } from 'lucide-react';
 import { Order } from '../../types';
 import { mockOrders } from '../../data/mockData';
 import Modal from '../Common/Modal';
@@ -22,6 +22,30 @@ const OrdersList: React.FC = () => {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  // Function to translate status values to Albanian
+  const translateStatus = (status: string) => {
+    const translations: { [key: string]: string } = {
+      'pending': 'Në Pritje',
+      'processing': 'Në Procesim',
+      'shipped': 'Dërguar',
+      'delivered': 'Dërguar',
+      'cancelled': 'Anuluar'
+    };
+    return translations[status] || status;
+  };
+
+  const getSourceColor = (source: string) => {
+    const colors = {
+      'Manual': 'bg-orange-100 text-orange-800',
+      'Woo': 'bg-blue-100 text-blue-800'
+    };
+    return colors[source as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getSourceIcon = (source: string) => {
+    return source === 'Woo' ? Globe : ShoppingCart;
+  };
+
   const handleViewOrder = (order: Order) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
@@ -30,12 +54,12 @@ const OrdersList: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Orders</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Porositë</h2>
         <button 
           onClick={() => setIsFormOpen(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
-          New Order
+          Porosi e Re
         </button>
       </div>
 
@@ -45,89 +69,105 @@ const OrdersList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Order ID
+                  ID e Porosisë
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
+                  Klienti
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Products
+                  Produktet
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Statusi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total
+                  Totali
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
+                  Krijuar
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Veprimet
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">{order.id}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{order.customer.name}</div>
-                        <div className="text-sm text-gray-500">{order.customer.email}</div>
+              {orders.map((order) => {
+                const SourceIcon = getSourceIcon(order.source);
+                return (
+                  <tr key={order.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">{order.id}</span>
+                          <span 
+                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(order.source)}`}
+                            title={order.source === 'Woo' ? 'Porosi WooCommerce' : 'Porosi Manuale'}
+                          >
+                            <SourceIcon className="w-3 h-3" />
+                            {order.source}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      {order.products.length} item{order.products.length > 1 ? 's' : ''}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {order.products.map(p => p.title).join(', ').substring(0, 50)}
-                      {order.products.map(p => p.title).join(', ').length > 50 ? '...' : ''}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-900">${order.total.toFixed(2)}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">
-                        {new Date(order.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{order.customer.name}</div>
+                          <div className="text-sm text-gray-500">{order.customer.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {order.products.length} item{order.products.length > 1 ? 's' : ''}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {order.products.map(p => p.title).join(', ').substring(0, 50)}
+                        {order.products.map(p => p.title).join(', ').length > 50 ? '...' : ''}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                        {translateStatus(order.status)}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewOrder(order)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button className="text-gray-600 hover:text-gray-900">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">${order.total.toFixed(2)}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleViewOrder(order);
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button className="text-gray-600 hover:text-gray-900">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -145,12 +185,23 @@ const OrdersList: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Order ID</label>
-                <p className="text-sm text-gray-900">{selectedOrder.id}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-900">{selectedOrder.id}</p>
+                  <span 
+                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(selectedOrder.source)}`}
+                  >
+                    {(() => {
+                      const SourceIcon = getSourceIcon(selectedOrder.source);
+                      return <SourceIcon className="w-3 h-3" />;
+                    })()}
+                    {selectedOrder.source}
+                  </span>
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedOrder.status)}`}>
-                  {selectedOrder.status}
+                  {translateStatus(selectedOrder.status)}
                 </span>
               </div>
             </div>

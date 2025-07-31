@@ -7,7 +7,7 @@ export const mockUsers: User[] = [
     email: 'admin@company.com', 
     role: 'Administrator',
     isActive: true,
-    twoFactorEnabled: true,
+    credits: 150.00,
     lastLogin: '2024-01-15T10:30:00Z'
   },
   { 
@@ -16,7 +16,7 @@ export const mockUsers: User[] = [
     email: 'manager@company.com', 
     role: 'Manager',
     isActive: true,
-    twoFactorEnabled: false,
+    credits: 85.50,
     lastLogin: '2024-01-15T09:15:00Z'
   },
   { 
@@ -25,7 +25,7 @@ export const mockUsers: User[] = [
     email: 'tech@company.com', 
     role: 'Technician',
     isActive: true,
-    twoFactorEnabled: true,
+    credits: 200.00,
     lastLogin: '2024-01-15T08:45:00Z'
   },
   { 
@@ -34,7 +34,7 @@ export const mockUsers: User[] = [
     email: 'support@company.com', 
     role: 'Support Agent',
     isActive: true,
-    twoFactorEnabled: false,
+    credits: 75.25,
     lastLogin: '2024-01-15T11:20:00Z'
   },
   { 
@@ -43,7 +43,7 @@ export const mockUsers: User[] = [
     email: 'design@company.com', 
     role: 'Design',
     isActive: true,
-    twoFactorEnabled: false,
+    credits: 120.75,
     lastLogin: '2024-01-14T16:30:00Z'
   },
   { 
@@ -52,7 +52,7 @@ export const mockUsers: User[] = [
     email: 'marketing@company.com', 
     role: 'Marketing',
     isActive: true,
-    twoFactorEnabled: false,
+    credits: 95.00,
     lastLogin: '2024-01-15T07:30:00Z'
   },
   { 
@@ -61,7 +61,7 @@ export const mockUsers: User[] = [
     email: 'ecommerce@company.com', 
     role: 'E-commerce',
     isActive: true,
-    twoFactorEnabled: true,
+    credits: 180.50,
     lastLogin: '2024-01-15T12:00:00Z'
   },
 ];
@@ -184,6 +184,7 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[0],
     products: createOrderProducts([mockProducts[0], mockProducts[1]], [1, 2]),
     status: 'processing',
+    source: 'Woo',
     shippingInfo: {
       address: '123 Main St',
       city: 'City',
@@ -202,6 +203,7 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[1],
     products: createOrderProducts([mockProducts[2]], [1]),
     status: 'shipped',
+    source: 'Woo',
     shippingInfo: {
       address: '456 Oak Ave',
       city: 'Town',
@@ -219,6 +221,7 @@ export const mockOrders: Order[] = [
     customer: mockCustomers[2],
     products: createOrderProducts([mockProducts[3], mockProducts[4]], [1, 1]),
     status: 'pending',
+    source: 'Manual',
     shippingInfo: {
       address: '789 Pine Rd',
       city: 'Village',
@@ -312,6 +315,7 @@ export const mockServices: Service[] = [
     qrCode: 'QR_SRV002_2024',
     createdAt: '2024-01-14T16:30:00Z',
     updatedAt: '2024-01-15T10:00:00Z',
+    completedAt: '2024-01-15T10:00:00Z',
     emailNotificationsSent: true
   },
   {
@@ -497,6 +501,46 @@ export const mockTasks: Task[] = [
         action: 'Status changed to review',
         userId: '5',
         userName: 'Tom Designer'
+      }
+    ]
+  },
+  {
+    id: 'TASK003',
+    type: 'task',
+    title: 'Update customer database records',
+    description: 'Clean up and update customer contact information in the database',
+    priority: 'medium',
+    assignedTo: 'Lisa Support',
+    visibleTo: ['1', '2', '4'],
+    category: 'Data Management',
+    status: 'done',
+    attachments: [],
+    createdAt: '2024-01-14T09:00:00Z',
+    updatedAt: '2024-01-15T11:00:00Z',
+    completedAt: '2024-01-15T11:00:00Z',
+    comments: [
+      {
+        id: 'c4',
+        userId: '4',
+        userName: 'Lisa Support',
+        message: 'Database cleanup completed successfully',
+        createdAt: '2024-01-15T11:00:00Z'
+      }
+    ],
+    history: [
+      {
+        id: 'h8',
+        date: '2024-01-14T09:00:00Z',
+        action: 'Task created',
+        userId: '2',
+        userName: 'Sarah Manager'
+      },
+      {
+        id: 'h9',
+        date: '2024-01-15T11:00:00Z',
+        action: 'Task completed',
+        userId: '4',
+        userName: 'Lisa Support'
       }
     ]
   }

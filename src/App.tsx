@@ -4,11 +4,113 @@ import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
 import ServicesList from './components/Services/ServicesList';
 import TasksList from './components/Tasks/TasksList';
+import TicketsList from './components/Tasks/TicketsList';
 import OrdersList from './components/Orders/OrdersList';
 import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
 import UsersList from './components/Users/UsersList';
 import { mockUsers } from './data/mockData';
+
+// New component for "Të gjitha" (All Tasks)
+const AllTasks: React.FC = () => {
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-900">Të gjitha Detyrat</h2>
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Services Summary */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Servisi</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total</span>
+              <span className="font-medium">47</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Në progres</span>
+              <span className="font-medium text-blue-600">12</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Përfunduar</span>
+              <span className="font-medium text-green-600">32</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tasks Summary */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Taskat</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total</span>
+              <span className="font-medium">156</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Në progres</span>
+              <span className="font-medium text-blue-600">45</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Përfunduar</span>
+              <span className="font-medium text-green-600">89</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tickets Summary */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Tiketat</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Total</span>
+              <span className="font-medium">89</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Hapur</span>
+              <span className="font-medium text-yellow-600">23</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Mbyllur</span>
+              <span className="font-medium text-green-600">66</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Aktiviteti i fundit</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Servis i ri u shtua</p>
+              <p className="text-xs text-gray-500">Repair laptop - Alice Johnson</p>
+            </div>
+            <span className="text-xs text-gray-400">2 min më parë</span>
+          </div>
+          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Task u përfundua</p>
+              <p className="text-xs text-gray-500">Update product catalog</p>
+            </div>
+            <span className="text-xs text-gray-400">15 min më parë</span>
+          </div>
+          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+            <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+            <div className="flex-1">
+              <p className="text-sm font-medium">Tiket i ri</p>
+              <p className="text-xs text-gray-500">Customer complaint - Bob Smith</p>
+            </div>
+            <span className="text-xs text-gray-400">1 orë më parë</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const [activeModule, setActiveModule] = useState('dashboard');
@@ -18,13 +120,15 @@ function App() {
   const getModuleTitle = (module: string) => {
     const titles = {
       dashboard: 'Dashboard',
-      services: 'Services',
-      tasks: 'Tasks & Tickets',
-      orders: 'Orders',
-      products: 'Products',
-      reports: 'Reports',
-      users: 'Users',
-      settings: 'Settings'
+      'all-tasks': 'Të gjitha Detyrat',
+      services: 'Servisi',
+      tasks: 'Taskat',
+      tickets: 'Tiketat',
+      orders: 'Porositë',
+      products: 'Produktet',
+      reports: 'Raportet',
+      users: 'Përdoruesit',
+      settings: 'Cilësimet'
     };
     return titles[module as keyof typeof titles] || 'Startech';
   };
@@ -33,10 +137,14 @@ function App() {
     switch (activeModule) {
       case 'dashboard':
         return <Dashboard />;
+      case 'all-tasks':
+        return <AllTasks />;
       case 'services':
         return <ServicesList />;
       case 'tasks':
         return <TasksList />;
+      case 'tickets':
+        return <TicketsList />;
       case 'orders':
         return <OrdersList />;
       case 'products':
@@ -48,9 +156,9 @@ function App() {
       case 'settings':
         return (
           <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Settings</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Cilësimet</h2>
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <p className="text-gray-600">Settings module would be implemented here.</p>
+              <p className="text-gray-600">Moduli i cilësimeve do të implementohet këtu.</p>
             </div>
           </div>
         );

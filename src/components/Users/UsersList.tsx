@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Shield, Mail, Phone, Key, Clock, Activity } from 'lucide-react';
+import { Plus, Edit, Shield, Mail, Phone, Euro, Clock, Activity } from 'lucide-react';
 import { User } from '../../types';
 import { mockUsers, mockUserActions } from '../../data/mockData';
 import Modal from '../Common/Modal';
@@ -25,6 +25,12 @@ const UsersList: React.FC = () => {
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const getCreditsColor = (credits: number) => {
+    if (credits >= 150) return 'bg-green-100 text-green-800';
+    if (credits >= 100) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
+
   const handleViewUser = (user: User) => {
     setSelectedUser(user);
     setIsUserModalOpen(true);
@@ -38,8 +44,8 @@ const UsersList: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-          <p className="text-sm text-gray-500 mt-1">Manage users, roles, and permissions</p>
+          <h2 className="text-2xl font-bold text-gray-900">Menaxhimi i Përdoruesve</h2>
+          <p className="text-sm text-gray-500 mt-1">Menaxho përdoruesit, rolet dhe lejet</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -47,21 +53,21 @@ const UsersList: React.FC = () => {
             className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <Activity className="w-4 h-4" />
-            User Actions
+            Veprimet e Përdoruesve
           </button>
           <button 
             onClick={() => setIsFormOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add User
+            Shto Përdorues
           </button>
         </div>
       </div>
 
       {showUserActions && (
         <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-3">Recent User Actions</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Veprimet e Fundit të Përdoruesve</h3>
           <div className="space-y-2">
             {mockUserActions.slice(0, 5).map((action) => (
               <div key={action.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
@@ -87,16 +93,16 @@ const UsersList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  Përdoruesi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
+                  Roli
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contact
+                  Kontakt
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  2FA
+                  Kredite (€)
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Last Login
@@ -105,7 +111,7 @@ const UsersList: React.FC = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Veprimet
                 </th>
               </tr>
             </thead>
@@ -143,11 +149,9 @@ const UsersList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <Key className={`w-4 h-4 ${user.twoFactorEnabled ? 'text-green-500' : 'text-gray-400'}`} />
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        user.twoFactorEnabled ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {user.twoFactorEnabled ? 'Enabled' : 'Disabled'}
+                      <Euro className="w-4 h-4 text-gray-400" />
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCreditsColor(user.credits)}`}>
+                        €{user.credits.toFixed(2)}
                       </span>
                     </div>
                   </td>
@@ -163,7 +167,7 @@ const UsersList: React.FC = () => {
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
+                      {user.isActive ? 'Aktiv' : 'Pasiv'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -208,34 +212,48 @@ const UsersList: React.FC = () => {
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(selectedUser.role)}`}>
                     {selectedUser.role}
                   </span>
-                  {selectedUser.twoFactorEnabled && (
-                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                      2FA Enabled
-                    </span>
-                  )}
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCreditsColor(selectedUser.credits)}`}>
+                    €{selectedUser.credits.toFixed(2)} kredite
+                  </span>
                 </div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statusi</label>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                   selectedUser.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                  {selectedUser.isActive ? 'Active' : 'Inactive'}
+                  {selectedUser.isActive ? 'Aktiv' : 'Pasiv'}
                 </span>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Login</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kredite</label>
+                <div className="flex items-center gap-2">
+                  <Euro className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm font-medium text-gray-900">€{selectedUser.credits.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hyrja e Fundit</label>
                 <p className="text-sm text-gray-900">
-                  {selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleString() : 'Never logged in'}
+                  {selectedUser.lastLogin ? new Date(selectedUser.lastLogin).toLocaleString() : 'Nuk ka kaluar ndonjë kohë'}
                 </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statusi i Kredive</label>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCreditsColor(selectedUser.credits)}`}>
+                  {selectedUser.credits >= 150 ? 'Shumë' : selectedUser.credits >= 100 ? 'Mesatare' : 'Ulëte'}
+                </span>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Recent Actions</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Veprimet e Fundit</label>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {getUserActions(selectedUser.id).map((action) => (
                   <div key={action.id} className="p-3 bg-gray-50 rounded-lg">
@@ -245,7 +263,7 @@ const UsersList: React.FC = () => {
                     </div>
                     <p className="text-sm text-gray-600">{action.details}</p>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs text-gray-500">Module: {action.module}</span>
+                      <span className="text-xs text-gray-500">Moduli: {action.module}</span>
                       {action.ipAddress && (
                         <span className="text-xs text-gray-500">IP: {action.ipAddress}</span>
                       )}
@@ -253,7 +271,7 @@ const UsersList: React.FC = () => {
                   </div>
                 ))}
                 {getUserActions(selectedUser.id).length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">No recent actions found</p>
+                  <p className="text-sm text-gray-500 text-center py-4">Nuk ka veprimet të fundit të gjetur</p>
                 )}
               </div>
             </div>
@@ -265,12 +283,12 @@ const UsersList: React.FC = () => {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="Add New User"
+        title="Shto Përdorues të Ri"
         size="md"
       >
         <form className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Emri i Plotë</label>
             <input
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -288,40 +306,42 @@ const UsersList: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Role</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Roli</label>
             <select 
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
             >
-              <option value="">Select Role</option>
-              <option value="Technician">Technician</option>
-              <option value="Support Agent">Support Agent</option>
+              <option value="">Zgjidh Rolin</option>
+              <option value="Technician">Teknici</option>
+              <option value="Support Agent">Agjent Mbështetje</option>
               <option value="E-commerce">E-commerce</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Design">Design</option>
-              <option value="Manager">Manager</option>
+              <option value="Marketing">Marketingu</option>
+              <option value="Design">Dizajni</option>
+              <option value="Manager">Menaxher</option>
               <option value="Administrator">Administrator</option>
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isActive"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                defaultChecked
-              />
-              <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">Active user</label>
-            </div>
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="twoFactor"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="twoFactor" className="ml-2 block text-sm text-gray-900">Enable 2FA</label>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kreditë Fillestare (€)</label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue="100.00"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="isActive"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              defaultChecked
+            />
+            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">Përdorues aktiv</label>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
@@ -330,13 +350,13 @@ const UsersList: React.FC = () => {
               onClick={() => setIsFormOpen(false)}
               className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200"
             >
-              Cancel
+              Anulo
             </button>
             <button
               type="submit"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700"
             >
-              Create User
+              Krijo Përdorues
             </button>
           </div>
         </form>

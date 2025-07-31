@@ -20,12 +20,19 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-        <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={onClose} />
-        
-        <div className={`inline-block w-full ${sizeClasses[size]} px-6 py-4 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg`}>
-          <div className="flex items-center justify-between mb-4">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
+      {/* Backdrop */}
+      <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={onClose} />
+      
+      {/* Modal Container - Properly centered */}
+      <div className="flex items-center justify-center min-h-screen p-4">
+        {/* Modal Content */}
+        <div 
+          className={`relative w-full ${sizeClasses[size]} bg-white rounded-lg shadow-xl transform transition-all`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">{title}</h3>
             <button
               onClick={onClose}
@@ -35,7 +42,8 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, size = 
             </button>
           </div>
           
-          <div className="max-h-96 overflow-y-auto">
+          {/* Body */}
+          <div className="p-6 max-h-96 overflow-y-auto">
             {children}
           </div>
         </div>

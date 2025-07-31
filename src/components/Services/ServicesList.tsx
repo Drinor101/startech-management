@@ -1,28 +1,50 @@
 import React, { useState } from 'react';
-import { Eye, Edit, QrCode, Clock, User, Package, Mail, Grid3X3, List } from 'lucide-react';
-import { Service } from '../../types';
+import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, QrCode, Mail, Shield, Calendar } from 'lucide-react';
+import { Service, ViewMode } from '../../types';
 import { mockServices } from '../../data/mockData';
+import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
-import KanbanBoard from '../Common/KanbanBoard';
-import { ViewMode } from '../../types';
 
 const ServicesList: React.FC = () => {
   const [services] = useState<Service[]>(mockServices);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   const getStatusColor = (status: string) => {
     const colors = {
-      'received': 'bg-blue-100 text-blue-800',
-      'in-progress': 'bg-yellow-100 text-yellow-800',
-      'waiting-parts': 'bg-orange-100 text-orange-800',
+      'received': 'bg-gray-100 text-gray-800',
+      'in-progress': 'bg-blue-100 text-blue-800',
+      'waiting-parts': 'bg-yellow-100 text-yellow-800',
       'completed': 'bg-green-100 text-green-800',
-      'delivered': 'bg-gray-100 text-gray-800'
+      'delivered': 'bg-purple-100 text-purple-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  // Function to translate status values to Albanian
+  const translateStatus = (status: string) => {
+    const translations: { [key: string]: string } = {
+      'received': 'Marrë',
+      'in-progress': 'Në Progres',
+      'waiting-parts': 'Duke Pritur Pjesët',
+      'completed': 'Përfunduar',
+      'delivered': 'Dërguar'
+    };
+    return translations[status] || status;
+  };
+
+  const formatCompletionTime = (completedAt: string) => {
+    const date = new Date(completedAt);
+    return date.toLocaleDateString('sq-AL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const handleViewService = (service: Service) => {
@@ -30,58 +52,53 @@ const ServicesList: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Kanban columns for services
+  // Kanban columns
   const kanbanColumns = [
     {
       id: 'received',
-      title: 'Received',
+      title: 'Marrë',
       items: services.filter(service => service.status === 'received'),
-      color: 'bg-blue-400'
+      color: 'bg-gray-400'
     },
     {
       id: 'in-progress',
-      title: 'In Progress',
+      title: 'Në Progres',
       items: services.filter(service => service.status === 'in-progress'),
-      color: 'bg-yellow-400'
+      color: 'bg-blue-400'
     },
     {
       id: 'waiting-parts',
-      title: 'Waiting Parts',
+      title: 'Duke Pritur Pjesët',
       items: services.filter(service => service.status === 'waiting-parts'),
-      color: 'bg-orange-400'
+      color: 'bg-yellow-400'
     },
     {
       id: 'completed',
-      title: 'Completed',
+      title: 'Përfunduar',
       items: services.filter(service => service.status === 'completed'),
       color: 'bg-green-400'
     },
     {
       id: 'delivered',
-      title: 'Delivered',
+      title: 'Dërguar',
       items: services.filter(service => service.status === 'delivered'),
-      color: 'bg-gray-400'
+      color: 'bg-purple-400'
     }
   ];
 
   const renderServiceCard = (service: Service) => (
     <div className="space-y-3">
       <div className="flex items-start justify-between">
-        <div>
-          <h4 className="font-medium text-gray-900 text-sm">{service.id}</h4>
-          <p className="text-xs text-gray-600">{service.customer.name}</p>
-        </div>
-        <div className="flex items-center gap-1">
-          <QrCode className="w-3 h-3 text-gray-400" />
-          {service.underWarranty && (
-            <span className="inline-flex px-1 py-0.5 text-xs font-semibold rounded bg-green-100 text-green-800">
-              Warranty
-            </span>
-          )}
-        </div>
+        <h4 className="font-medium text-gray-900 text-sm">{service.id}</h4>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}>
+          {translateStatus(service.status)}
+        </span>
       </div>
       
-      <p className="text-sm text-gray-600 line-clamp-2">{service.problemDescription}</p>
+      <div>
+        <p className="text-sm font-medium text-gray-900">{service.customer.name}</p>
+        <p className="text-sm text-gray-600">{service.problemDescription}</p>
+      </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center gap-1">
@@ -94,13 +111,13 @@ const ServicesList: React.FC = () => {
         </div>
       </div>
       
-      <div className="flex items-center justify-between">
-        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-          {service.category}
+      <div className="flex items-center gap-2">
+        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+          {service.underWarranty ? 'Garanci' : 'Pa Garanci'}
         </span>
         <div className="flex items-center gap-1">
           {service.emailNotificationsSent && (
-            <Mail className="w-3 h-3 text-green-500" title="Email notifications sent" />
+            <Mail className="w-3 h-3 text-green-500" title="Njoftimet me email u dërguan" />
           )}
           <button
             onClick={() => handleViewService(service)}
@@ -116,7 +133,7 @@ const ServicesList: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Services</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Servisi</h2>
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -126,7 +143,7 @@ const ServicesList: React.FC = () => {
               }`}
             >
               <List className="w-4 h-4" />
-              List
+              Lista
             </button>
             <button
               onClick={() => setViewMode('kanban')}
@@ -142,7 +159,7 @@ const ServicesList: React.FC = () => {
             onClick={() => setIsFormOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            New Service
+            Servis i Ri
           </button>
         </div>
       </div>
@@ -154,28 +171,28 @@ const ServicesList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Service ID
+                  Servis ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
+                  Klienti
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Problem
+                  Problemi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Statusi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Assigned To
+                  Caktuar për
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Warranty
+                  Garanci
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Notifications
+                  Njoftimet
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
+                  Veprimet
                 </th>
               </tr>
             </thead>
@@ -198,14 +215,25 @@ const ServicesList: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 max-w-xs truncate">
-                      {service.problemDescription}
+                    <div className="max-w-xs">
+                      <p className="text-sm text-gray-900 truncate">{service.problemDescription}</p>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}>
-                      {service.status.replace('-', ' ')}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span 
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}
+                        title={service.status === 'completed' && service.completedAt ? `Përfunduar më: ${formatCompletionTime(service.completedAt)}` : undefined}
+                      >
+                        {translateStatus(service.status)}
+                      </span>
+                      {service.status === 'completed' && service.completedAt && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                          <Calendar className="w-3 h-3" />
+                          <span>{formatCompletionTime(service.completedAt)}</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
@@ -214,18 +242,17 @@ const ServicesList: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {service.underWarranty ? 'Yes' : 'No'}
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                      {service.underWarranty ? 'Po' : 'Jo'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <Mail className={`w-4 h-4 ${service.emailNotificationsSent ? 'text-green-500' : 'text-gray-400'}`} />
-                      <span className="text-sm text-gray-600">
-                        {service.emailNotificationsSent ? 'Sent' : 'Pending'}
-                      </span>
+                    <div className="flex items-center gap-2">
+                      {service.emailNotificationsSent ? (
+                        <Mail className="w-4 h-4 text-green-500" title="Njoftimet me email u dërguan" />
+                      ) : (
+                        <Mail className="w-4 h-4 text-gray-400" title="Asnjë njoftim me email" />
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -251,7 +278,7 @@ const ServicesList: React.FC = () => {
         <KanbanBoard
           columns={kanbanColumns}
           renderCard={renderServiceCard}
-          onAddItem={(columnId) => console.log('Add service to', columnId)}
+          onAddItem={(columnId) => console.log('Add item to', columnId)}
         />
       )}
 
@@ -264,60 +291,93 @@ const ServicesList: React.FC = () => {
       >
         {selectedService && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-start justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Service ID</label>
-                <p className="text-sm text-gray-900">{selectedService.id}</p>
+                <h3 className="text-lg font-medium text-gray-900">{selectedService.id}</h3>
+                <p className="text-sm text-gray-500 mt-1">Klienti: {selectedService.customer.name}</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">QR Code</label>
-                <p className="text-sm text-gray-900">{selectedService.qrCode}</p>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedService.status)}`}>
+                  {translateStatus(selectedService.status)}
+                </span>
+                {selectedService.status === 'completed' && selectedService.completedAt && (
+                  <div className="flex items-center gap-1 text-xs text-gray-500">
+                    <Calendar className="w-3 h-3" />
+                    <span>Përfunduar: {formatCompletionTime(selectedService.completedAt)}</span>
+                  </div>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer Information</label>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-medium">{selectedService.customer.name}</p>
-                <p className="text-sm text-gray-600">{selectedService.customer.email}</p>
-                <p className="text-sm text-gray-600">{selectedService.customer.phone}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Problem Description</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi i Problemit</label>
               <p className="text-sm text-gray-900">{selectedService.problemDescription}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedService.status)}`}>
-                  {selectedService.status.replace('-', ' ')}
-                </span>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
+                <p className="text-sm text-gray-900">{selectedService.category}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <p className="text-sm text-gray-900">{selectedService.category}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përshkruar nga</label>
+                <p className="text-sm text-gray-900">{selectedService.assignedTo}</p>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Service History</label>
-              <div className="space-y-2">
-                {selectedService.serviceHistory.map((entry) => (
-                  <div key={entry.id} className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-medium">{entry.action}</span>
-                      <span className="text-xs text-gray-500 ml-auto">{entry.date}</span>
-                    </div>
-                    <p className="text-sm text-gray-600">{entry.notes}</p>
-                    <p className="text-xs text-gray-500 mt-1">by {entry.userName}</p>
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar</label>
+                <p className="text-sm text-gray-900">{new Date(selectedService.createdAt).toLocaleString()}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedService.updatedAt).toLocaleString()}</p>
               </div>
             </div>
+
+            {selectedService.completedAt && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përfunduar më</label>
+                <p className="text-sm text-gray-900">{formatCompletionTime(selectedService.completedAt)}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Garanci</label>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedService.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                  {selectedService.underWarranty ? 'Garanci' : 'Pa Garanci'}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Punkti i Pranueshmërisë</label>
+                <p className="text-sm text-gray-900">{selectedService.receptionPoint}</p>
+              </div>
+            </div>
+
+            {selectedService.serviceHistory.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Historiku i Shërbimit</label>
+                <div className="space-y-3 max-h-48 overflow-y-auto">
+                  {selectedService.serviceHistory.map((entry) => (
+                    <div key={entry.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900">{entry.action}</span>
+                        <span className="text-xs text-gray-500">{new Date(entry.date).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{entry.notes}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-xs text-gray-500">nga {entry.userName}</span>
+                        {entry.emailSent && (
+                          <Mail className="w-3 h-3 text-green-500" title="Email u dërgua" />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Modal>
@@ -326,7 +386,7 @@ const ServicesList: React.FC = () => {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title="New Service Request"
+        title="Shërbim i Ri"
         size="lg"
       >
         <ServiceForm onClose={() => setIsFormOpen(false)} />
