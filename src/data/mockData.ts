@@ -3,7 +3,7 @@ import { User, Customer, Product, Order, Service, Task, UserAction, OrderProduct
 export const mockUsers: User[] = [
   { 
     id: '1', 
-    name: 'John Admin', 
+    name: 'Filan Fisteku', 
     email: 'admin@company.com', 
     role: 'Administrator',
     isActive: true,
@@ -356,6 +356,7 @@ export const mockTasks: Task[] = [
     assignedTo: 'Alex Ecommerce',
     visibleTo: ['1', '2', '7'],
     category: 'System Maintenance',
+    department: 'E-commerce',
     status: 'in-progress',
     attachments: [
       {
@@ -412,6 +413,7 @@ export const mockTasks: Task[] = [
     assignedTo: 'Lisa Support',
     visibleTo: ['1', '2', '4'],
     category: 'Customer Service',
+    department: 'Support',
     status: 'todo',
     attachments: [
       {
@@ -464,6 +466,7 @@ export const mockTasks: Task[] = [
     assignedTo: 'Tom Designer',
     visibleTo: ['1', '2', '5'],
     category: 'Design',
+    department: 'Design',
     status: 'review',
     attachments: [
       {
@@ -513,6 +516,7 @@ export const mockTasks: Task[] = [
     assignedTo: 'Lisa Support',
     visibleTo: ['1', '2', '4'],
     category: 'Data Management',
+    department: 'Support',
     status: 'done',
     attachments: [],
     createdAt: '2024-01-14T09:00:00Z',

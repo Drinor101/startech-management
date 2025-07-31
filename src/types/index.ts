@@ -95,6 +95,7 @@ export interface Task {
   assignedTo: string;
   visibleTo: string[];
   category: string;
+  department: string;
   status: 'todo' | 'in-progress' | 'review' | 'done';
   attachments: FileAttachment[];
   createdAt: string;

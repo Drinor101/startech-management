@@ -25,7 +25,7 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard', label: 'Dashboard', icon: Home, roles: ['Administrator', 'Manager'] },
+  { id: 'dashboard', label: 'Përmbledhja', icon: Home, roles: ['Administrator', 'Manager'] },
   { 
     id: 'detyra', 
     label: 'Detyra', 

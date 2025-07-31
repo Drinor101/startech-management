@@ -12,9 +12,18 @@ const TasksList: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   // Filter only tasks (not tickets)
   const tasks = allTasks.filter(task => task.type === 'task');
+  
+  // Apply department filter
+  const filteredTasks = departmentFilter === 'all' 
+    ? tasks 
+    : tasks.filter(task => task.department === departmentFilter);
+  
+  // Get unique departments for filter dropdown
+  const departments = ['all', ...Array.from(new Set(tasks.map(task => task.department)))];
 
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -80,25 +89,25 @@ const TasksList: React.FC = () => {
     {
       id: 'todo',
       title: 'Për të bërë',
-      items: tasks.filter(task => task.status === 'todo'),
+      items: filteredTasks.filter(task => task.status === 'todo'),
       color: 'bg-gray-400'
     },
     {
       id: 'in-progress',
       title: 'Në Progres',
-      items: tasks.filter(task => task.status === 'in-progress'),
+      items: filteredTasks.filter(task => task.status === 'in-progress'),
       color: 'bg-blue-400'
     },
     {
       id: 'review',
       title: 'Rishikim',
-      items: tasks.filter(task => task.status === 'review'),
+      items: filteredTasks.filter(task => task.status === 'review'),
       color: 'bg-purple-400'
     },
     {
       id: 'done',
       title: 'Përfunduar',
-      items: tasks.filter(task => task.status === 'done'),
+      items: filteredTasks.filter(task => task.status === 'done'),
       color: 'bg-green-400'
     }
   ];
@@ -172,6 +181,17 @@ const TasksList: React.FC = () => {
               Kanban
             </button>
           </div>
+          <select
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                {dept === 'all' ? 'Të gjitha departamentet' : dept}
+              </option>
+            ))}
+          </select>
           <button 
             onClick={() => setIsFormOpen(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
@@ -201,7 +221,7 @@ const TasksList: React.FC = () => {
                     Përshkrues
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Kategoria
+                    Departamenti
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Krijuar
@@ -212,7 +232,7 @@ const TasksList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {tasks.map((task) => (
+                {filteredTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -256,7 +276,7 @@ const TasksList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{task.category}</span>
+                      <span className="text-sm text-gray-900">{task.department}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -340,8 +360,8 @@ const TasksList: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <p className="text-sm text-gray-900">{selectedTask.category}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti</label>
+                <p className="text-sm text-gray-900">{selectedTask.department}</p>
               </div>
             </div>
 

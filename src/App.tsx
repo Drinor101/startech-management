@@ -119,7 +119,7 @@ function App() {
 
   const getModuleTitle = (module: string) => {
     const titles = {
-      dashboard: 'Dashboard',
+      dashboard: 'Përmbledhja',
       'all-tasks': 'Të gjitha Detyrat',
       services: 'Servisi',
       tasks: 'Taskat',

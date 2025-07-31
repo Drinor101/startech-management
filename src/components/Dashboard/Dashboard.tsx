@@ -117,7 +117,7 @@ const Dashboard: React.FC = () => {
       {/* Header with New Button */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Përmbledhja</h1>
           <p className="text-sm text-gray-500 mt-1">Mirë se vini në Startech Management System</p>
         </div>
         
