@@ -6,10 +6,6 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Only build when frontend files change
-[[plugins]]
-  package = "@netlify/plugin-functions"
-
 # Ignore backend changes
 [build.ignore]
-  ignore = "backend/**"
+  ignore = ["backend/**"]
