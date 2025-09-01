@@ -1,31 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X } from 'lucide-react';
-import { mockUsers, mockCustomers } from '../../data/mockData';
+import { apiCall, apiConfig } from '../../config/api';
 
 interface TaskFormProps {
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     type: 'task' as 'task' | 'ticket',
     title: '',
     description: '',
     priority: 'medium',
-    assignedTo: '',
+    assigned_to: '',
     category: '',
-    customerId: '',
-    relatedOrderId: '',
+    customer_id: '',
+    related_order_id: '',
     source: '',
-    attachments: []
+    department: '',
+    due_date: ''
   });
 
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Fetch customers and orders
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [customersResponse, ordersResponse] = await Promise.all([
+          apiCall(apiConfig.endpoints.customers),
+          apiCall(apiConfig.endpoints.orders)
+        ]);
+        setCustomers(customersResponse.data || []);
+        setOrders(ordersResponse.data || []);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Task form data:', formData);
-    onClose();
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await apiCall(apiConfig.endpoints.tasks, {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      });
+      
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim në krijimin e taskut');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -47,6 +84,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+      
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tipi</label>
@@ -106,16 +149,16 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Cakto Për</label>
           <select
-            name="assignedTo"
-            value={formData.assignedTo}
+            name="assigned_to"
+            value={formData.assigned_to}
             onChange={handleChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             required
           >
             <option value="">Zgjidh Përdoruesin</option>
-            {mockUsers.map(user => (
-              <option key={user.id} value={user.name}>{user.name} ({user.role})</option>
-            ))}
+            <option value="admin">Admin</option>
+            <option value="technician">Teknik</option>
+            <option value="support">Mbështetje</option>
           </select>
         </div>
 
@@ -145,13 +188,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Klienti (Opsionale)</label>
               <select
-                name="customerId"
-                value={formData.customerId}
+                name="customer_id"
+                value={formData.customer_id}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Zgjidh Klientin</option>
-                {mockCustomers.map(customer => (
+                {customers.map(customer => (
                   <option key={customer.id} value={customer.id}>{customer.name}</option>
                 ))}
               </select>
@@ -159,14 +202,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Porosia e Lidhur (Opsionale)</label>
-              <input
-                type="text"
-                name="relatedOrderId"
-                value={formData.relatedOrderId}
+              <select
+                name="related_order_id"
+                value={formData.related_order_id}
                 onChange={handleChange}
-                placeholder="ORD001"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              >
+                <option value="">Zgjidh Porosinë</option>
+                {orders.map(order => (
+                  <option key={order.id} value={order.id}>{order.id} - {order.customer_name}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -188,6 +234,36 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
           </div>
         </>
       )}
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti</label>
+          <select
+            name="department"
+            value={formData.department}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          >
+            <option value="">Zgjidh Departamentin</option>
+            <option value="IT">IT</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Sales">Shitje</option>
+            <option value="Support">Mbështetje</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Data e Afatit</label>
+          <input
+            type="date"
+            name="due_date"
+            value={formData.due_date}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Shtesa</label>
@@ -241,9 +317,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose }) => {
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          disabled={loading}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {formData.type === 'task' ? 'Krijo Task' : 'Krijo Tiket'}
+          {loading ? 'Duke krijuar...' : (formData.type === 'task' ? 'Krijo Task' : 'Krijo Tiket')}
         </button>
       </div>
     </form>

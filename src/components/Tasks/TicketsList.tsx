@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, MessageCircle, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, MessageCircle } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
-import { mockTasks } from '../../data/mockData';
+import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 
 const TicketsList: React.FC = () => {
-  const [allTasks] = useState<Task[]>(mockTasks);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTicket, setSelectedTicket] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Fetch tasks from API
+  const fetchTickets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.tasks);
+      setAllTasks(response.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim në marrjen e tiketave');
+      console.error('Error fetching tickets:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
 
   // Filter only tickets (not tasks)
   const tickets = allTasks.filter(task => task.type === 'ticket');
@@ -89,7 +110,7 @@ const TicketsList: React.FC = () => {
     {
       id: 'resolved',
       title: 'Zgjidhur',
-      items: tickets.filter(ticket => ticket.status === 'done' || ticket.status === 'resolved'),
+      items: tickets.filter(ticket => ticket.status === 'done'),
       color: 'bg-green-400'
     }
   ];
@@ -143,10 +164,43 @@ const TicketsList: React.FC = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-gray-600">Duke ngarkuar tiketat...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Gabim në ngarkimin e tiketave</h3>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+              <button
+                onClick={fetchTickets}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Provo përsëri
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Tiketat</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Tiketat ({tickets.length})</h2>
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -377,7 +431,10 @@ const TicketsList: React.FC = () => {
         title="New Ticket"
         size="lg"
       >
-        <TaskForm onClose={() => setIsFormOpen(false)} />
+        <TaskForm 
+          onClose={() => setIsFormOpen(false)} 
+          onSuccess={fetchTickets}
+        />
       </Modal>
     </div>
   );

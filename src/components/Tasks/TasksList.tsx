@@ -1,18 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, Calendar } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
-import { mockTasks } from '../../data/mockData';
+import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 
 const TasksList: React.FC = () => {
-  const [allTasks] = useState<Task[]>(mockTasks);
+  const [allTasks, setAllTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
+
+  // Fetch tasks from API
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.tasks);
+      setAllTasks(response.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim në marrjen e taskave');
+      console.error('Error fetching tasks:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
 
   // Filter only tasks (not tickets)
   const tasks = allTasks.filter(task => task.type === 'task');
@@ -156,10 +177,43 @@ const TasksList: React.FC = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-gray-600">Duke ngarkuar taskat...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Gabim në ngarkimin e taskave</h3>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+              <button
+                onClick={fetchTasks}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Provo përsëri
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Taskat</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Taskat ({tasks.length})</h2>
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -410,7 +464,10 @@ const TasksList: React.FC = () => {
         title="New Task"
         size="lg"
       >
-        <TaskForm onClose={() => setIsFormOpen(false)} />
+        <TaskForm 
+          onClose={() => setIsFormOpen(false)} 
+          onSuccess={fetchTasks}
+        />
       </Modal>
     </div>
   );

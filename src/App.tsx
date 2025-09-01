@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -112,10 +114,10 @@ const AllTasks: React.FC = () => {
   );
 };
 
-function App() {
+const AppContent: React.FC = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [currentUser] = useState(mockUsers[0]); // Administrator
+  const { user } = useAuth();
 
   const getModuleTitle = (module: string) => {
     const titles = {
@@ -167,6 +169,18 @@ function App() {
     }
   };
 
+  // Convert user to the format expected by Sidebar
+  const currentUser = user ? {
+    id: user.id,
+    name: user.email.split('@')[0], // Use email prefix as name
+    email: user.email,
+    role: (user.role === 'admin' ? 'Administrator' : 'Support Agent') as 'Administrator' | 'Manager' | 'E-commerce' | 'Technician' | 'Marketing' | 'Design' | 'Support Agent' | 'Customer',
+    avatar: `https://ui-avatars.com/api/?name=${user.email.split('@')[0]}&background=3b82f6&color=fff`,
+    isActive: true,
+    credits: 0, // Default credits for new users
+    lastLogin: new Date().toISOString()
+  } : mockUsers[0];
+
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar
@@ -187,6 +201,16 @@ function App() {
         </main>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <ProtectedRoute>
+        <AppContent />
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, QrCode, Mail, Shield, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Grid3X3, List, Eye, Edit, AlertCircle, Clock, User, QrCode, Mail, Calendar } from 'lucide-react';
 import { Service, ViewMode } from '../../types';
-import { mockServices } from '../../data/mockData';
+import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
 
 const ServicesList: React.FC = () => {
-  const [services] = useState<Service[]>(mockServices);
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Fetch services from API
+  const fetchServices = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.services);
+      setServices(response.data || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gabim në marrjen e shërbimeve');
+      console.error('Error fetching services:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchServices();
+  }, []);
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -117,7 +138,7 @@ const ServicesList: React.FC = () => {
         </span>
         <div className="flex items-center gap-1">
           {service.emailNotificationsSent && (
-            <Mail className="w-3 h-3 text-green-500" title="Njoftimet me email u dërguan" />
+            <Mail className="w-3 h-3 text-green-500" />
           )}
           <button
             onClick={() => handleViewService(service)}
@@ -130,10 +151,43 @@ const ServicesList: React.FC = () => {
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <span className="ml-2 text-gray-600">Duke ngarkuar shërbimet...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Gabim në ngarkimin e shërbimeve</h3>
+              <p className="text-sm text-red-600 mt-1">{error}</p>
+              <button
+                onClick={fetchServices}
+                className="mt-2 text-sm text-red-600 hover:text-red-800 underline"
+              >
+                Provo përsëri
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Servisi</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Servisi ({services.length})</h2>
         <div className="flex items-center gap-3">
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -249,9 +303,9 @@ const ServicesList: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       {service.emailNotificationsSent ? (
-                        <Mail className="w-4 h-4 text-green-500" title="Njoftimet me email u dërguan" />
+                        <Mail className="w-4 h-4 text-green-500" />
                       ) : (
-                        <Mail className="w-4 h-4 text-gray-400" title="Asnjë njoftim me email" />
+                        <Mail className="w-4 h-4 text-gray-400" />
                       )}
                     </div>
                   </td>
@@ -370,7 +424,7 @@ const ServicesList: React.FC = () => {
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-500">nga {entry.userName}</span>
                         {entry.emailSent && (
-                          <Mail className="w-3 h-3 text-green-500" title="Email u dërgua" />
+                          <Mail className="w-3 h-3 text-green-500" />
                         )}
                       </div>
                     </div>
@@ -389,7 +443,10 @@ const ServicesList: React.FC = () => {
         title="Shërbim i Ri"
         size="lg"
       >
-        <ServiceForm onClose={() => setIsFormOpen(false)} />
+        <ServiceForm 
+          onClose={() => setIsFormOpen(false)} 
+          onSuccess={fetchServices}
+        />
       </Modal>
     </div>
   );

@@ -1,0 +1,272 @@
+import express from 'express';
+import { supabase } from '../config/supabase.js';
+import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+
+const router = express.Router();
+
+// Merr të gjithë shërbimet
+router.get('/', authenticateUser, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, category } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('services')
+      .select(`
+        *,
+        customer:customers(*),
+        service_history:service_history(*)
+      `)
+      .order('created_at', { ascending: false });
+
+    // Filtra
+    if (status) {
+      query = query.eq('status', status);
+    }
+    if (category) {
+      query = query.eq('category', category);
+    }
+
+    // Paginimi
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: data,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        pages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Gabim në marrjen e shërbimeve:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e shërbimeve'
+    });
+  }
+});
+
+// Merr një shërbim specifik
+router.get('/:id', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { data, error } = await supabase
+      .from('services')
+      .select(`
+        *,
+        customer:customers(*),
+        service_history:service_history(*)
+      `)
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        success: false,
+        error: 'Shërbimi nuk u gjet'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('Gabim në marrjen e shërbimit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e shërbimit'
+    });
+  }
+});
+
+// Krijon një shërbim të ri
+router.post('/', authenticateUser, async (req, res) => {
+  try {
+    const serviceData = {
+      ...req.body,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('services')
+      .insert(serviceData)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    res.status(201).json({
+      success: true,
+      data: data,
+      message: 'Shërbimi u krijua me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në krijimin e shërbimit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në krijimin e shërbimit'
+    });
+  }
+});
+
+// Përditëson një shërbim
+router.put('/:id', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = {
+      ...req.body,
+      updated_at: new Date().toISOString()
+    };
+
+    // Heq fushët që nuk duhet të përditësohen
+    delete updates.id;
+    delete updates.created_at;
+
+    const { data, error } = await supabase
+      .from('services')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: data,
+      message: 'Shërbimi u përditësua me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në përditësimin e shërbimit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në përditësimin e shërbimit'
+    });
+  }
+});
+
+// Fshin një shërbim (vetëm admin)
+router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      message: 'Shërbimi u fshi me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në fshirjen e shërbimit:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në fshirjen e shërbimit'
+    });
+  }
+});
+
+// Shton një hyrje në historinë e shërbimit
+router.post('/:id/history', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const historyEntry = {
+      ...req.body,
+      service_id: id,
+      user_id: req.user.id,
+      user_name: req.user.email.split('@')[0],
+      date: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('service_history')
+      .insert(historyEntry)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Përditëson datën e përditësimit të shërbimit
+    await supabase
+      .from('services')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', id);
+
+    res.status(201).json({
+      success: true,
+      data: data,
+      message: 'Hyrja në histori u shtua me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në shtimin e historisë:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në shtimin e historisë'
+    });
+  }
+});
+
+// Merr statistikat e shërbimeve
+router.get('/stats/overview', authenticateUser, async (req, res) => {
+  try {
+    const { data: services, error } = await supabase
+      .from('services')
+      .select('status, category, created_at');
+
+    if (error) {
+      throw error;
+    }
+
+    // Llogarit statistikat
+    const stats = {
+      total: services.length,
+      received: services.filter(s => s.status === 'received').length,
+      inProgress: services.filter(s => s.status === 'in-progress').length,
+      waitingParts: services.filter(s => s.status === 'waiting-parts').length,
+      completed: services.filter(s => s.status === 'completed').length,
+      delivered: services.filter(s => s.status === 'delivered').length
+    };
+
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    console.error('Gabim në marrjen e statistikave:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e statistikave'
+    });
+  }
+});
+
+export default router;
+
