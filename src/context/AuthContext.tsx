@@ -58,7 +58,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Fallback timeout to ensure loading state ends
+    const timeout = setTimeout(() => {
+      setLoading(false)
+    }, 5000)
+
+    return () => {
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
@@ -72,6 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) {
         console.error('Error fetching user profile:', error)
         setError('Failed to fetch user profile')
+        setUser(null)
         return
       }
 
@@ -79,6 +88,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (err) {
       console.error('Error fetching user profile:', err)
       setError('Failed to fetch user profile')
+      setUser(null)
     }
   }
 
