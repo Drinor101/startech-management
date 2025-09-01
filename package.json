@@ -2,6 +2,7 @@
   "name": "startech-monorepo",
   "version": "1.0.0",
   "description": "Startech Frontend and Backend",
+  "type": "module",
   "scripts": {
     "start": "cd backend && npm start",
     "build": "npm run build:frontend",
