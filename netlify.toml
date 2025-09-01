@@ -5,3 +5,7 @@
 
 [build.environment]
   NODE_VERSION = "18"
+
+# Create dist directory if it doesn't exist
+[build.processing]
+  skip_processing = false
