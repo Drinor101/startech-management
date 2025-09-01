@@ -5,21 +5,22 @@ import { apiCall, apiConfig } from '../../config/api';
 interface TaskFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  task?: any; // For editing existing task
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
+const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   const [formData, setFormData] = useState({
-    type: 'task' as 'task' | 'ticket',
-    title: '',
-    description: '',
-    priority: 'medium',
-    assigned_to: '',
-    category: '',
-    customer_id: '',
-    related_order_id: '',
-    source: '',
-    department: '',
-    due_date: '' // Temporarily disabled until database is updated
+    type: task?.type || 'task' as 'task' | 'ticket',
+    title: task?.title || '',
+    description: task?.description || '',
+    priority: task?.priority || 'medium',
+    assigned_to: task?.assigned_to || '',
+    category: task?.category || '',
+    customer_id: task?.customer_id || '',
+    related_order_id: task?.related_order_id || '',
+    source: task?.source || '',
+    department: task?.department || '',
+    due_date: task?.due_date || '' // Temporarily disabled until database is updated
   });
 
   const [customers, setCustomers] = useState<any[]>([]);
@@ -54,15 +55,24 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
       // Remove due_date from formData until database is updated
       const { due_date, ...taskData } = formData;
       
-      await apiCall(apiConfig.endpoints.tasks, {
-        method: 'POST',
-        body: JSON.stringify(taskData)
-      });
+      if (task) {
+        // Update existing task
+        await apiCall(`${apiConfig.endpoints.tasks}/${task.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(taskData)
+        });
+      } else {
+        // Create new task
+        await apiCall(apiConfig.endpoints.tasks, {
+          method: 'POST',
+          body: JSON.stringify(taskData)
+        });
+      }
       
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gabim në krijimin e taskut');
+      setError(err instanceof Error ? err.message : task ? 'Gabim në përditësimin e taskut' : 'Gabim në krijimin e taskut');
     } finally {
       setLoading(false);
     }
@@ -325,7 +335,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
           disabled={loading}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Duke krijuar...' : (formData.type === 'task' ? 'Krijo Task' : 'Krijo Tiket')}
+          {loading ? 'Duke ruajtur...' : (task ? (formData.type === 'task' ? 'Përditëso Task' : 'Përditëso Tiket') : (formData.type === 'task' ? 'Krijo Task' : 'Krijo Tiket'))}
         </button>
       </div>
     </form>

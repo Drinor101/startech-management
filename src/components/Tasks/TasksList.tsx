@@ -14,6 +14,7 @@ const TasksList: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   // Fetch tasks from API
@@ -103,6 +104,27 @@ const TasksList: React.FC = () => {
   const handleViewTask = (task: Task) => {
     setSelectedTask(task);
     setIsModalOpen(true);
+  };
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+  };
+
+  const handleStatusChange = async (taskId: string, newStatus: string) => {
+    try {
+      await apiCall(`${apiConfig.endpoints.tasks}/${taskId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      // Refresh the tasks list
+      fetchTasks();
+    } catch (err) {
+      console.error('Error updating task status:', err);
+      alert('Gabim në përditësimin e statusit');
+    }
   };
 
   // Kanban columns
@@ -348,7 +370,10 @@ const TasksList: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900">
+                        <button 
+                          onClick={() => handleEditTask(task)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
                       </div>
@@ -364,6 +389,7 @@ const TasksList: React.FC = () => {
           columns={kanbanColumns}
           renderCard={renderTaskCard}
           onAddItem={(columnId) => console.log('Add item to', columnId)}
+          onStatusChange={handleStatusChange}
         />
       )}
 
@@ -460,13 +486,27 @@ const TasksList: React.FC = () => {
       {/* Task Form Modal */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="New Task"
+        onClose={() => {
+          setIsFormOpen(false);
+          setIsEditMode(false);
+          setSelectedTask(null);
+        }}
+        title={isEditMode ? "Edit Task" : "New Task"}
         size="lg"
       >
         <TaskForm 
-          onClose={() => setIsFormOpen(false)} 
-          onSuccess={fetchTasks}
+          task={isEditMode ? selectedTask : undefined}
+          onClose={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedTask(null);
+          }}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedTask(null);
+            fetchTasks();
+          }}
         />
       </Modal>
     </div>

@@ -14,6 +14,7 @@ const ServicesList: React.FC = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -71,6 +72,27 @@ const ServicesList: React.FC = () => {
   const handleViewService = (service: Service) => {
     setSelectedService(service);
     setIsModalOpen(true);
+  };
+
+  const handleEditService = (service: Service) => {
+    setSelectedService(service);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+  };
+
+  const handleStatusChange = async (serviceId: string, newStatus: string) => {
+    try {
+      await apiCall(`${apiConfig.endpoints.services}/${serviceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      // Refresh the services list
+      fetchServices();
+    } catch (err) {
+      console.error('Error updating service status:', err);
+      alert('Gabim në përditësimin e statusit');
+    }
   };
 
   // Kanban columns
@@ -317,7 +339,10 @@ const ServicesList: React.FC = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-900">
+                      <button 
+                        onClick={() => handleEditService(service)}
+                        className="text-gray-600 hover:text-gray-900"
+                      >
                         <Edit className="w-4 h-4" />
                       </button>
                     </div>
@@ -333,6 +358,7 @@ const ServicesList: React.FC = () => {
           columns={kanbanColumns}
           renderCard={renderServiceCard}
           onAddItem={(columnId) => console.log('Add item to', columnId)}
+          onStatusChange={handleStatusChange}
         />
       )}
 
@@ -439,13 +465,27 @@ const ServicesList: React.FC = () => {
       {/* Service Form Modal */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Shërbim i Ri"
+        onClose={() => {
+          setIsFormOpen(false);
+          setIsEditMode(false);
+          setSelectedService(null);
+        }}
+        title={isEditMode ? "Edit Service" : "Shërbim i Ri"}
         size="lg"
       >
         <ServiceForm 
-          onClose={() => setIsFormOpen(false)} 
-          onSuccess={fetchServices}
+          service={isEditMode ? selectedService : undefined}
+          onClose={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedService(null);
+          }}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedService(null);
+            fetchServices();
+          }}
         />
       </Modal>
     </div>

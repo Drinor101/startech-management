@@ -5,18 +5,19 @@ import { apiCall, apiConfig } from '../../config/api';
 interface ServiceFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  service?: any; // For editing existing service
 }
 
-const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess }) => {
+const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }) => {
   const [formData, setFormData] = useState({
-    customer_id: '',
-    order_id: '',
-    problem_description: '',
-    category: '',
-    assigned_to: '',
-    reception_point: '',
-    under_warranty: false,
-    email_notifications_sent: true
+    customer_id: service?.customer_id || '',
+    order_id: service?.order_id || '',
+    problem_description: service?.problem_description || '',
+    category: service?.category || '',
+    assigned_to: service?.assigned_to || '',
+    reception_point: service?.reception_point || '',
+    under_warranty: service?.under_warranty || false,
+    email_notifications_sent: service?.email_notifications_sent || true
   });
   const [customers, setCustomers] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
@@ -46,15 +47,24 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess }) => {
     setError(null);
     
     try {
-      await apiCall(apiConfig.endpoints.services, {
-        method: 'POST',
-        body: JSON.stringify(formData)
-      });
+      if (service) {
+        // Update existing service
+        await apiCall(`${apiConfig.endpoints.services}/${service.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(formData)
+        });
+      } else {
+        // Create new service
+        await apiCall(apiConfig.endpoints.services, {
+          method: 'POST',
+          body: JSON.stringify(formData)
+        });
+      }
       
       onSuccess?.();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gabim në krijimin e shërbimit');
+      setError(err instanceof Error ? err.message : service ? 'Gabim në përditësimin e shërbimit' : 'Gabim në krijimin e shërbimit');
     } finally {
       setLoading(false);
     }
@@ -221,7 +231,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess }) => {
           disabled={loading}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'Duke krijuar...' : 'Krijo Shërbim'}
+          {loading ? 'Duke ruajtur...' : (service ? 'Përditëso Shërbim' : 'Krijo Shërbim')}
         </button>
       </div>
     </form>
