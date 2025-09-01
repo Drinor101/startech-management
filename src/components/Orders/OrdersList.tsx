@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Edit, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Order } from '../../types';
-import { apiCall } from '../../config/api';
+import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
 
@@ -19,7 +19,8 @@ const OrdersList: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiCall('/api/orders');
+        const response = await apiCall(apiConfig.endpoints.orders);
+        const data = response.data || [];
         setOrders(data);
       } catch (err) {
         console.error('Error fetching orders:', err);

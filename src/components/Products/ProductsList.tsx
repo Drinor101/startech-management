@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter } from 'lucide-react';
 import { Product } from '../../types';
-import { apiCall } from '../../config/api';
+import { apiCall, apiConfig } from '../../config/api';
 
 const ProductsList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -17,7 +17,8 @@ const ProductsList: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await apiCall('/api/products');
+        const response = await apiCall(apiConfig.endpoints.products);
+        const data = response.data || [];
         setProducts(data);
       } catch (err) {
         console.error('Error fetching products:', err);

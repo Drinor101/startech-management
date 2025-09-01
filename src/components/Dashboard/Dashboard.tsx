@@ -122,6 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     { label: 'Porosi e re', icon: Package, color: 'text-purple-600', action: () => onNavigate?.('orders') },
     { label: 'Produkt i ri', icon: Package, color: 'text-orange-600', action: () => onNavigate?.('products') },
     { label: 'Përdorues i ri', icon: Users, color: 'text-orange-600', action: () => onNavigate?.('users') },
+    { label: 'Klient i ri', icon: Users, color: 'text-blue-600', action: () => onNavigate?.('customers') },
   ];
 
   const handleNewItem = (action: () => void) => {
