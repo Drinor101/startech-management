@@ -5,7 +5,3 @@
 
 [build.environment]
   NODE_VERSION = "18"
-
-# Ignore backend changes
-[build.ignore]
-  ignore = ["backend/**"]
