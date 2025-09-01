@@ -26,23 +26,28 @@ app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Import routes
-import userRoutes from './routes/users.js';
-import productRoutes from './routes/products.js';
-import orderRoutes from './routes/orders.js';
-import serviceRoutes from './routes/services.js';
-import taskRoutes from './routes/tasks.js';
-import customerRoutes from './routes/customers.js';
-import reportRoutes from './routes/reports.js';
+// Import routes after dotenv.config()
+const setupRoutes = async () => {
+  const userRoutes = (await import('./routes/users.js')).default;
+  const productRoutes = (await import('./routes/products.js')).default;
+  const orderRoutes = (await import('./routes/orders.js')).default;
+  const serviceRoutes = (await import('./routes/services.js')).default;
+  const taskRoutes = (await import('./routes/tasks.js')).default;
+  const customerRoutes = (await import('./routes/customers.js')).default;
+  const reportRoutes = (await import('./routes/reports.js')).default;
 
-// Routes
-app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/services', serviceRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/reports', reportRoutes);
+  // Routes
+  app.use('/api/users', userRoutes);
+  app.use('/api/products', productRoutes);
+  app.use('/api/orders', orderRoutes);
+  app.use('/api/services', serviceRoutes);
+  app.use('/api/tasks', taskRoutes);
+  app.use('/api/customers', customerRoutes);
+  app.use('/api/reports', reportRoutes);
+};
+
+// Setup routes
+await setupRoutes();
 
 // Health check
 app.get('/api/health', (req, res) => {

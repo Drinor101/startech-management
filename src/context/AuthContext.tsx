@@ -25,104 +25,131 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Start with false - show login immediately
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
+    // Check if user is already logged in
+    const checkExistingSession = async () => {
       try {
+        console.log('Checking existing session...')
         const { data: { session } } = await supabase.auth.getSession()
+        console.log('Existing session:', session?.user?.id)
+        
         if (session?.user) {
+          console.log('User already logged in, fetching profile...')
+          setLoading(true) // Show loading while fetching profile
           await fetchUserProfile(session.user.id)
+        } else {
+          console.log('No existing session - show login form')
+          setLoading(false) // No loading, show login form
         }
       } catch (err) {
-        console.error('Error getting initial session:', err)
-        setError('Failed to get initial session')
-      } finally {
-        setLoading(false)
+        console.error('Error checking session:', err)
+        setError('Failed to check session')
+        setLoading(false) // Show login form on error
       }
     }
 
-    getInitialSession()
+    checkExistingSession()
 
-    // Listen for auth changes
+    // Listen for auth changes (login/logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
+      async (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id)
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in, fetching profile...')
+          setLoading(true) // Show loading while fetching profile
           await fetchUserProfile(session.user.id)
-        } else {
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out')
           setUser(null)
+          setLoading(false) // Show login form
         }
-        setLoading(false)
       }
     )
 
-    // Fallback timeout to ensure loading state ends
-    const timeout = setTimeout(() => {
-      setLoading(false)
-    }, 5000)
-
     return () => {
       subscription.unsubscribe()
-      clearTimeout(timeout)
     }
   }, [])
 
   const fetchUserProfile = async (userId: string) => {
+    console.log('fetchUserProfile called with userId:', userId)
+    
     try {
+      // Get user from database
+      console.log('Fetching user from database...')
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single()
 
-      if (error) {
-        console.error('Error fetching user profile:', error)
-        // Fallback: create user profile if it doesn't exist
+      console.log('Database query result:', { data, error })
+
+      if (error || !data) {
+        console.error('Error fetching user profile or no data:', error)
+        // Create fallback user from auth
         const { data: authUser } = await supabase.auth.getUser()
         if (authUser.user) {
           const fallbackUser = {
             id: authUser.user.id,
             email: authUser.user.email || '',
             role: 'admin', // Default role
-            name: authUser.user.email?.split('@')[0] || 'User',
+            name: authUser.user.email?.split('@')[0] || 'Admin User',
+            department: 'IT',
+            phone: '',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }
+          console.log('Setting fallback user:', fallbackUser)
           setUser(fallbackUser)
-          return
         }
-        setError('Failed to fetch user profile')
-        setUser(null)
-        return
+      } else {
+        // Use database data
+        const userData = {
+          id: data.id,
+          email: data.email || '',
+          role: data.role || 'admin',
+          name: data.name || data.email?.split('@')[0] || 'Admin User',
+          department: data.department || 'IT',
+          phone: data.phone || '',
+          created_at: data.created_at || new Date().toISOString(),
+          updated_at: data.updated_at || new Date().toISOString()
+        }
+        console.log('Setting user from database:', userData)
+        setUser(userData)
       }
-
-      setUser(data)
     } catch (err) {
       console.error('Error fetching user profile:', err)
-      // Fallback: create user profile if it doesn't exist
+      // Create fallback user from auth
       const { data: authUser } = await supabase.auth.getUser()
       if (authUser.user) {
         const fallbackUser = {
           id: authUser.user.id,
           email: authUser.user.email || '',
-          role: 'admin', // Default role
-          name: authUser.user.email?.split('@')[0] || 'User',
+          role: 'admin',
+          name: authUser.user.email?.split('@')[0] || 'Admin User',
+          department: 'IT',
+          phone: '',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
+        console.log('Setting fallback user after error:', fallbackUser)
         setUser(fallbackUser)
-        return
       }
-      setError('Failed to fetch user profile')
-      setUser(null)
     }
+    
+    console.log('fetchUserProfile completed')
+    setLoading(false) // Always set loading to false when done
   }
 
   const login = async (credentials: LoginCredentials) => {
     try {
-      setLoading(true)
+      console.log('Login started with email:', credentials.email)
+      setLoading(true) // Show loading spinner
       setError(null)
 
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -130,18 +157,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password: credentials.password,
       })
 
+      console.log('Login response:', { data: data?.user?.id, error })
+
       if (error) {
+        console.error('Login error:', error)
+        setLoading(false) // Hide loading on error
         throw error
       }
 
       if (data.user) {
+        console.log('Login successful, fetching user profile...')
+        // fetchUserProfile will set loading to false when done
         await fetchUserProfile(data.user.id)
       }
     } catch (err: any) {
+      console.error('Login failed:', err)
       setError(err.message || 'Login failed')
+      setLoading(false) // Hide loading on error
       throw err
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -183,7 +216,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      setLoading(true)
       setError(null)
 
       const { error } = await supabase.auth.signOut()
@@ -191,12 +223,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error
       }
 
-      setUser(null)
+      // User will be set to null by onAuthStateChange
+      console.log('Logout successful')
     } catch (err: any) {
       setError(err.message || 'Logout failed')
       throw err
-    } finally {
-      setLoading(false)
     }
   }
 

@@ -8,7 +8,9 @@
     "build": "npm run build:frontend",
     "build:frontend": "npm install && npm run build:dist",
     "build:dist": "vite build",
-    "dev": "cd backend && npm run dev"
+    "dev": "cd backend && npm run dev",
+    "dev:frontend": "vite",
+    "dev:backend": "cd backend && npm run dev"
   },
   "engines": {
     "node": ">=18.0.0"

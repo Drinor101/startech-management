@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
+import LoginForm from './components/Auth/LoginForm';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -117,7 +118,43 @@ const AllTasks: React.FC = () => {
 const AppContent: React.FC = () => {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // 1) Show login form immediately if there is no user
+  if (!user) {
+    return <LoginForm />;
+  }
+
+  // 2) If there is a user but we're still initializing, show spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="flex items-center space-x-2">
+          <svg
+            className="animate-spin h-8 w-8 text-blue-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span className="text-lg text-gray-600">Po ngarkohet...</span>
+        </div>
+      </div>
+    );
+  }
 
   const getModuleTitle = (module: string) => {
     const titles = {
@@ -207,9 +244,7 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <ProtectedRoute>
-        <AppContent />
-      </ProtectedRoute>
+      <AppContent />
     </AuthProvider>
   );
 }
