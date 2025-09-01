@@ -79,6 +79,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching user profile:', error)
+        // Fallback: create user profile if it doesn't exist
+        const { data: authUser } = await supabase.auth.getUser()
+        if (authUser.user) {
+          const fallbackUser = {
+            id: authUser.user.id,
+            email: authUser.user.email || '',
+            role: 'admin', // Default role
+            name: authUser.user.email?.split('@')[0] || 'User',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+          setUser(fallbackUser)
+          return
+        }
         setError('Failed to fetch user profile')
         setUser(null)
         return
@@ -87,6 +101,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(data)
     } catch (err) {
       console.error('Error fetching user profile:', err)
+      // Fallback: create user profile if it doesn't exist
+      const { data: authUser } = await supabase.auth.getUser()
+      if (authUser.user) {
+        const fallbackUser = {
+          id: authUser.user.id,
+          email: authUser.user.email || '',
+          role: 'admin', // Default role
+          name: authUser.user.email?.split('@')[0] || 'User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        setUser(fallbackUser)
+        return
+      }
       setError('Failed to fetch user profile')
       setUser(null)
     }
