@@ -16,6 +16,7 @@ app.use(cors({
     'http://localhost:5173', 
     'http://localhost:5174', 
     'http://localhost:5175',
+    'https://startechmanagement.netlify.app',
     'https://startechapp.netlify.app',
     'https://startechapp.vercel.app'
   ],
