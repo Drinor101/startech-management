@@ -28,6 +28,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
+  const [newCustomerData, setNewCustomerData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
 
   // Fetch customers and orders
   useEffect(() => {
@@ -93,6 +100,49 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
 
   const removeFile = (index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleNewCustomerChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewCustomerData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateNewCustomer = async () => {
+    if (!newCustomerData.name || !newCustomerData.email) {
+      alert('Emri dhe emaili janë të detyrueshëm');
+      return;
+    }
+
+    try {
+      const response = await apiCall(apiConfig.endpoints.customers, {
+        method: 'POST',
+        body: JSON.stringify(newCustomerData)
+      });
+
+      if (response.success) {
+        // Shto klientin e ri në listën e klientëve
+        setCustomers(prev => [...prev, response.data]);
+        // Zgjidh klientin e ri automatikisht
+        setFormData(prev => ({
+          ...prev,
+          customer_id: response.data.id
+        }));
+        // Fshij formën e klientit të ri
+        setNewCustomerData({
+          name: '',
+          email: '',
+          phone: '',
+          address: ''
+        });
+        setShowNewCustomerForm(false);
+      }
+    } catch (err) {
+      console.error('Error creating customer:', err);
+      alert('Gabim në krijimin e klientit');
+    }
   };
 
   return (
@@ -200,17 +250,74 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Klienti (Opsionale)</label>
-              <select
-                name="customer_id"
-                value={formData.customer_id}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Zgjidh Klientin</option>
-                {customers.map(customer => (
-                  <option key={customer.id} value={customer.id}>{customer.name}</option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <select
+                  name="customer_id"
+                  value={formData.customer_id}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="">Zgjidh Klientin</option>
+                  {customers.map(customer => (
+                    <option key={customer.id} value={customer.id}>{customer.name}</option>
+                  ))}
+                </select>
+                
+                <button
+                  type="button"
+                  onClick={() => setShowNewCustomerForm(!showNewCustomerForm)}
+                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                >
+                  {showNewCustomerForm ? 'Anulo' : '+ Shto Klient të Ri'}
+                </button>
+              </div>
+              
+              {showNewCustomerForm && (
+                <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Klient i Ri</h4>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      name="name"
+                      placeholder="Emri i plotë"
+                      value={newCustomerData.name}
+                      onChange={handleNewCustomerChange}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Email"
+                      value={newCustomerData.email}
+                      onChange={handleNewCustomerChange}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="tel"
+                      name="phone"
+                      placeholder="Telefoni (opsionale)"
+                      value={newCustomerData.phone}
+                      onChange={handleNewCustomerChange}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <input
+                      type="text"
+                      name="address"
+                      placeholder="Adresa (opsionale)"
+                      value={newCustomerData.address}
+                      onChange={handleNewCustomerChange}
+                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCreateNewCustomer}
+                      className="w-full px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                    >
+                      Krijo Klient
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
