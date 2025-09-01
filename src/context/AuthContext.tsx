@@ -65,26 +65,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       console.log('Logging in with username:', credentials.username);
       
-      // Get user from database by name (username)
+      // Use the password verification function
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('name', credentials.username)
-        .single();
+        .rpc('verify_user_password', {
+          username: credentials.username,
+          user_password: credentials.password
+        });
 
-      console.log('Database query result:', { data, error });
+      console.log('Password verification result:', { data, error });
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         throw new Error('Invalid username or password');
       }
 
-      // For now, we'll skip password verification
-      // In a real app, you'd hash the password and compare
-      console.log('Login successful, user found:', data);
+      const userData = data[0];
+      console.log('Login successful, user found:', userData);
       
       // Store user in localStorage
-      localStorage.setItem('user', JSON.stringify(data));
-      setUser(data);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
       
     } catch (err: any) {
       console.error('Login error:', err);

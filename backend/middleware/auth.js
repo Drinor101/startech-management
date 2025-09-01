@@ -6,7 +6,6 @@ const authenticateUser = async (req, res, next) => {
     const userId = req.headers['x-user-id'];
     
     console.log('Auth middleware - User ID:', userId);
-    console.log('Auth middleware - Headers:', req.headers);
     
     if (!userId) {
       return res.status(401).json({ 
