@@ -1,13 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter } from 'lucide-react';
 import { Product } from '../../types';
-import { mockProducts } from '../../data/mockData';
+import { apiCall } from '../../config/api';
 
 const ProductsList: React.FC = () => {
-  const [products] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [lastSync] = useState('2024-01-15T12:00:00Z');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await apiCall('/api/products');
+        setProducts(data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError('Gabim në ngarkimin e produkteve');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   // Get unique categories from products
   const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
@@ -46,6 +67,32 @@ const ProductsList: React.FC = () => {
         return <AlertCircle className="w-4 h-4 text-gray-400" />;
     }
   };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Po ngarkohen produktet...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">

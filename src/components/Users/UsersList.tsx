@@ -1,15 +1,36 @@
-import React, { useState } from 'react';
-import { Plus, Edit, Shield, Mail, Phone, Euro, Clock, Activity } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Shield, Mail, Phone, Euro, Clock, Activity, AlertCircle } from 'lucide-react';
 import { User } from '../../types';
-import { mockUsers, mockUserActions } from '../../data/mockData';
+import { apiCall } from '../../config/api';
 import Modal from '../Common/Modal';
 
 const UsersList: React.FC = () => {
-  const [users] = useState<User[]>(mockUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [showUserActions, setShowUserActions] = useState(false);
+
+  // Fetch users from API
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await apiCall('/api/users');
+        setUsers(data);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+        setError('Gabim në ngarkimin e përdoruesve');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const getRoleColor = (role: string) => {
     const colors = {
@@ -37,8 +58,35 @@ const UsersList: React.FC = () => {
   };
 
   const getUserActions = (userId: string) => {
-    return mockUserActions.filter(action => action.userId === userId);
+    // For now, return empty array since we don't have user actions API
+    return [];
   };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Po ngarkohen përdoruesit...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6">
