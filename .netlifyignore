@@ -1,0 +1,4 @@
+# Ignore backend files for Netlify
+backend/
+railway.json
+.railwayignore

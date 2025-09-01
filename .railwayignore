@@ -1,0 +1,14 @@
+# Ignore frontend files for Railway
+src/
+public/
+index.html
+vite.config.ts
+tailwind.config.js
+postcss.config.js
+tsconfig*.json
+eslint.config.js
+package.json
+package-lock.json
+node_modules/
+dist/
+netlify.toml
