@@ -1,6 +1,5 @@
 // Konfigurimi i API-së për backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://startech-management-production.up.railway.app';
-
+const API_BASE_URL = 'https://startech-management-production.up.railway.app';
 export const apiConfig = {
   baseURL: API_BASE_URL,
   endpoints: {

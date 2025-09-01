@@ -138,16 +138,16 @@ const ServicesList: React.FC = () => {
         </span>
       </div>
       
-      <div>
-        <p className="text-sm font-medium text-gray-900">{service.customer.name}</p>
-        <p className="text-sm text-gray-600">{service.problemDescription}</p>
-      </div>
+             <div>
+         <p className="text-sm font-medium text-gray-900">{service.customer.name}</p>
+         <p className="text-sm text-gray-600">{service.problem_description || 'N/A'}</p>
+       </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
-        <div className="flex items-center gap-1">
-          <User className="w-3 h-3" />
-          <span>{service.assignedTo}</span>
-        </div>
+                 <div className="flex items-center gap-1">
+           <User className="w-3 h-3" />
+           <span>{service.assigned_to || 'N/A'}</span>
+         </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
           <span>{new Date(service.createdAt).toLocaleDateString()}</span>
@@ -290,11 +290,11 @@ const ServicesList: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="max-w-xs">
-                      <p className="text-sm text-gray-900 truncate">{service.problemDescription}</p>
-                    </div>
-                  </td>
+                                     <td className="px-6 py-4">
+                     <div className="max-w-xs">
+                       <p className="text-sm text-gray-900 truncate">{service.problem_description || 'N/A'}</p>
+                     </div>
+                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span 
@@ -311,12 +311,12 @@ const ServicesList: React.FC = () => {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{service.assignedTo}</span>
-                    </div>
-                  </td>
+                                     <td className="px-6 py-4 whitespace-nowrap">
+                     <div className="flex items-center gap-2">
+                       <User className="w-4 h-4 text-gray-400" />
+                       <span className="text-sm text-gray-900">{service.assigned_to || 'N/A'}</span>
+                     </div>
+                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {service.underWarranty ? 'Po' : 'Jo'}
@@ -389,20 +389,26 @@ const ServicesList: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi i Problemit</label>
-              <p className="text-sm text-gray-900">{selectedService.problemDescription}</p>
-            </div>
+                         <div>
+               <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi i Problemit</label>
+               <p className="text-sm text-gray-900">
+                 {selectedService.problem_description || 'N/A'}
+               </p>
+             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
-                <p className="text-sm text-gray-900">{selectedService.category}</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Përshkruar nga</label>
-                <p className="text-sm text-gray-900">{selectedService.assignedTo}</p>
-              </div>
+                             <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
+                 <p className="text-sm text-gray-900">
+                   {selectedService.category || 'N/A'}
+                 </p>
+               </div>
+                             <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">Përshkruar nga</label>
+                 <p className="text-sm text-gray-900">
+                   {selectedService.assigned_to || 'N/A'}
+                 </p>
+               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -430,13 +436,15 @@ const ServicesList: React.FC = () => {
                   {selectedService.underWarranty ? 'Garanci' : 'Pa Garanci'}
                 </span>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Punkti i Pranueshmërisë</label>
-                <p className="text-sm text-gray-900">{selectedService.receptionPoint}</p>
-              </div>
+                             <div>
+                 <label className="block text-sm font-medium text-gray-700 mb-1">Punkti i Pranueshmërisë</label>
+                 <p className="text-sm text-gray-900">
+                   {selectedService.reception_point || 'N/A'}
+                 </p>
+               </div>
             </div>
 
-            {selectedService.serviceHistory.length > 0 && (
+            {selectedService.serviceHistory && selectedService.serviceHistory.length > 0 && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Historiku i Shërbimit</label>
                 <div className="space-y-3 max-h-48 overflow-y-auto">
