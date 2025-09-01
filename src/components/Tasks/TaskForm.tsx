@@ -19,7 +19,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
     related_order_id: '',
     source: '',
     department: '',
-    due_date: ''
+    due_date: '' // Temporarily disabled until database is updated
   });
 
   const [customers, setCustomers] = useState<any[]>([]);
@@ -51,9 +51,12 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
     setError(null);
     
     try {
+      // Remove due_date from formData until database is updated
+      const { due_date, ...taskData } = formData;
+      
       await apiCall(apiConfig.endpoints.tasks, {
         method: 'POST',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(taskData)
       });
       
       onSuccess?.();
@@ -253,6 +256,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
           </select>
         </div>
 
+        {/* Temporarily disabled until database is updated
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Data e Afatit</label>
           <input
@@ -263,6 +267,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
+        */}
       </div>
 
       <div>

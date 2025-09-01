@@ -24,7 +24,11 @@ ChartJS.register(
   Filler
 );
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  onNavigate?: (module: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [stats, setStats] = useState([
     { label: 'Servisi Aktivë', value: '0', icon: Settings, color: 'bg-blue-500', change: '+0%' },
@@ -112,12 +116,12 @@ const Dashboard: React.FC = () => {
   };
 
   const newItemOptions = [
-    { label: 'Servis i ri', icon: Settings, color: 'text-blue-600', action: () => console.log('New Service') },
-    { label: 'Task i ri', icon: CheckSquare, color: 'text-green-600', action: () => console.log('New Task') },
-    { label: 'Tiket i ri', icon: CheckSquare, color: 'text-purple-600', action: () => console.log('New Ticket') },
-    { label: 'Porosi e re', icon: Package, color: 'text-purple-600', action: () => console.log('New Order') },
-    { label: 'Produkt i ri', icon: Package, color: 'text-orange-600', action: () => console.log('New Product') },
-    { label: 'Përdorues i ri', icon: Users, color: 'text-orange-600', action: () => console.log('New User') },
+    { label: 'Servis i ri', icon: Settings, color: 'text-blue-600', action: () => onNavigate?.('services') },
+    { label: 'Task i ri', icon: CheckSquare, color: 'text-green-600', action: () => onNavigate?.('tasks') },
+    { label: 'Tiket i ri', icon: CheckSquare, color: 'text-purple-600', action: () => onNavigate?.('tickets') },
+    { label: 'Porosi e re', icon: Package, color: 'text-purple-600', action: () => onNavigate?.('orders') },
+    { label: 'Produkt i ri', icon: Package, color: 'text-orange-600', action: () => onNavigate?.('products') },
+    { label: 'Përdorues i ri', icon: Users, color: 'text-orange-600', action: () => onNavigate?.('users') },
   ];
 
   const handleNewItem = (action: () => void) => {

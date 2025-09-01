@@ -11,6 +11,7 @@ import OrdersList from './components/Orders/OrdersList';
 import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
 import UsersList from './components/Users/UsersList';
+import CustomersList from './components/Customers/CustomersList';
 import { mockUsers } from './data/mockData';
 
 // New component for "Të gjitha" (All Tasks)
@@ -178,6 +179,7 @@ const AppContent: React.FC = () => {
       products: 'Produktet',
       reports: 'Raportet',
       users: 'Përdoruesit',
+      customers: 'Klientët',
       settings: 'Cilësimet'
     };
     return titles[module as keyof typeof titles] || 'Startech';
@@ -186,7 +188,7 @@ const AppContent: React.FC = () => {
   const renderActiveModule = () => {
     switch (activeModule) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard onNavigate={setActiveModule} />;
       case 'all-tasks':
         return <AllTasks />;
       case 'services':
@@ -203,6 +205,8 @@ const AppContent: React.FC = () => {
         return <Reports />;
       case 'users':
         return <UsersList />;
+      case 'customers':
+        return <CustomersList />;
       case 'settings':
         return (
           <div className="p-6">
