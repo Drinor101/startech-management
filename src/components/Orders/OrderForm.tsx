@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { mockCustomers, mockProducts } from '../../data/mockData';
+import { mockCustomers } from '../../data/mockData';
+import { apiCall } from '../../config/api';
+import { Product } from '../../types';
 
 interface OrderFormProps {
   onClose: () => void;
@@ -12,6 +14,8 @@ interface OrderItem {
 }
 
 const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     customerId: '',
     items: [{ productId: '', quantity: 1 }] as OrderItem[],
@@ -22,6 +26,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
     notes: '',
     emailNotifications: true
   });
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const data = await apiCall('/api/products');
+        setProducts(data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,7 +83,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
 
   const calculateTotal = () => {
     return formData.items.reduce((total, item) => {
-      const product = mockProducts.find(p => p.id === item.productId);
+      const product = products.find(p => p.id === item.productId);
       return total + (product ? product.finalPrice * item.quantity : 0);
     }, 0);
   };
@@ -109,11 +130,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
                   required
                 >
                   <option value="">Zgjidh Produktin</option>
-                  {mockProducts.map(product => (
-                    <option key={product.id} value={product.id}>
-                      {product.title} - ${product.finalPrice}
-                    </option>
-                  ))}
+                  {loading ? (
+                    <option disabled>Duke ngarkuar...</option>
+                  ) : (
+                    products.map(product => (
+                      <option key={product.id} value={product.id}>
+                        {product.title} - ${product.finalPrice}
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
               <div className="col-span-3">
