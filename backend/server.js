@@ -58,6 +58,25 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Test database connection
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const { supabase } = await import('./config/supabase.js');
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, name, email, role')
+      .limit(5);
+    
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    
+    res.json({ users: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);

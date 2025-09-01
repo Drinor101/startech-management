@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, Users, Package, Settings, CheckSquare, Plus, ChevronDown } from 'lucide-react';
 import {
   Chart as ChartJS,
@@ -9,6 +9,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 
@@ -19,25 +20,96 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const Dashboard: React.FC = () => {
   const [showNewMenu, setShowNewMenu] = useState(false);
+  const [stats, setStats] = useState([
+    { label: 'Servisi Aktivë', value: '0', icon: Settings, color: 'bg-blue-500', change: '+0%' },
+    { label: 'Taskat e Hapura', value: '0', icon: CheckSquare, color: 'bg-green-500', change: '+0%' },
+    { label: 'Porositë Sot', value: '0', icon: Package, color: 'bg-purple-500', change: '+0%' },
+    { label: 'Klientët', value: '0', icon: Users, color: 'bg-orange-500', change: '+0%' },
+  ]);
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const stats = [
-    { label: 'Servisi Aktivë', value: '23', icon: Settings, color: 'bg-blue-500', change: '+12%' },
-    { label: 'Taskat e Hapura', value: '15', icon: CheckSquare, color: 'bg-green-500', change: '+8%' },
-    { label: 'Porositë Sot', value: '8', icon: Package, color: 'bg-purple-500', change: '+15%' },
-    { label: 'Klientët', value: '156', icon: Users, color: 'bg-orange-500', change: '+5%' },
-  ];
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
-  const recentActivities = [
-    { id: 1, action: 'Kërkesë e re për servis u krijua', user: 'Mike Tech', time: '2 min më parë' },
-    { id: 2, action: 'Porosia ORD001 u shënuar si e dërguar', user: 'Sarah Manager', time: '15 min më parë' },
-    { id: 3, action: 'Task TASK001 u përfundua', user: 'Lisa Support', time: '1 orë më parë' },
-    { id: 4, action: 'Klient i ri u regjistrua', user: 'Sistemi', time: '2 orë më parë' },
-  ];
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://startech-management-production.up.railway.app';
+      
+      // Fetch all data in parallel
+      const [servicesRes, tasksRes, ordersRes, customersRes, reportsRes] = await Promise.all([
+        fetch(`${apiUrl}/api/services`),
+        fetch(`${apiUrl}/api/tasks`),
+        fetch(`${apiUrl}/api/orders`),
+        fetch(`${apiUrl}/api/customers`),
+        fetch(`${apiUrl}/api/reports`)
+      ]);
+
+      const [services, tasks, orders, customers, reports] = await Promise.all([
+        servicesRes.ok ? servicesRes.json() : [],
+        tasksRes.ok ? tasksRes.json() : [],
+        ordersRes.ok ? ordersRes.json() : [],
+        customersRes.ok ? customersRes.json() : [],
+        reportsRes.ok ? reportsRes.json() : []
+      ]);
+
+      // Update stats with real data
+      setStats([
+        { 
+          label: 'Servisi Aktivë', 
+          value: services.filter((s: any) => s.status === 'in-progress').length.toString(), 
+          icon: Settings, 
+          color: 'bg-blue-500', 
+          change: '+12%' 
+        },
+        { 
+          label: 'Taskat e Hapura', 
+          value: tasks.filter((t: any) => t.status === 'todo' || t.status === 'in-progress').length.toString(), 
+          icon: CheckSquare, 
+          color: 'bg-green-500', 
+          change: '+8%' 
+        },
+        { 
+          label: 'Porositë Sot', 
+          value: orders.filter((o: any) => {
+            const today = new Date().toISOString().split('T')[0];
+            return o.created_at?.startsWith(today);
+          }).length.toString(), 
+          icon: Package, 
+          color: 'bg-purple-500', 
+          change: '+15%' 
+        },
+        { 
+          label: 'Klientët', 
+          value: customers.length.toString(), 
+          icon: Users, 
+          color: 'bg-orange-500', 
+          change: '+5%' 
+        },
+      ]);
+
+      // Set recent activities (you can customize this based on your needs)
+      setRecentActivities([
+        { id: 1, action: 'Kërkesë e re për servis u krijua', user: 'Sistemi', time: '2 min më parë' },
+        { id: 2, action: 'Porosi e re u regjistrua', user: 'Sistemi', time: '15 min më parë' },
+        { id: 3, action: 'Task i ri u krijuar', user: 'Sistemi', time: '1 orë më parë' },
+        { id: 4, action: 'Klient i ri u regjistrua', user: 'Sistemi', time: '2 orë më parë' },
+      ]);
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const newItemOptions = [
     { label: 'Servis i ri', icon: Settings, color: 'text-blue-600', action: () => console.log('New Service') },
@@ -111,6 +183,36 @@ const Dashboard: React.FC = () => {
       intersect: false,
     },
   };
+
+  if (loading) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-96">
+        <div className="flex items-center space-x-2">
+          <svg
+            className="animate-spin h-8 w-8 text-blue-600"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            ></circle>
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span className="text-lg text-gray-600">Po ngarkohen të dhënat...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

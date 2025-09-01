@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import ProtectedRoute from './components/Auth/ProtectedRoute';
-import LoginForm from './components/Auth/LoginForm';
+import LoginForm from './components/LoginForm';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
@@ -120,13 +119,23 @@ const AppContent: React.FC = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, loading } = useAuth();
 
-  // 1) Show login form immediately if there is no user
+  console.log('AppContent render:', { 
+    user: user?.id, 
+    userEmail: user?.email,
+    loading,
+    hasUser: !!user,
+    userRole: user?.role
+  });
+
+  // Show login form if no user
   if (!user) {
+    console.log('No user, showing login form');
     return <LoginForm />;
   }
 
-  // 2) If there is a user but we're still initializing, show spinner
+  // Show loading spinner if loading
   if (loading) {
+    console.log('Loading, showing spinner');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="flex items-center space-x-2">
@@ -155,6 +164,8 @@ const AppContent: React.FC = () => {
       </div>
     );
   }
+
+  console.log('User authenticated, showing app');
 
   const getModuleTitle = (module: string) => {
     const titles = {

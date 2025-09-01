@@ -3,22 +3,14 @@ import { supabase } from '../config/supabase.js';
 // Middleware për të verifikuar autentifikimin
 const authenticateUser = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const userId = req.headers['x-user-id'];
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    console.log('Auth middleware - User ID:', userId);
+    console.log('Auth middleware - Headers:', req.headers);
+    
+    if (!userId) {
       return res.status(401).json({ 
-        error: 'Token i autentifikimit mungon' 
-      });
-    }
-
-    const token = authHeader.substring(7); // Heq 'Bearer ' nga fillimi
-
-    // Verifikon token-in me Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-
-    if (error || !user) {
-      return res.status(401).json({ 
-        error: 'Token i pavlefshëm' 
+        error: 'User ID mungon' 
       });
     }
 
@@ -26,8 +18,11 @@ const authenticateUser = async (req, res, next) => {
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', userId)
       .single();
+
+    console.log('Auth middleware - User profile:', userProfile);
+    console.log('Auth middleware - Profile error:', profileError);
 
     if (profileError || !userProfile) {
       return res.status(401).json({ 

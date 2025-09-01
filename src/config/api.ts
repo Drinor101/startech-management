@@ -1,8 +1,5 @@
-// Import Supabase për getAuthToken
-import { supabase } from './supabase';
-
 // Konfigurimi i API-së për backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://startech-management-production.up.railway.app';
 
 export const apiConfig = {
   baseURL: API_BASE_URL,
@@ -18,21 +15,21 @@ export const apiConfig = {
   }
 };
 
-// Funksioni për të marrë token-in nga Supabase
-export const getAuthToken = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token;
+// Funksioni për të marrë user-in nga localStorage
+export const getCurrentUser = () => {
+  const user = localStorage.getItem('user');
+  return user ? JSON.parse(user) : null;
 };
 
-// Funksioni për të bërë API calls me autentifikim
+// Funksioni për të bërë API calls
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
-  const token = await getAuthToken();
+  const user = getCurrentUser();
   
   const config: RequestInit = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...(user && { 'X-User-ID': user.id }),
       ...options.headers,
     },
   };
