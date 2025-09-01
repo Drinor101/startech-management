@@ -130,6 +130,18 @@ CREATE TABLE IF NOT EXISTS task_history (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tabela e përdoruesve
+CREATE TABLE IF NOT EXISTS users (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email TEXT NOT NULL,
+  role TEXT DEFAULT 'user' CHECK (role IN ('admin', 'user', 'Administrator', 'Manager', 'Technician', 'Support Agent', 'Design', 'Marketing', 'E-commerce')),
+  name TEXT,
+  phone TEXT,
+  department TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Tabela e aksioneve të përdoruesve
 CREATE TABLE IF NOT EXISTS user_actions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -143,6 +155,7 @@ CREATE TABLE IF NOT EXISTS user_actions (
 );
 
 -- Aktivizimi i Row Level Security për të gjitha tabelat
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
@@ -156,6 +169,7 @@ ALTER TABLE user_actions ENABLE ROW LEVEL SECURITY;
 
 -- Politikat e sigurisë për të gjitha tabelat
 -- Të gjithë përdoruesit e autentifikuar mund të lexojnë të gjitha të dhënat
+CREATE POLICY "Authenticated users can read all data" ON users FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Authenticated users can read all data" ON products FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Authenticated users can read all data" ON customers FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Authenticated users can read all data" ON orders FOR SELECT TO authenticated USING (true);
@@ -168,6 +182,7 @@ CREATE POLICY "Authenticated users can read all data" ON task_history FOR SELECT
 CREATE POLICY "Authenticated users can read all data" ON user_actions FOR SELECT TO authenticated USING (true);
 
 -- Të gjithë përdoruesit e autentifikuar mund të krijojnë të dhëna
+CREATE POLICY "Authenticated users can insert data" ON users FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Authenticated users can insert data" ON products FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Authenticated users can insert data" ON customers FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Authenticated users can insert data" ON orders FOR INSERT TO authenticated WITH CHECK (true);
