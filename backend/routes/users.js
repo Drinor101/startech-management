@@ -4,13 +4,29 @@ import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Merr të gjithë përdoruesit (vetëm admin)
-router.get('/', authenticateUser, requireAdmin, async (req, res) => {
+// Merr të gjithë përdoruesit
+router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { page = 1, limit = 10, role, department } = req.query;
+    const offset = (page - 1) * limit;
+
+    let query = supabase
       .from('users')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Filtra
+    if (role) {
+      query = query.eq('role', role);
+    }
+    if (department) {
+      query = query.eq('department', department);
+    }
+
+    // Paginimi
+    query = query.range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
 
     if (error) {
       throw error;
@@ -19,7 +35,12 @@ router.get('/', authenticateUser, requireAdmin, async (req, res) => {
     res.json({
       success: true,
       data: data,
-      count: data.length
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        pages: Math.ceil(count / limit)
+      }
     });
   } catch (error) {
     console.error('Gabim në marrjen e përdoruesve:', error);
@@ -34,14 +55,6 @@ router.get('/', authenticateUser, requireAdmin, async (req, res) => {
 router.get('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Përdoruesi mund të shohë vetëm profilin e vet, përveç nëse është admin
-    if (req.user.id !== id && req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        error: 'Nuk keni leje për të parë këtë profil'
-      });
-    }
 
     const { data, error } = await supabase
       .from('users')
@@ -73,24 +86,98 @@ router.get('/:id', authenticateUser, async (req, res) => {
   }
 });
 
+// Krijon një përdorues të ri (vetëm admin)
+router.post('/', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    const { name, email, role, phone, department, password } = req.body;
+
+    // Validimi i të dhënave
+    if (!name || !email || !role || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Emri, emaili, roli dhe fjalëkalimi janë të detyrueshëm'
+      });
+    }
+
+    // Kontrollo nëse emaili ekziston
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        error: 'Emaili tashmë ekziston'
+      });
+    }
+
+    const userData = {
+      name,
+      email,
+      role,
+      phone: phone || null,
+      department: department || null,
+      password, // Në prodhim duhet të hash-ohët
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await supabase
+      .from('users')
+      .insert(userData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      throw error;
+    }
+
+    // Heq fjalëkalimin nga përgjigjja
+    const { password: _, ...userWithoutPassword } = data;
+
+    res.status(201).json({
+      success: true,
+      data: userWithoutPassword,
+      message: 'Përdoruesi u krijua me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në krijimin e përdoruesit:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Gabim në krijimin e përdoruesit'
+    });
+  }
+});
+
 // Përditëson një përdorues
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const { name, email, role, phone, department } = req.body;
 
-    // Përdoruesi mund të përditësojë vetëm profilin e vet, përveç nëse është admin
+    // Kontrollo nëse përdoruesi po përditëson vetveten ose ka të drejta admin
     if (req.user.id !== id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
-        error: 'Nuk keni leje për të përditësuar këtë profil'
+        error: 'Nuk keni të drejta për të përditësuar këtë përdorues'
       });
     }
+
+    const updates = {
+      name,
+      email,
+      role,
+      phone: phone || null,
+      department: department || null,
+      updated_at: new Date().toISOString()
+    };
 
     // Heq fushët që nuk duhet të përditësohen
     delete updates.id;
     delete updates.created_at;
-    updates.updated_at = new Date().toISOString();
 
     const { data, error } = await supabase
       .from('users')
@@ -103,9 +190,12 @@ router.put('/:id', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Heq fjalëkalimin nga përgjigjja
+    const { password: _, ...userWithoutPassword } = data;
+
     res.json({
       success: true,
-      data: data,
+      data: userWithoutPassword,
       message: 'Përdoruesi u përditësua me sukses'
     });
   } catch (error) {
@@ -122,11 +212,11 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Nuk lejohet fshirja e vetes
+    // Kontrollo nëse përdoruesi po fshihet vetveten
     if (req.user.id === id) {
       return res.status(400).json({
         success: false,
-        error: 'Nuk mund të fshini vetë profilin tuaj'
+        error: 'Nuk mund të fshini vetveten'
       });
     }
 

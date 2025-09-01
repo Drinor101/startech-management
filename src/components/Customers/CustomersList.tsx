@@ -1,0 +1,338 @@
+import React, { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Mail, Phone, MapPin, Users, Activity, AlertCircle } from 'lucide-react';
+import { apiCall, apiConfig } from '../../config/api';
+import Modal from '../Common/Modal';
+import CustomerForm from './CustomerForm';
+
+const CustomersList: React.FC = () => {
+  const [customers, setCustomers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+
+  // Fetch customers from API
+  useEffect(() => {
+    const fetchCustomers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiCall(apiConfig.endpoints.customers);
+        setCustomers(response.data || []);
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+        setError('Gabim në ngarkimin e klientëve');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCustomers();
+  }, []);
+
+  const getSourceColor = (source: string) => {
+    const colors = {
+      'Internal': 'bg-blue-100 text-blue-800',
+      'WooCommerce': 'bg-green-100 text-green-800',
+      'Website': 'bg-purple-100 text-purple-800',
+      'Social Media': 'bg-pink-100 text-pink-800',
+      'Referral': 'bg-orange-100 text-orange-800'
+    };
+    return colors[source as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleViewCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsCustomerModalOpen(true);
+  };
+
+  const handleDeleteCustomer = async (customerId: string) => {
+    if (!confirm('A jeni të sigurt që dëshironi të fshini këtë klient?')) {
+      return;
+    }
+
+    try {
+      await apiCall(`${apiConfig.endpoints.customers}/${customerId}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the list
+      window.location.reload();
+    } catch (err) {
+      console.error('Error deleting customer:', err);
+      alert('Gabim në fshirjen e klientit');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Po ngarkohen klientët...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Menaxhimi i Klientëve</h2>
+          <p className="text-sm text-gray-500 mt-1">Menaxho klientët dhe të dhënat e tyre</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setShowStats(!showStats)}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+          >
+            <Activity className="w-4 h-4" />
+            Statistikat
+          </button>
+          <button 
+            onClick={() => setIsFormOpen(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Shto Klient
+          </button>
+        </div>
+      </div>
+
+      {showStats && (
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <h3 className="text-lg font-medium text-gray-900 mb-3">Statistikat e Klientëve</h3>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{customers.length}</div>
+              <div className="text-sm text-gray-600">Total</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {customers.filter(c => c.source === 'Internal').length}
+              </div>
+              <div className="text-sm text-gray-600">Internal</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-purple-600">
+                {customers.filter(c => c.source === 'WooCommerce').length}
+              </div>
+              <div className="text-sm text-gray-600">WooCommerce</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-pink-600">
+                {customers.filter(c => c.source === 'Website').length}
+              </div>
+              <div className="text-sm text-gray-600">Website</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">
+                {customers.filter(c => c.source === 'Social Media').length}
+              </div>
+              <div className="text-sm text-gray-600">Social Media</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Klienti
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kontakt
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Adresa
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Burimi
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data e Krijimit
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Veprimet
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {customers.map((customer) => (
+                <tr key={customer.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                        <span className="text-sm font-medium text-gray-700">
+                          {customer.name.charAt(0)}
+                        </span>
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{customer.name}</div>
+                        <div className="text-sm text-gray-500">ID: {customer.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 text-sm text-gray-900">
+                        <Mail className="w-4 h-4 text-gray-400" />
+                        {customer.email}
+                      </div>
+                      {customer.phone && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Phone className="w-4 h-4 text-gray-400" />
+                          {customer.phone}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {customer.address || 'N/A'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(customer.source)}`}>
+                      {customer.source}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <Activity className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {customer.created_at ? new Date(customer.created_at).toLocaleDateString() : 'N/A'}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => handleViewCustomer(customer)}
+                        className="text-blue-600 hover:text-blue-900"
+                      >
+                        <Users className="w-4 h-4" />
+                      </button>
+                      <button className="text-gray-600 hover:text-gray-900">
+                        <Edit className="w-4 h-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteCustomer(customer.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Customer Details Modal */}
+      <Modal
+        isOpen={isCustomerModalOpen}
+        onClose={() => setIsCustomerModalOpen(false)}
+        title="Detajet e Klientit"
+        size="lg"
+      >
+        {selectedCustomer && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-xl font-medium text-gray-700">
+                  {selectedCustomer.name.charAt(0)}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">{selectedCustomer.name}</h3>
+                <p className="text-sm text-gray-600">{selectedCustomer.email}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(selectedCustomer.source)}`}>
+                    {selectedCustomer.source}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Telefoni</label>
+                <p className="text-sm text-gray-900">
+                  {selectedCustomer.phone || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+                <p className="text-sm text-gray-900">
+                  {selectedCustomer.address || 'N/A'}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Data e Krijimit</label>
+              <p className="text-sm text-gray-900">
+                {selectedCustomer.created_at ? new Date(selectedCustomer.created_at).toLocaleString() : 'N/A'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Porositë dhe Shërbimet</label>
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                <p className="text-sm text-gray-500 text-center py-4">
+                  Informacioni për porositë dhe shërbimet do të shfaqet këtu
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Customer Form Modal */}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title="Shto Klient të Ri"
+        size="md"
+      >
+        <CustomerForm 
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            // Refresh the customers list
+            window.location.reload();
+          }}
+        />
+      </Modal>
+    </div>
+  );
+};
+
+export default CustomersList;

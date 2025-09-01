@@ -97,8 +97,13 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një shërbim të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    // Generate a unique service ID
+    const serviceId = `SRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const serviceData = {
+      id: serviceId,
       ...req.body,
+      status: req.body.status || 'received',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -110,6 +115,7 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       throw error;
     }
 
@@ -122,7 +128,7 @@ router.post('/', authenticateUser, async (req, res) => {
     console.error('Gabim në krijimin e shërbimit:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në krijimin e shërbimit'
+      error: error.message || 'Gabim në krijimin e shërbimit'
     });
   }
 });

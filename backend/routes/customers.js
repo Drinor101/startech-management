@@ -1,6 +1,6 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
-import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { authenticateUser } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -55,7 +55,11 @@ router.get('/:id', authenticateUser, async (req, res) => {
 
     const { data, error } = await supabase
       .from('customers')
-      .select('*')
+      .select(`
+        *,
+        orders:orders(*),
+        services:services(*)
+      `)
       .eq('id', id)
       .single();
 
@@ -86,8 +90,36 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një klient të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    const { name, email, phone, address, source } = req.body;
+
+    // Validimi i të dhënave
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        error: 'Emri dhe emaili janë të detyrueshëm'
+      });
+    }
+
+    // Kontrollo nëse emaili ekziston
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (existingCustomer) {
+      return res.status(400).json({
+        success: false,
+        error: 'Emaili tashmë ekziston'
+      });
+    }
+
     const customerData = {
-      ...req.body,
+      name,
+      email,
+      phone: phone || null,
+      address: address || null,
+      source: source || 'Internal',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -99,6 +131,7 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       throw error;
     }
 
@@ -111,7 +144,7 @@ router.post('/', authenticateUser, async (req, res) => {
     console.error('Gabim në krijimin e klientit:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në krijimin e klientit'
+      error: error.message || 'Gabim në krijimin e klientit'
     });
   }
 });
@@ -120,8 +153,14 @@ router.post('/', authenticateUser, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
+    const { name, email, phone, address, source } = req.body;
+
     const updates = {
-      ...req.body,
+      name,
+      email,
+      phone: phone || null,
+      address: address || null,
+      source: source || 'Internal',
       updated_at: new Date().toISOString()
     };
 
@@ -154,10 +193,35 @@ router.put('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Fshin një klient (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+// Fshin një klient
+router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // Kontrollo nëse klienti ka porosi ose shërbime
+    const { data: orders } = await supabase
+      .from('orders')
+      .select('id')
+      .eq('customer_id', id);
+
+    const { data: services } = await supabase
+      .from('services')
+      .select('id')
+      .eq('customer_id', id);
+
+    if (orders && orders.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nuk mund të fshihet klienti pasi ka porosi të lidhura'
+      });
+    }
+
+    if (services && services.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nuk mund të fshihet klienti pasi ka shërbime të lidhura'
+      });
+    }
 
     const { error } = await supabase
       .from('customers')
@@ -181,71 +245,6 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
   }
 });
 
-// Merr porositë e një klienti
-router.get('/:id/orders', authenticateUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const { data, error } = await supabase
-      .from('orders')
-      .select(`
-        *,
-        order_products:order_products(
-          *,
-          product:products(*)
-        )
-      `)
-      .eq('customer_id', id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    res.json({
-      success: true,
-      data: data
-    });
-  } catch (error) {
-    console.error('Gabim në marrjen e porosive të klientit:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Gabim në marrjen e porosive të klientit'
-    });
-  }
-});
-
-// Merr shërbimet e një klienti
-router.get('/:id/services', authenticateUser, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const { data, error } = await supabase
-      .from('services')
-      .select(`
-        *,
-        service_history:service_history(*)
-      `)
-      .eq('customer_id', id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
-    }
-
-    res.json({
-      success: true,
-      data: data
-    });
-  } catch (error) {
-    console.error('Gabim në marrjen e shërbimeve të klientit:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Gabim në marrjen e shërbimeve të klientit'
-    });
-  }
-});
-
 // Merr statistikat e klientëve
 router.get('/stats/overview', authenticateUser, async (req, res) => {
   try {
@@ -260,8 +259,11 @@ router.get('/stats/overview', authenticateUser, async (req, res) => {
     // Llogarit statistikat
     const stats = {
       total: customers.length,
-      wooCommerce: customers.filter(c => c.source === 'WooCommerce').length,
-      internal: customers.filter(c => c.source === 'Internal').length
+      internal: customers.filter(c => c.source === 'Internal').length,
+      woocommerce: customers.filter(c => c.source === 'WooCommerce').length,
+      website: customers.filter(c => c.source === 'Website').length,
+      socialMedia: customers.filter(c => c.source === 'Social Media').length,
+      referral: customers.filter(c => c.source === 'Referral').length
     };
 
     res.json({

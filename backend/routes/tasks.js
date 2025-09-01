@@ -100,8 +100,13 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një task të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    // Generate a unique task ID
+    const taskId = `TASK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
     const taskData = {
+      id: taskId,
       ...req.body,
+      status: req.body.status || 'todo',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -113,6 +118,7 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Supabase error:', error);
       throw error;
     }
 
@@ -125,7 +131,7 @@ router.post('/', authenticateUser, async (req, res) => {
     console.error('Gabim në krijimin e taskut:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në krijimin e taskut'
+      error: error.message || 'Gabim në krijimin e taskut'
     });
   }
 });
