@@ -1,5 +1,4 @@
 import express from 'express';
-import fetch from 'node-fetch';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
