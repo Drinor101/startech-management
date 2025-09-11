@@ -5,9 +5,12 @@ const authenticateUser = async (req, res, next) => {
   try {
     const userId = req.headers['x-user-id'];
     
+    console.log('Auth middleware - Headers:', req.headers);
     console.log('Auth middleware - User ID:', userId);
+    console.log('Auth middleware - URL:', req.url);
     
     if (!userId) {
+      console.log('Auth middleware - No user ID provided');
       return res.status(401).json({ 
         error: 'User ID mungon' 
       });

@@ -35,16 +35,16 @@ router.get('/', authenticateUser, async (req, res) => {
     // Transform the data to match frontend expectations
     const transformedData = data.map(product => ({
       id: product.id,
-      image: product.image,
-      title: product.title,
-      category: product.category,
-      basePrice: parseFloat(product.base_price),
-      additionalCost: parseFloat(product.additional_cost),
-      finalPrice: parseFloat(product.final_price),
-      supplier: product.supplier,
-      wooCommerceStatus: product.woo_commerce_status,
-      wooCommerceCategory: product.woo_commerce_category,
-      lastSyncDate: product.last_sync_date
+      image: product.image || '',
+      title: product.title || '',
+      category: product.category || '',
+      basePrice: parseFloat(product.base_price || 0),
+      additionalCost: parseFloat(product.additional_cost || 0),
+      finalPrice: parseFloat(product.final_price || 0),
+      supplier: product.supplier || '',
+      wooCommerceStatus: product.woo_commerce_status || 'draft',
+      wooCommerceCategory: product.woo_commerce_category || '',
+      lastSyncDate: product.last_sync_date || new Date().toISOString()
     }));
 
     res.json({
@@ -91,16 +91,16 @@ router.get('/:id', authenticateUser, async (req, res) => {
     // Transform the data to match frontend expectations
     const transformedData = {
       id: data.id,
-      image: data.image,
-      title: data.title,
-      category: data.category,
-      basePrice: parseFloat(data.base_price),
-      additionalCost: parseFloat(data.additional_cost),
-      finalPrice: parseFloat(data.final_price),
-      supplier: data.supplier,
-      wooCommerceStatus: data.woo_commerce_status,
-      wooCommerceCategory: data.woo_commerce_category,
-      lastSyncDate: data.last_sync_date
+      image: data.image || '',
+      title: data.title || '',
+      category: data.category || '',
+      basePrice: parseFloat(data.base_price || 0),
+      additionalCost: parseFloat(data.additional_cost || 0),
+      finalPrice: parseFloat(data.final_price || 0),
+      supplier: data.supplier || '',
+      wooCommerceStatus: data.woo_commerce_status || 'draft',
+      wooCommerceCategory: data.woo_commerce_category || '',
+      lastSyncDate: data.last_sync_date || new Date().toISOString()
     };
 
     res.json({

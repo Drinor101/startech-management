@@ -24,18 +24,26 @@ export const getCurrentUser = () => {
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const user = getCurrentUser();
   
+  console.log('API Call - User from localStorage:', user);
+  console.log('API Call - User ID:', user?.id);
+  
   const config: RequestInit = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...(user && { 'X-User-ID': user.id }),
+      ...(user && user.id && { 'X-User-ID': user.id }),
       ...options.headers,
     },
   };
 
+  console.log('API Call - Headers:', config.headers);
+
   const response = await fetch(`${apiConfig.baseURL}${endpoint}`, config);
   
   if (!response.ok) {
+    console.error(`API Error: ${response.status} ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('API Error Response:', errorText);
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
   
