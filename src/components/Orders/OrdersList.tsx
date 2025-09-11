@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle, FolderSync as Sync, CheckCircle, Clock } from 'lucide-react';
+import { Eye, Edit, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -12,7 +12,6 @@ const OrdersList: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
 
   // Fetch orders from API
   useEffect(() => {
@@ -36,35 +35,6 @@ const OrdersList: React.FC = () => {
 
     fetchOrders();
   }, []);
-
-  const handleSync = async () => {
-    setSyncStatus('syncing');
-    try {
-      console.log('Starting WooCommerce orders sync...');
-      const response = await apiCall('/api/orders/sync-woocommerce', {
-        method: 'POST'
-      });
-      
-      console.log('WooCommerce orders sync response:', response);
-      
-      if (response.success) {
-        setSyncStatus('success');
-        // Refresh orders after successful sync
-        const ordersResponse = await apiCall(apiConfig.endpoints.orders);
-        const data = ordersResponse.success ? ordersResponse.data : [];
-        setOrders(data || []);
-        
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 5000);
-      }
-    } catch (err) {
-      console.error('WooCommerce orders sync error:', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 5000);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -136,49 +106,12 @@ const OrdersList: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Porositë</h2>
-        <div className="flex gap-3">
-          <button 
-            onClick={handleSync}
-            disabled={syncStatus === 'syncing'}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-              syncStatus === 'syncing' 
-                ? 'bg-gray-400 text-white cursor-not-allowed' 
-                : syncStatus === 'success'
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : syncStatus === 'error'
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
-            }`}
-          >
-            {syncStatus === 'syncing' ? (
-              <>
-                <Clock className="w-4 h-4 animate-spin" />
-                Duke Sinkronizuar...
-              </>
-            ) : syncStatus === 'success' ? (
-              <>
-                <CheckCircle className="w-4 h-4" />
-                U Sinkronizua
-              </>
-            ) : syncStatus === 'error' ? (
-              <>
-                <AlertCircle className="w-4 h-4" />
-                Gabim
-              </>
-            ) : (
-              <>
-                <Sync className="w-4 h-4" />
-                Sinkronizo me WooCommerce
-              </>
-            )}
-          </button>
-          <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Porosi e Re
-          </button>
-        </div>
+        <button 
+          onClick={() => setIsFormOpen(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Porosi e Re
+        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
