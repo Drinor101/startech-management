@@ -283,5 +283,316 @@ router.get('/stats/overview', authenticateUser, async (req, res) => {
   }
 });
 
+// Sinkronizon porositë me WooCommerce (vetëm admin)
+router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    console.log('Starting WooCommerce orders sync...');
+    
+    // WooCommerce API configuration
+    const wooCommerceConfig = {
+      url: process.env.WOOCOMMERCE_URL || 'https://your-store.com',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+    };
+
+    if (!wooCommerceConfig.consumerKey || !wooCommerceConfig.consumerSecret) {
+      return res.status(400).json({
+        success: false,
+        error: 'WooCommerce credentials not configured'
+      });
+    }
+
+    // Fetch orders from WooCommerce API
+    const wooCommerceOrders = await fetchWooCommerceOrders(wooCommerceConfig);
+    
+    if (!wooCommerceOrders || wooCommerceOrders.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No orders found in WooCommerce store'
+      });
+    }
+
+    // Sync orders to database
+    const syncedOrders = await syncOrdersToDatabase(wooCommerceOrders);
+    
+    res.json({
+      success: true,
+      message: `Successfully synced ${syncedOrders.length} orders from WooCommerce`,
+      data: {
+        synced_at: new Date().toISOString(),
+        orders_synced: syncedOrders.length,
+        orders: syncedOrders.slice(0, 5) // Return first 5 orders as sample
+      }
+    });
+
+  } catch (error) {
+    console.error('WooCommerce orders sync error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'WooCommerce orders sync failed',
+      details: error.message
+    });
+  }
+});
+
+// Fetch orders from WooCommerce API
+async function fetchWooCommerceOrders(config) {
+  try {
+    console.log('Fetching orders from WooCommerce...');
+    const orders = [];
+    let page = 1;
+    const perPage = 100;
+    
+    while (true) {
+      const url = `${config.url}/wp-json/wc/v3/orders?per_page=${perPage}&page=${page}&status=any`;
+      const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+      
+      console.log(`Fetching orders page ${page} from: ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const pageOrders = await response.json();
+      
+      if (pageOrders.length === 0) {
+        break; // No more orders
+      }
+      
+      orders.push(...pageOrders);
+      page++;
+      
+      // Safety limit to prevent infinite loops
+      if (page > 50) {
+        console.log('Reached page limit (50), stopping...');
+        break;
+      }
+    }
+    
+    console.log(`Fetched ${orders.length} orders from WooCommerce`);
+    return orders;
+    
+  } catch (error) {
+    console.error('Error fetching WooCommerce orders:', error);
+    throw error;
+  }
+}
+
+// Sync WooCommerce orders to database
+async function syncOrdersToDatabase(wooCommerceOrders) {
+  try {
+    console.log('Syncing orders to database...');
+    const syncedOrders = [];
+    
+    for (const wcOrder of wooCommerceOrders) {
+      try {
+        // First, create or find customer
+        let customerId = null;
+        
+        if (wcOrder.billing && wcOrder.billing.email) {
+          // Check if customer exists
+          const { data: existingCustomer } = await supabase
+            .from('customers')
+            .select('id')
+            .eq('email', wcOrder.billing.email)
+            .single();
+
+          if (existingCustomer) {
+            customerId = existingCustomer.id;
+          } else {
+            // Create new customer
+            const customerData = {
+              name: `${wcOrder.billing.first_name || ''} ${wcOrder.billing.last_name || ''}`.trim() || 'WooCommerce Customer',
+              email: wcOrder.billing.email,
+              phone: wcOrder.billing.phone || '',
+              address: wcOrder.billing.address_1 || '',
+              city: wcOrder.billing.city || '',
+              zip_code: wcOrder.billing.postcode || '',
+              country: wcOrder.billing.country || '',
+              source: 'WooCommerce'
+            };
+
+            const { data: newCustomer, error: customerError } = await supabase
+              .from('customers')
+              .insert(customerData)
+              .select()
+              .single();
+
+            if (customerError) {
+              console.error(`Error creating customer for order ${wcOrder.id}:`, customerError);
+              continue;
+            }
+            
+            customerId = newCustomer.id;
+          }
+        }
+
+        // Transform WooCommerce order to our database schema
+        const orderData = {
+          customer_id: customerId,
+          status: mapWooCommerceStatus(wcOrder.status),
+          source: 'WooCommerce',
+          shipping_address: wcOrder.shipping?.address_1 || '',
+          shipping_city: wcOrder.shipping?.city || '',
+          shipping_zip_code: wcOrder.shipping?.postcode || '',
+          shipping_method: wcOrder.shipping_lines?.[0]?.method_title || 'Standard Shipping',
+          total: parseFloat(wcOrder.total || 0),
+          is_editable: false, // WooCommerce orders are not editable
+          notes: wcOrder.customer_note || '',
+          woo_commerce_id: wcOrder.id,
+          woo_commerce_status: wcOrder.status,
+          last_sync_date: new Date().toISOString()
+        };
+
+        // Check if order already exists by WooCommerce ID
+        const { data: existingOrder } = await supabase
+          .from('orders')
+          .select('id')
+          .eq('woo_commerce_id', wcOrder.id)
+          .single();
+
+        let orderId;
+        if (existingOrder) {
+          // Update existing order
+          const { data: updatedOrder, error: updateError } = await supabase
+            .from('orders')
+            .update(orderData)
+            .eq('woo_commerce_id', wcOrder.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error(`Error updating order ${wcOrder.id}:`, updateError);
+            continue;
+          }
+          
+          orderId = updatedOrder.id;
+          syncedOrders.push(updatedOrder);
+        } else {
+          // Insert new order
+          const { data: newOrder, error: insertError } = await supabase
+            .from('orders')
+            .insert(orderData)
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error(`Error inserting order ${wcOrder.id}:`, insertError);
+            continue;
+          }
+          
+          orderId = newOrder.id;
+          syncedOrders.push(newOrder);
+        }
+
+        // Sync order products
+        if (wcOrder.line_items && wcOrder.line_items.length > 0) {
+          await syncOrderProducts(orderId, wcOrder.line_items);
+        }
+        
+      } catch (orderError) {
+        console.error(`Error processing order ${wcOrder.id}:`, orderError);
+        continue;
+      }
+    }
+    
+    console.log(`Successfully synced ${syncedOrders.length} orders to database`);
+    return syncedOrders;
+    
+  } catch (error) {
+    console.error('Error syncing orders to database:', error);
+    throw error;
+  }
+}
+
+// Sync order products
+async function syncOrderProducts(orderId, lineItems) {
+  try {
+    // First, delete existing order products for this order
+    await supabase
+      .from('order_products')
+      .delete()
+      .eq('order_id', orderId);
+
+    for (const item of lineItems) {
+      // Find product by WooCommerce ID or create a placeholder
+      let productId = null;
+      
+      if (item.product_id) {
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('woo_commerce_id', item.product_id)
+          .single();
+
+        if (existingProduct) {
+          productId = existingProduct.id;
+        }
+      }
+
+      // If product not found, create a placeholder
+      if (!productId) {
+        const productData = {
+          title: item.name || 'Unknown Product',
+          base_price: parseFloat(item.price || 0),
+          final_price: parseFloat(item.price || 0),
+          supplier: 'WooCommerce',
+          woo_commerce_id: item.product_id,
+          woo_commerce_status: 'draft'
+        };
+
+        const { data: newProduct, error: productError } = await supabase
+          .from('products')
+          .insert(productData)
+          .select()
+          .single();
+
+        if (!productError && newProduct) {
+          productId = newProduct.id;
+        }
+      }
+
+      if (productId) {
+        // Insert order product
+        const orderProductData = {
+          order_id: orderId,
+          product_id: productId,
+          quantity: item.quantity || 1,
+          subtotal: parseFloat(item.total || 0)
+        };
+
+        await supabase
+          .from('order_products')
+          .insert(orderProductData);
+      }
+    }
+  } catch (error) {
+    console.error('Error syncing order products:', error);
+  }
+}
+
+// Map WooCommerce status to our status
+function mapWooCommerceStatus(wcStatus) {
+  const statusMap = {
+    'pending': 'pending',
+    'processing': 'processing',
+    'on-hold': 'pending',
+    'completed': 'completed',
+    'cancelled': 'cancelled',
+    'refunded': 'cancelled',
+    'failed': 'cancelled'
+  };
+  
+  return statusMap[wcStatus] || 'pending';
+}
+
 export default router;
 

@@ -52,11 +52,31 @@ const ProductsList: React.FC = () => {
 
   const handleSync = async () => {
     setSyncStatus('syncing');
-    // Simulate sync process
-    setTimeout(() => {
-      setSyncStatus('success');
-      setTimeout(() => setSyncStatus('idle'), 3000);
-    }, 2000);
+    try {
+      console.log('Starting WooCommerce sync...');
+      const response = await apiCall('/api/products/sync-woocommerce', {
+        method: 'POST'
+      });
+      
+      console.log('WooCommerce sync response:', response);
+      
+      if (response.success) {
+        setSyncStatus('success');
+        // Refresh products after successful sync
+        const productsResponse = await apiCall(apiConfig.endpoints.products);
+        const data = productsResponse.success ? productsResponse.data : [];
+        setProducts(data || []);
+        
+        setTimeout(() => setSyncStatus('idle'), 3000);
+      } else {
+        setSyncStatus('error');
+        setTimeout(() => setSyncStatus('idle'), 5000);
+      }
+    } catch (err) {
+      console.error('WooCommerce sync error:', err);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 5000);
+    }
   };
 
   const getStatusIcon = (status: string) => {

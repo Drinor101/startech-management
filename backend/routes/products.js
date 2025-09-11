@@ -217,25 +217,182 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
 // Sinkronizon produktet me WooCommerce (vetëm admin)
 router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res) => {
   try {
-    // Këtu do të implementohet logjika për sinkronizimin me WooCommerce
-    // Për tani kthejmë një mesazh suksesi
+    console.log('Starting WooCommerce sync...');
+    
+    // WooCommerce API configuration
+    const wooCommerceConfig = {
+      url: process.env.WOOCOMMERCE_URL || 'https://your-store.com',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+    };
+
+    if (!wooCommerceConfig.consumerKey || !wooCommerceConfig.consumerSecret) {
+      return res.status(400).json({
+        success: false,
+        error: 'WooCommerce credentials not configured'
+      });
+    }
+
+    // Fetch products from WooCommerce API
+    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+    
+    if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No products found in WooCommerce store'
+      });
+    }
+
+    // Sync products to database
+    const syncedProducts = await syncProductsToDatabase(wooCommerceProducts);
     
     res.json({
       success: true,
-      message: 'Sinkronizimi me WooCommerce u fillua',
+      message: `Successfully synced ${syncedProducts.length} products from WooCommerce`,
       data: {
         synced_at: new Date().toISOString(),
-        status: 'in_progress'
+        products_synced: syncedProducts.length,
+        products: syncedProducts.slice(0, 5) // Return first 5 products as sample
       }
     });
+
   } catch (error) {
-    console.error('Gabim në sinkronizimin me WooCommerce:', error);
+    console.error('WooCommerce sync error:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në sinkronizimin me WooCommerce'
+      error: 'WooCommerce sync failed',
+      details: error.message
     });
   }
 });
+
+// Fetch products from WooCommerce API
+async function fetchWooCommerceProducts(config) {
+  try {
+    console.log('Fetching products from WooCommerce...');
+    const products = [];
+    let page = 1;
+    const perPage = 100;
+    
+    while (true) {
+      const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
+      const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+      
+      console.log(`Fetching page ${page} from: ${url}`);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const pageProducts = await response.json();
+      
+      if (pageProducts.length === 0) {
+        break; // No more products
+      }
+      
+      products.push(...pageProducts);
+      page++;
+      
+      // Safety limit to prevent infinite loops
+      if (page > 50) {
+        console.log('Reached page limit (50), stopping...');
+        break;
+      }
+    }
+    
+    console.log(`Fetched ${products.length} products from WooCommerce`);
+    return products;
+    
+  } catch (error) {
+    console.error('Error fetching WooCommerce products:', error);
+    throw error;
+  }
+}
+
+// Sync WooCommerce products to database
+async function syncProductsToDatabase(wooCommerceProducts) {
+  try {
+    console.log('Syncing products to database...');
+    const syncedProducts = [];
+    
+    for (const wcProduct of wooCommerceProducts) {
+      try {
+        // Transform WooCommerce product to our database schema
+        const productData = {
+          title: wcProduct.name || 'Untitled Product',
+          description: wcProduct.description || '',
+          image: wcProduct.images && wcProduct.images.length > 0 ? wcProduct.images[0].src : '',
+          category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : 'Uncategorized',
+          base_price: parseFloat(wcProduct.price || 0),
+          additional_cost: 0,
+          final_price: parseFloat(wcProduct.price || 0),
+          supplier: 'WooCommerce',
+          woo_commerce_status: wcProduct.status || 'draft',
+          woo_commerce_category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : '',
+          last_sync_date: new Date().toISOString(),
+          woo_commerce_id: wcProduct.id
+        };
+
+        // Check if product already exists by WooCommerce ID
+        const { data: existingProduct } = await supabase
+          .from('products')
+          .select('id')
+          .eq('woo_commerce_id', wcProduct.id)
+          .single();
+
+        if (existingProduct) {
+          // Update existing product
+          const { data: updatedProduct, error: updateError } = await supabase
+            .from('products')
+            .update(productData)
+            .eq('woo_commerce_id', wcProduct.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error(`Error updating product ${wcProduct.id}:`, updateError);
+            continue;
+          }
+          
+          syncedProducts.push(updatedProduct);
+        } else {
+          // Insert new product
+          const { data: newProduct, error: insertError } = await supabase
+            .from('products')
+            .insert(productData)
+            .select()
+            .single();
+
+          if (insertError) {
+            console.error(`Error inserting product ${wcProduct.id}:`, insertError);
+            continue;
+          }
+          
+          syncedProducts.push(newProduct);
+        }
+        
+      } catch (productError) {
+        console.error(`Error processing product ${wcProduct.id}:`, productError);
+        continue;
+      }
+    }
+    
+    console.log(`Successfully synced ${syncedProducts.length} products to database`);
+    return syncedProducts;
+    
+  } catch (error) {
+    console.error('Error syncing products to database:', error);
+    throw error;
+  }
+}
 
 export default router;
 
