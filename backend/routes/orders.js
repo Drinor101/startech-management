@@ -39,9 +39,34 @@ router.get('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Transform the data to match frontend expectations
+    const transformedData = data.map(order => ({
+      id: order.id,
+      customerId: order.customer_id,
+      customer: order.customer,
+      products: order.order_products?.map(op => ({
+        ...op.product,
+        quantity: op.quantity,
+        subtotal: op.subtotal
+      })) || [],
+      status: order.status,
+      source: order.source,
+      shippingInfo: {
+        address: order.shipping_address || '',
+        city: order.shipping_city || '',
+        zipCode: order.shipping_zip_code || '',
+        method: order.shipping_method || ''
+      },
+      total: parseFloat(order.total),
+      createdAt: order.created_at,
+      updatedAt: order.updated_at,
+      isEditable: order.is_editable,
+      notes: order.notes
+    }));
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -87,9 +112,34 @@ router.get('/:id', authenticateUser, async (req, res) => {
       });
     }
 
+    // Transform the data to match frontend expectations
+    const transformedData = {
+      id: data.id,
+      customerId: data.customer_id,
+      customer: data.customer,
+      products: data.order_products?.map(op => ({
+        ...op.product,
+        quantity: op.quantity,
+        subtotal: op.subtotal
+      })) || [],
+      status: data.status,
+      source: data.source,
+      shippingInfo: {
+        address: data.shipping_address || '',
+        city: data.shipping_city || '',
+        zipCode: data.shipping_zip_code || '',
+        method: data.shipping_method || ''
+      },
+      total: parseFloat(data.total),
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      isEditable: data.is_editable,
+      notes: data.notes
+    };
+
     res.json({
       success: true,
-      data: data
+      data: transformedData
     });
   } catch (error) {
     console.error('Gabim në marrjen e porosisë:', error);

@@ -18,8 +18,11 @@ const ProductsList: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await apiCall(apiConfig.endpoints.products);
-        const data = response.data || [];
-        setProducts(data);
+        console.log('Products API response:', response);
+        
+        // Handle the correct API response structure
+        const data = response.success ? response.data : [];
+        setProducts(data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Gabim në ngarkimin e produkteve');

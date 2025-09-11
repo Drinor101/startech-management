@@ -32,9 +32,24 @@ router.get('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Transform the data to match frontend expectations
+    const transformedData = data.map(product => ({
+      id: product.id,
+      image: product.image,
+      title: product.title,
+      category: product.category,
+      basePrice: parseFloat(product.base_price),
+      additionalCost: parseFloat(product.additional_cost),
+      finalPrice: parseFloat(product.final_price),
+      supplier: product.supplier,
+      wooCommerceStatus: product.woo_commerce_status,
+      wooCommerceCategory: product.woo_commerce_category,
+      lastSyncDate: product.last_sync_date
+    }));
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -73,9 +88,24 @@ router.get('/:id', authenticateUser, async (req, res) => {
       });
     }
 
+    // Transform the data to match frontend expectations
+    const transformedData = {
+      id: data.id,
+      image: data.image,
+      title: data.title,
+      category: data.category,
+      basePrice: parseFloat(data.base_price),
+      additionalCost: parseFloat(data.additional_cost),
+      finalPrice: parseFloat(data.final_price),
+      supplier: data.supplier,
+      wooCommerceStatus: data.woo_commerce_status,
+      wooCommerceCategory: data.woo_commerce_category,
+      lastSyncDate: data.last_sync_date
+    };
+
     res.json({
       success: true,
-      data: data
+      data: transformedData
     });
   } catch (error) {
     console.error('Gabim në marrjen e produktit:', error);

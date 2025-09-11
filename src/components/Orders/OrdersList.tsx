@@ -20,8 +20,11 @@ const OrdersList: React.FC = () => {
         setLoading(true);
         setError(null);
         const response = await apiCall(apiConfig.endpoints.orders);
-        const data = response.data || [];
-        setOrders(data);
+        console.log('Orders API response:', response);
+        
+        // Handle the correct API response structure
+        const data = response.success ? response.data : [];
+        setOrders(data || []);
       } catch (err) {
         console.error('Error fetching orders:', err);
         setError('Gabim në ngarkimin e porosive');

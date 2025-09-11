@@ -32,8 +32,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const data = await apiCall('/api/products');
-        setProducts(data);
+        const response = await apiCall('/api/products');
+        console.log('OrderForm Products API response:', response);
+        
+        // Handle the correct API response structure
+        const data = response.success ? response.data : [];
+        setProducts(data || []);
       } catch (err) {
         console.error('Error fetching products:', err);
       } finally {
