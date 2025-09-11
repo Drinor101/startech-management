@@ -221,7 +221,7 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
     
     // WooCommerce API configuration
     const wooCommerceConfig = {
-      url: process.env.WOOCOMMERCE_URL || 'https://your-store.com',
+      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
       consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
       consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
     };

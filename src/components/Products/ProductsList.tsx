@@ -11,12 +11,25 @@ const ProductsList: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Fetch products from API
+  // Fetch products from API and sync with WooCommerce
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
+        
+        // First, try to sync with WooCommerce
+        console.log('Starting automatic WooCommerce sync...');
+        try {
+          const syncResponse = await apiCall('/api/products/sync-woocommerce', {
+            method: 'POST'
+          });
+          console.log('WooCommerce sync response:', syncResponse);
+        } catch (syncError) {
+          console.log('WooCommerce sync failed, continuing with existing products:', syncError);
+        }
+        
+        // Then fetch products from database
         const response = await apiCall(apiConfig.endpoints.products);
         console.log('Products API response:', response);
         

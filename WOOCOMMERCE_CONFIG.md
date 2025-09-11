@@ -19,7 +19,7 @@ Duhet të jepni URL-në e dyqanit tuaj WooCommerce. Kjo duhet të jetë URL-ja b
 Shtoni këto variabla në mjedisin e prodhimit (Railway):
 
 ```bash
-WOOCOMMERCE_URL=https://yourstore.com
+WOOCOMMERCE_URL=https://startech24.com
 WOOCOMMERCE_CONSUMER_KEY=ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414
 WOOCOMMERCE_CONSUMER_SECRET=cs_7c882c8e16979743e2dd63fb113759254d47d0aa
 ```
