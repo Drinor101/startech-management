@@ -18,15 +18,25 @@ const ProductsList: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // First, try to sync with WooCommerce
+        // First, try to sync with WooCommerce (with timeout)
         console.log('Starting automatic WooCommerce sync...');
         try {
-          const syncResponse = await apiCall('/api/products/sync-woocommerce', {
+          console.log('Calling WooCommerce sync API...');
+          
+          // Add timeout to prevent hanging
+          const syncPromise = apiCall('/api/products/sync-woocommerce', {
             method: 'POST'
           });
+          
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('WooCommerce sync timeout')), 30000)
+          );
+          
+          const syncResponse = await Promise.race([syncPromise, timeoutPromise]);
           console.log('WooCommerce sync response:', syncResponse);
         } catch (syncError) {
-          console.log('WooCommerce sync failed, continuing with existing products:', syncError);
+          console.error('WooCommerce sync failed, continuing with existing products:', syncError);
+          console.error('Sync error details:', syncError.message);
         }
         
         // Then fetch products from database
