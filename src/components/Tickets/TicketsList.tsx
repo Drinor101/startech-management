@@ -9,17 +9,21 @@ import {
   CheckCircle,
   XCircle,
   Pause,
-  Play
+  Play,
+  Grid3X3,
+  List
 } from 'lucide-react';
-import { Ticket } from '../../types';
+import { Ticket, ViewMode } from '../../types';
 import { apiCall } from '../../config/api';
 import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
+import KanbanBoard from '../Common/KanbanBoard';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
@@ -149,6 +153,105 @@ const TicketsList: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  // Kanban columns for tickets
+  const getKanbanColumns = () => {
+    const columns = [
+      {
+        id: 'open',
+        title: 'Hapur',
+        items: filteredTickets.filter(ticket => ticket.status === 'open'),
+        color: 'bg-blue-500'
+      },
+      {
+        id: 'in-progress',
+        title: 'Në progres',
+        items: filteredTickets.filter(ticket => ticket.status === 'in-progress'),
+        color: 'bg-yellow-500'
+      },
+      {
+        id: 'waiting-customer',
+        title: 'Në pritje të klientit',
+        items: filteredTickets.filter(ticket => ticket.status === 'waiting-customer'),
+        color: 'bg-orange-500'
+      },
+      {
+        id: 'resolved',
+        title: 'Zgjidhur',
+        items: filteredTickets.filter(ticket => ticket.status === 'resolved'),
+        color: 'bg-green-500'
+      },
+      {
+        id: 'closed',
+        title: 'Mbyllur',
+        items: filteredTickets.filter(ticket => ticket.status === 'closed'),
+        color: 'bg-gray-500'
+      }
+    ];
+    return columns;
+  };
+
+  // Render ticket card for kanban
+  const renderTicketCard = (ticket: Ticket) => (
+    <div className="space-y-2">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h4 className="text-sm font-medium text-gray-900 truncate">{ticket.title}</h4>
+          <p className="text-xs text-gray-500 mt-1">{ticket.id}</p>
+        </div>
+        <div className="flex items-center gap-1">
+          <AlertCircle className="w-3 h-3 text-gray-400" />
+          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+            {getPriorityText(ticket.priority)}
+          </span>
+        </div>
+      </div>
+      
+      {ticket.description && (
+        <p className="text-xs text-gray-600 line-clamp-2">{ticket.description}</p>
+      )}
+      
+      <div className="flex items-center justify-between text-xs text-gray-500">
+        <span>{ticket.createdBy || 'N/A'}</span>
+        <span>{new Date(ticket.createdAt).toLocaleDateString('sq-AL')}</span>
+      </div>
+      
+      <div className="flex items-center gap-2 pt-2">
+        <button
+          onClick={() => handleViewTicket(ticket)}
+          className="text-blue-600 hover:text-blue-900 p-1"
+          title="Shih"
+        >
+          <Eye className="w-3 h-3" />
+        </button>
+        <button
+          onClick={() => handleEditTicket(ticket)}
+          className="text-green-600 hover:text-green-900 p-1"
+          title="Modifiko"
+        >
+          <Edit className="w-3 h-3" />
+        </button>
+        <button
+          className="text-red-600 hover:text-red-900 p-1"
+          title="Fshij"
+        >
+          <Trash2 className="w-3 h-3" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
+    try {
+      await apiCall(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      fetchTickets(); // Refresh the list
+    } catch (err) {
+      console.error('Error updating ticket status:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -170,6 +273,30 @@ const TicketsList: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Tiketat ({tickets.length})</h2>
         <div className="flex items-center gap-3">
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'list' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Lista"
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-2 rounded-md transition-colors ${
+                viewMode === 'kanban' 
+                  ? 'bg-white text-blue-600 shadow-sm' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+              title="Kanban"
+            >
+              <Grid3X3 className="w-4 h-4" />
+            </button>
+          </div>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -207,116 +334,124 @@ const TicketsList: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Titulli
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Burimi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Krijuar nga
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Prioriteti
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statusi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Veprimet
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTickets.map((ticket) => (
-                <tr key={ticket.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                        Tiketë
-                      </span>
-                      <span className="text-sm font-medium text-gray-900">{ticket.id}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
-                    {ticket.description && (
-                      <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {ticket.description}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{getSourceText(ticket.source)}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">{ticket.createdBy || 'N/A'}</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4 text-gray-400" />
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
-                        {getPriorityText(ticket.priority)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(ticket.status)}
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
-                        {getStatusText(ticket.status)}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">
-                        {new Date(ticket.createdAt).toLocaleDateString('sq-AL')}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleViewTicket(ticket)}
-                        className="text-blue-600 hover:text-blue-900 p-1"
-                        title="Shih"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleEditTicket(ticket)}
-                        className="text-green-600 hover:text-green-900 p-1"
-                        title="Modifiko"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Fshij"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+      {viewMode === 'list' ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Titulli
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Burimi
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Krijuar nga
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Prioriteti
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Statusi
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Data
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Veprimet
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredTickets.map((ticket) => (
+                  <tr key={ticket.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          Tiketë
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">{ticket.id}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
+                      {ticket.description && (
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {ticket.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{getSourceText(ticket.source)}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{ticket.createdBy || 'N/A'}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4 text-gray-400" />
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+                          {getPriorityText(ticket.priority)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(ticket.status)}
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(ticket.status)}`}>
+                          {getStatusText(ticket.status)}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">
+                          {new Date(ticket.createdAt).toLocaleDateString('sq-AL')}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleViewTicket(ticket)}
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shih"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditTicket(ticket)}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <KanbanBoard
+          columns={getKanbanColumns()}
+          renderCard={renderTicketCard}
+          onStatusChange={handleStatusChange}
+        />
+      )}
 
       {/* Ticket Details Modal */}
       <Modal
