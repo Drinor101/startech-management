@@ -416,13 +416,13 @@ const ServicesList: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
                 <p className="text-sm text-gray-900">
-                  {selectedService.createdBy || 'N/A'}
+                  {selectedService.createdBy || selectedService.created_by || 'N/A'}
                 </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
                 <p className="text-sm text-gray-900">
-                  {selectedService.assignedTo || 'N/A'}
+                  {selectedService.assignedTo || selectedService.assigned_to || 'N/A'}
                 </p>
               </div>
             </div>
