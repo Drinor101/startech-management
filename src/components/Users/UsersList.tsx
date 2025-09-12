@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Shield, Mail, Phone, Clock, Activity, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Shield, Mail, Phone, Clock, Activity, AlertCircle, Euro } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import UserForm from './UserForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const UsersList: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -35,15 +37,20 @@ const UsersList: React.FC = () => {
   const getRoleColor = (role: string) => {
     const colors = {
       'Administrator': 'bg-red-100 text-red-800',
-      'Manager': 'bg-purple-100 text-purple-800',
-      'E-commerce': 'bg-blue-100 text-blue-800',
-      'Technician': 'bg-green-100 text-green-800',
-      'Marketing': 'bg-orange-100 text-orange-800',
-      'Design': 'bg-pink-100 text-pink-800',
-      'Support Agent': 'bg-yellow-100 text-yellow-800',
-      'Customer': 'bg-gray-100 text-gray-800'
+      'Menaxher': 'bg-purple-100 text-purple-800',
+      'Marketer': 'bg-orange-100 text-orange-800',
+      'Dizajner': 'bg-pink-100 text-pink-800',
+      'Agjent shitjeje': 'bg-blue-100 text-blue-800',
+      'Agjent mbështetje': 'bg-yellow-100 text-yellow-800',
+      'Serviser': 'bg-green-100 text-green-800'
     };
     return colors[role as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getCreditsColor = (credits: number) => {
+    if (credits >= 150) return 'bg-green-100 text-green-800';
+    if (credits >= 100) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
   };
 
 
@@ -99,13 +106,15 @@ const UsersList: React.FC = () => {
             <Activity className="w-4 h-4" />
             Veprimet e Përdoruesve
           </button>
-          <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Shto Përdorues
-          </button>
+          {canCreate('users') && (
+            <button 
+              onClick={() => setIsFormOpen(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Shto Përdorues
+            </button>
+          )}
         </div>
       </div>
 
@@ -150,11 +159,13 @@ const UsersList: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
                         <span className="text-sm font-medium text-gray-700">
-                          {user.name.charAt(0)}
+                          {(user.name || user.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.name || user.email?.split('@')[0] || 'Përdorues'}
+                        </div>
                         <div className="text-sm text-gray-500">ID: {user.id}</div>
                       </div>
                     </div>
@@ -200,9 +211,11 @@ const UsersList: React.FC = () => {
                       >
                         <Shield className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-900">
-                        <Edit className="w-4 h-4" />
-                      </button>
+                      {canEdit('users') && (
+                        <button className="text-gray-600 hover:text-gray-900">
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -224,11 +237,13 @@ const UsersList: React.FC = () => {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
                 <span className="text-xl font-medium text-gray-700">
-                  {selectedUser.name.charAt(0)}
+                  {(selectedUser.name || selectedUser.email?.split('@')[0] || 'U').charAt(0).toUpperCase()}
                 </span>
               </div>
               <div>
-                <h3 className="text-lg font-medium text-gray-900">{selectedUser.name}</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  {selectedUser.name || selectedUser.email?.split('@')[0] || 'Përdorues'}
+                </h3>
                 <p className="text-sm text-gray-600">{selectedUser.email}</p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(selectedUser.role)}`}>

@@ -11,7 +11,7 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    role: user?.role || 'user',
+    role: user?.role || 'Agjent mbështetje',
     phone: user?.phone || '',
     department: user?.department || '',
     password: '' // Only for new users
@@ -78,13 +78,14 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
       )}
       
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Emri i Plotë</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
         <input
           type="text"
           name="name"
           value={formData.name}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="username"
           required
         />
       </div>
@@ -155,14 +156,13 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         >
-          <option value="user">Përdorues</option>
-          <option value="admin">Administrator</option>
-          <option value="Manager">Menaxher</option>
-          <option value="Technician">Teknici</option>
-          <option value="Support Agent">Agjent Mbështetje</option>
-          <option value="Design">Dizajner</option>
-          <option value="Marketing">Marketingu</option>
-          <option value="E-commerce">E-commerce</option>
+          <option value="Administrator">Administrator</option>
+          <option value="Menaxher">Menaxher</option>
+          <option value="Marketer">Marketer</option>
+          <option value="Dizajner">Dizajner</option>
+          <option value="Agjent shitjeje">Agjent shitjeje</option>
+          <option value="Agjent mbështetje">Agjent mbështetje</option>
+          <option value="Serviser">Serviser</option>
         </select>
       </div>
 
