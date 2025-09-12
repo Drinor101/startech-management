@@ -307,15 +307,23 @@ router.post('/', authenticateUser, async (req, res) => {
 
     // Insert order products - sync products to database if not found
     const orderProducts = [];
+    console.log('Processing order items:', items);
+    console.log('Product details from WooCommerce:', productDetails);
+    
     for (const item of items) {
+      console.log(`Processing item: ${item.productId}, quantity: ${item.quantity}`);
       const product = productDetails.find(p => p.id === item.productId);
+      console.log(`Found product in WooCommerce details:`, product);
       
       // Find the product UUID in our database by WooCommerce ID
-      let { data: dbProduct } = await supabase
+      console.log(`Looking for product ${item.productId} in database...`);
+      let { data: dbProduct, error: dbError } = await supabase
         .from('products')
         .select('id')
         .eq('woo_commerce_id', parseInt(item.productId))
         .single();
+      
+      console.log(`Database lookup result:`, { dbProduct, dbError });
       
       // If product not found in database, create it
       if (!dbProduct && product) {
@@ -336,11 +344,15 @@ router.post('/', authenticateUser, async (req, res) => {
           woo_commerce_id: parseInt(item.productId)
         };
         
+        console.log(`Creating product with data:`, productData);
+        
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
           .insert(productData)
           .select('id')
           .single();
+        
+        console.log(`Product creation result:`, { newProduct, insertError });
         
         if (insertError) {
           console.error(`Error creating product ${item.productId}:`, insertError);
@@ -352,12 +364,14 @@ router.post('/', authenticateUser, async (req, res) => {
       }
       
       if (dbProduct) {
-        orderProducts.push({
+        const orderProduct = {
           order_id: orderId,
           product_id: dbProduct.id, // Use database UUID
           quantity: item.quantity,
           subtotal: product ? product.price * item.quantity : 0
-        });
+        };
+        console.log(`Adding order product:`, orderProduct);
+        orderProducts.push(orderProduct);
       } else {
         console.warn(`Product ${item.productId} could not be created, skipping...`);
       }

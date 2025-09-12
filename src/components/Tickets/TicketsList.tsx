@@ -171,7 +171,7 @@ const TicketsList: React.FC = () => {
       {
         id: 'waiting-customer',
         title: 'Në pritje të klientit',
-        items: filteredTickets.filter(ticket => ticket.status === 'waiting-customer'),
+        items: filteredTickets.filter(ticket => ticket.status === 'waiting-customer'),jm 
         color: 'bg-orange-500'
       },
       {
