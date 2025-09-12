@@ -139,14 +139,50 @@ router.post('/', authenticateUser, async (req, res) => {
 
     const userName = userData?.name || userData?.email || 'Unknown';
 
+    // Handle customer - create if doesn't exist or use existing
+    let customerId = req.body.customer || req.body.customerId;
+    
+    // If customer is a string (name), try to find or create customer
+    if (customerId && typeof customerId === 'string' && !customerId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Check if customer exists by name
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('name', customerId)
+        .single();
+      
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            name: customerId,
+            email: `${customerId.toLowerCase().replace(/\s+/g, '')}@example.com`,
+            phone: '+383 44 000 000'
+          })
+          .select('id')
+          .single();
+        
+        if (customerError) {
+          console.error('Error creating customer:', customerError);
+          return res.status(500).json({
+            success: false,
+            error: 'Gabim në krijimin e klientit'
+          });
+        }
+        
+        customerId = newCustomer.id;
+      }
+    }
+
     const serviceData = {
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status || 'received',
-      category: req.body.category,
       assigned_to: req.body.assignedTo,
       warranty_info: req.body.warranty || req.body.warrantyInfo,
-      reception_point: req.body.receptionPoint,
-      customer_id: req.body.customer || req.body.customerId,
+      customer_id: customerId,
       created_by: userName,
       assigned_by: req.body.assignedTo || userName,
       created_at: new Date().toISOString(),

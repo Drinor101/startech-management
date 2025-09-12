@@ -15,9 +15,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
     customer: service?.customer || '',
     problem: service?.problem || '',
     status: service?.status || 'received',
-    warranty: service?.warranty || '',
-    category: service?.category || '',
-    receptionPoint: service?.receptionPoint || ''
+    warranty: service?.warranty || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
