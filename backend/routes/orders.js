@@ -288,6 +288,10 @@ router.post('/', authenticateUser, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
+    console.log('Order data to insert:', orderData);
+    console.log('Total calculated:', total);
+    console.log('Customer ID:', customerId);
+
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert(orderData)
@@ -295,8 +299,11 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     if (orderError) {
+      console.error('Database error inserting order:', orderError);
       throw orderError;
     }
+
+    console.log('Order inserted successfully:', order);
 
     // Insert order products
     const orderProducts = items.map(item => {
@@ -309,13 +316,18 @@ router.post('/', authenticateUser, async (req, res) => {
       };
     });
 
+    console.log('Order products to insert:', orderProducts);
+
     const { error: productsError } = await supabase
       .from('order_products')
       .insert(orderProducts);
 
     if (productsError) {
+      console.error('Database error inserting order products:', productsError);
       throw productsError;
     }
+
+    console.log('Order products inserted successfully');
 
     res.status(201).json({
       success: true,
