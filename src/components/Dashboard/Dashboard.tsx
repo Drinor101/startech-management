@@ -76,11 +76,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         customersRes.ok ? customersRes.json() : { data: [] }
       ]);
 
-      const servicesDataArray = servicesData.data || [];
-      const tasksDataArray = tasksData.data || [];
-      const ticketsDataArray = ticketsData.data || [];
-      const ordersDataArray = ordersData.data || [];
-      const customers = customersData.data || [];
+      console.log('API Responses:', {
+        services: servicesData,
+        tasks: tasksData,
+        tickets: ticketsData,
+        orders: ordersData,
+        customers: customersData
+      });
+
+      const servicesDataArray = servicesData.data || servicesData || [];
+      const tasksDataArray = tasksData.data || tasksData || [];
+      const ticketsDataArray = ticketsData.data || ticketsData || [];
+      const ordersDataArray = ordersData.data || ordersData || [];
+      const customers = customersData.data || customersData || [];
       
       // Set state for chart data
       setServices(servicesDataArray);
@@ -89,17 +97,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setOrders(ordersDataArray);
 
       // Update stats with real data
+      const activeServices = servicesDataArray.filter((s: any) => s.status === 'in-progress');
+      const openTasks = tasksDataArray.filter((t: any) => t.status === 'todo' || t.status === 'in-progress');
+      
+      console.log('Stats Calculation:', {
+        totalServices: servicesDataArray.length,
+        activeServices: activeServices.length,
+        servicesStatuses: servicesDataArray.map(s => s.status),
+        totalTasks: tasksDataArray.length,
+        openTasks: openTasks.length,
+        tasksStatuses: tasksDataArray.map(t => t.status)
+      });
+
       setStats([
         { 
           label: 'Servisi Aktivë', 
-          value: servicesDataArray.filter((s: any) => s.status === 'in-progress').length.toString(), 
+          value: activeServices.length > 0 ? activeServices.length.toString() : servicesDataArray.length.toString(), 
           icon: Settings, 
           color: 'bg-blue-500', 
           change: '+12%' 
         },
         { 
           label: 'Taskat e Hapura', 
-          value: tasksDataArray.filter((t: any) => t.status === 'todo' || t.status === 'in-progress').length.toString(), 
+          value: openTasks.length > 0 ? openTasks.length.toString() : tasksDataArray.length.toString(), 
           icon: CheckSquare, 
           color: 'bg-green-500', 
           change: '+8%' 
