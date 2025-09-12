@@ -52,12 +52,15 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setLoading(true);
       const apiUrl = import.meta.env.VITE_API_URL || 'https://startech-management-production.up.railway.app';
       
-      // Get user token for authentication
-      const token = localStorage.getItem('token');
+      // Get user ID for authentication (backend expects X-User-ID header)
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
       const headers = {
         'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` })
+        ...(user.id && { 'X-User-ID': user.id })
       };
+      
+      console.log('Dashboard Headers:', headers);
+      console.log('User from localStorage:', user);
       
       // Fetch all data in parallel
       const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes] = await Promise.all([
