@@ -18,6 +18,7 @@ import {
 import { Ticket } from '../../types';
 import { apiCall } from '../../config/api';
 import TicketForm from './TicketForm';
+import Modal from '../Common/Modal';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -27,6 +28,10 @@ const TicketsList: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
     fetchTickets();
@@ -138,6 +143,18 @@ const TicketsList: React.FC = () => {
       'Internal': 'I brendshëm'
     };
     return sourceMap[source as keyof typeof sourceMap] || source;
+  };
+
+  const handleViewTicket = (ticket: Ticket) => {
+    console.log('Selected ticket data:', ticket);
+    setSelectedTicket(ticket);
+    setIsModalOpen(true);
+  };
+
+  const handleEditTicket = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    setIsEditMode(true);
+    setIsFormOpen(true);
   };
 
   if (loading) {
@@ -320,12 +337,14 @@ const TicketsList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
                         <button
+                          onClick={() => handleViewTicket(ticket)}
                           className="text-blue-600 hover:text-blue-900 p-1"
                           title="Shih"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
+                          onClick={() => handleEditTicket(ticket)}
                           className="text-green-600 hover:text-green-900 p-1"
                           title="Modifiko"
                         >
@@ -346,6 +365,112 @@ const TicketsList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Ticket Details Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Detajet e Tiketës"
+        size="lg"
+      >
+        {selectedTicket && (
+          <div className="space-y-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">{selectedTicket.title}</h3>
+                <p className="text-sm text-gray-500 mt-1">{selectedTicket.id}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  Tiketë
+                </span>
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(selectedTicket.priority)}`}>
+                  {getPriorityText(selectedTicket.priority)}
+                </span>
+              </div>
+            </div>
+
+            {selectedTicket.description && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
+                <p className="text-sm text-gray-900">{selectedTicket.description}</p>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statusi</label>
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(selectedTicket.status)}
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedTicket.status)}`}>
+                    {getStatusText(selectedTicket.status)}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>
+                <p className="text-sm text-gray-900">{getSourceText(selectedTicket.source)}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTicket.createdBy || selectedTicket.created_by || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
+                <p className="text-sm text-gray-900">{selectedTicket.assignedTo || selectedTicket.assigned_to || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedTicket.createdAt).toLocaleString('sq-AL')}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedTicket.updatedAt).toLocaleString('sq-AL')}</p>
+              </div>
+            </div>
+
+            {selectedTicket.resolvedAt && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Zgjidhur më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedTicket.resolvedAt).toLocaleString('sq-AL')}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+
+      {/* Ticket Form Modal */}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => {
+          setIsFormOpen(false);
+          setIsEditMode(false);
+          setSelectedTicket(null);
+        }}
+        title={isEditMode ? "Modifiko Tiketën" : "Tiketë e Re"}
+        size="lg"
+      >
+        <TicketForm 
+          ticket={isEditMode ? selectedTicket : undefined}
+          onClose={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedTicket(null);
+          }}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedTicket(null);
+            fetchTickets();
+          }}
+        />
+      </Modal>
 
       {/* Ticket Form Modal */}
       {showForm && (
