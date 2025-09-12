@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Shield, Mail, Phone, Clock, Activity, AlertCircle, Euro } from 'lucide-react';
+import { Plus, Edit, Shield, Mail, Phone, Clock, Activity, AlertCircle, Euro, Trash2 } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import UserForm from './UserForm';
@@ -58,6 +58,30 @@ const UsersList: React.FC = () => {
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
     setIsUserModalOpen(true);
+  };
+
+  const handleEditUser = (user: any) => {
+    setSelectedUser(user);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteUser = async (user: any) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini përdoruesin "${user.name || user.email}"?`)) {
+      try {
+        await apiCall(`${apiConfig.endpoints.users}/${user.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the users list
+        const response = await apiCall(apiConfig.endpoints.users);
+        setUsers(response.data || []);
+        
+        alert('Përdoruesi u fshi me sukses');
+      } catch (error) {
+        console.error('Error deleting user:', error);
+        alert('Gabim në fshirjen e përdoruesit');
+      }
+    }
   };
 
   const getUserActions = (userId: string) => {
@@ -207,13 +231,27 @@ const UsersList: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <button 
                         onClick={() => handleViewUser(user)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 p-1"
+                        title="Shiko detajet"
                       >
                         <Shield className="w-4 h-4" />
                       </button>
                       {canEdit('users') && (
-                        <button className="text-gray-600 hover:text-gray-900">
+                        <button 
+                          onClick={() => handleEditUser(user)}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
+                        >
                           <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete('users') && (
+                        <button 
+                          onClick={() => handleDeleteUser(user)}
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
                     </div>
@@ -266,7 +304,7 @@ const UsersList: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Kredite</label>
                 <div className="flex items-center gap-2">
                   <Euro className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-medium text-gray-900">€{selectedUser.credits.toFixed(2)}</span>
+                  <span className="text-sm font-medium text-gray-900">€{(selectedUser.credits || 0).toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -280,8 +318,8 @@ const UsersList: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Statusi i Kredive</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCreditsColor(selectedUser.credits)}`}>
-                  {selectedUser.credits >= 150 ? 'Shumë' : selectedUser.credits >= 100 ? 'Mesatare' : 'Ulëte'}
+                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCreditsColor(selectedUser.credits || 0)}`}>
+                  {(selectedUser.credits || 0) >= 150 ? 'Shumë' : (selectedUser.credits || 0) >= 100 ? 'Mesatare' : 'Ulëte'}
                 </span>
               </div>
             </div>
@@ -316,14 +354,22 @@ const UsersList: React.FC = () => {
       {/* User Form Modal */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Shto Përdorues të Ri"
+        onClose={() => {
+          setIsFormOpen(false);
+          setSelectedUser(null);
+        }}
+        title={selectedUser ? "Modifiko Përdoruesin" : "Shto Përdorues të Ri"}
         size="md"
       >
         <UserForm 
-          onClose={() => setIsFormOpen(false)}
+          user={selectedUser}
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedUser(null);
+          }}
           onSuccess={() => {
             setIsFormOpen(false);
+            setSelectedUser(null);
             // Refresh the users list
             window.location.reload();
           }}
