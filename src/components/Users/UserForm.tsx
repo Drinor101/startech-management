@@ -86,7 +86,8 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3">
           <p className="text-sm text-red-600">{error}</p>
@@ -191,6 +192,7 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
       isVisible={notification.isVisible}
       onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
     />
+    </>
   );
 };
 
