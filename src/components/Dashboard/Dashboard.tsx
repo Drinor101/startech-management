@@ -393,28 +393,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Veprime të Shpejta</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <button className="p-4 text-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Settings className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-            <span className="text-sm font-medium">Servis i Ri</span>
-          </button>
-          <button className="p-4 text-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <CheckSquare className="w-6 h-6 text-green-600 mx-auto mb-2" />
-            <span className="text-sm font-medium">Krijo Task</span>
-          </button>
-          <button className="p-4 text-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Package className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-            <span className="text-sm font-medium">Porosi e Re</span>
-          </button>
-          <button className="p-4 text-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-            <Users className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-            <span className="text-sm font-medium">Shto Klient</span>
-          </button>
-        </div>
-      </div>
 
       {/* Click outside to close dropdown */}
       {showNewMenu && (
