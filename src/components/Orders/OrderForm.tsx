@@ -55,19 +55,27 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       const url = order ? `/api/orders/${order.id}` : '/api/orders';
       const method = order ? 'PUT' : 'POST';
       
+      console.log('OrderForm - Submitting order:', formData);
+      console.log('OrderForm - URL:', url, 'Method:', method);
+      
       const response = await apiCall(url, {
         method,
         body: JSON.stringify(formData)
       });
       
+      console.log('OrderForm - API Response:', response);
+      
       if (response.success) {
         console.log('Order saved successfully:', response);
+        alert('Porosia u krijua me sukses!');
         onSuccess?.();
       } else {
         console.error('Error saving order:', response.error);
+        alert(`Gabim në krijimin e porosisë: ${response.error}`);
       }
     } catch (error) {
       console.error('Error saving order:', error);
+      alert(`Gabim në krijimin e porosisë: ${error.message}`);
     }
   };
 

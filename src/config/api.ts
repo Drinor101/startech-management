@@ -41,6 +41,9 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   const response = await fetch(`${apiConfig.baseURL}${endpoint}`, config);
   
+  console.log('API Call - Response status:', response.status, response.statusText);
+  console.log('API Call - Response ok:', response.ok);
+  
   if (!response.ok) {
     console.error(`API Error: ${response.status} ${response.statusText}`);
     const errorText = await response.text();
@@ -48,5 +51,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
   
-  return response.json();
+  const responseData = await response.json();
+  console.log('API Call - Response data:', responseData);
+  return responseData;
 };
