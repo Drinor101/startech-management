@@ -326,17 +326,17 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`Database lookup result:`, { dbProduct, dbError });
       
       // If product not found in database, create it
-      if (!dbProduct && product) {
+      if (!dbProduct) {
         console.log(`Product ${item.productId} not found in database, creating it...`);
         
         const productData = {
-          title: product.name || 'Unknown Product',
+          title: product ? product.name : `Product ${item.productId}`,
           description: '',
           image: '',
           category: 'WooCommerce',
-          base_price: parseFloat(product.price || 0),
+          base_price: product ? parseFloat(product.price || 0) : 100,
           additional_cost: 0,
-          final_price: parseFloat(product.price || 0),
+          final_price: product ? parseFloat(product.price || 0) : 100,
           supplier: 'WooCommerce',
           woo_commerce_status: 'active',
           woo_commerce_category: '',
