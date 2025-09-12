@@ -4,6 +4,8 @@ import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import UserForm from './UserForm';
 import { usePermissions } from '../../hooks/usePermissions';
+import Notification from '../Common/Notification';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 const UsersList: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -14,6 +16,22 @@ const UsersList: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [showUserActions, setShowUserActions] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    user: any | null;
+  }>({
+    isOpen: false,
+    user: null
+  });
 
   // Fetch users from API
   useEffect(() => {
@@ -65,22 +83,42 @@ const UsersList: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteUser = async (user: any) => {
-    if (window.confirm(`A jeni të sigurt që doni të fshini përdoruesin "${user.name || user.email}"?`)) {
-      try {
-        await apiCall(`${apiConfig.endpoints.users}/${user.id}`, {
-          method: 'DELETE'
-        });
-        
-        // Refresh the users list
-        const response = await apiCall(apiConfig.endpoints.users);
-        setUsers(response.data || []);
-        
-        alert('Përdoruesi u fshi me sukses');
-      } catch (error) {
-        console.error('Error deleting user:', error);
-        alert('Gabim në fshirjen e përdoruesit');
-      }
+  const handleDeleteUser = (user: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      user: user
+    });
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!confirmationModal.user) return;
+    
+    try {
+      await apiCall(`${apiConfig.endpoints.users}/${confirmationModal.user.id}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the users list
+      const response = await apiCall(apiConfig.endpoints.users);
+      setUsers(response.data || []);
+      
+      setNotification({
+        type: 'success',
+        message: 'Përdoruesi u fshi me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e përdoruesit',
+        isVisible: true
+      });
+    } finally {
+      setConfirmationModal({
+        isOpen: false,
+        user: null
+      });
     }
   };
 
@@ -375,6 +413,25 @@ const UsersList: React.FC = () => {
           }}
         />
       </Modal>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, user: null })}
+        onConfirm={confirmDeleteUser}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini përdoruesin "${confirmationModal.user?.name || confirmationModal.user?.email}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
+      />
     </div>
   );
 };
