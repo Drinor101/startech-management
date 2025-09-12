@@ -226,7 +226,7 @@ const AppContent: React.FC = () => {
     id: user.id,
     name: user.name || user.email.split('@')[0], // Use name or email prefix as name
     email: user.email,
-    role: user.role as 'Administrator' | 'Manager' | 'E-commerce' | 'Technician' | 'Marketing' | 'Design' | 'Support Agent' | 'Customer',
+    role: user.role, // Use the actual role from database
     avatar: `https://ui-avatars.com/api/?name=${user.name || user.email.split('@')[0]}&background=3b82f6&color=fff`,
     isActive: true,
     credits: 0, // Default credits for new users

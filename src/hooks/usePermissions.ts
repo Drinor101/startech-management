@@ -5,15 +5,41 @@ export const usePermissions = () => {
   const { user } = useAuth();
 
   const hasPermission = (module: string, action: 'canView' | 'canCreate' | 'canEdit' | 'canDelete' | 'canExport'): boolean => {
-    if (!user) return false;
+    if (!user) {
+      console.log('usePermissions: No user');
+      return false;
+    }
     
-    const rolePermissions = ROLE_PERMISSIONS[user.role as keyof typeof ROLE_PERMISSIONS];
-    if (!rolePermissions) return false;
+    // Map database role to permission role
+    const roleMapping: { [key: string]: string } = {
+      'admin': 'Administrator',
+      'manager': 'Menaxher',
+      'marketer': 'Marketer',
+      'designer': 'Dizajner',
+      'sales_agent': 'Agjent shitjeje',
+      'support_agent': 'Agjent mbështetje',
+      'technician': 'Serviser'
+    };
+    
+    const mappedRole = roleMapping[user.role] || user.role;
+    console.log('usePermissions: User role:', user.role, '-> Mapped to:', mappedRole);
+    console.log('usePermissions: Available roles:', Object.keys(ROLE_PERMISSIONS));
+    
+    const rolePermissions = ROLE_PERMISSIONS[mappedRole as keyof typeof ROLE_PERMISSIONS];
+    if (!rolePermissions) {
+      console.log('usePermissions: No permissions found for role:', mappedRole);
+      return false;
+    }
     
     const modulePermissions = rolePermissions[module as keyof typeof rolePermissions];
-    if (!modulePermissions) return false;
+    if (!modulePermissions) {
+      console.log('usePermissions: No module permissions found for:', module);
+      return false;
+    }
     
-    return modulePermissions[action];
+    const result = modulePermissions[action];
+    console.log(`usePermissions: ${mappedRole} can ${action} ${module}:`, result);
+    return result;
   };
 
   const canView = (module: string) => hasPermission(module, 'canView');
