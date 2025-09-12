@@ -201,11 +201,11 @@ const OrdersList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-900">
-                        {order.products.length} item{order.products.length > 1 ? 's' : ''}
+                        {order.products?.length || 0} item{(order.products?.length || 0) > 1 ? 's' : ''}
                       </div>
                       <div className="text-sm text-gray-500">
-                        {order.products.map(p => p.title).join(', ').substring(0, 50)}
-                        {order.products.map(p => p.title).join(', ').length > 50 ? '...' : ''}
+                        {order.products?.map(p => p?.title || 'Produkt i panjohur').join(', ').substring(0, 50) || 'N/A'}
+                        {(order.products?.map(p => p?.title || 'Produkt i panjohur').join(', ').length || 0) > 50 ? '...' : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4">
@@ -219,7 +219,7 @@ const OrdersList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">${order.total.toFixed(2)}</span>
+                        <span className="text-sm font-medium text-gray-900">${(order.total || 0).toFixed(2)}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -324,23 +324,23 @@ const OrdersList: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Produktet</label>
               <div className="space-y-2">
-                {selectedOrder.products.map((product) => (
-                  <div key={product.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                {selectedOrder.products?.map((product) => (
+                  <div key={product?.id || Math.random()} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     <img 
-                      src={product.image} 
-                      alt={product.title}
+                      src={product?.image || '/placeholder-product.png'} 
+                      alt={product?.title || 'Produkt'}
                       className="w-12 h-12 object-cover rounded"
                     />
                     <div className="flex-1">
-                      <p className="font-medium text-gray-900">{product.title}</p>
-                      <p className="text-sm text-gray-600">{product.category}</p>
+                      <p className="font-medium text-gray-900">{product?.title || 'Produkt i panjohur'}</p>
+                      <p className="text-sm text-gray-600">{product?.category || 'N/A'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">${product.finalPrice.toFixed(2)}</p>
-                      <p className="text-sm text-gray-500">Sasi: {product.quantity}</p>
+                      <p className="font-medium text-gray-900">${(product?.finalPrice || 0).toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">Sasi: {product?.quantity || 0}</p>
                     </div>
                   </div>
-                ))}
+                )) || []}
               </div>
             </div>
 
@@ -384,7 +384,7 @@ const OrdersList: React.FC = () => {
 
             <div className="flex justify-between items-center pt-4 border-t border-gray-200">
               <span className="text-lg font-medium text-gray-900">Totali</span>
-              <span className="text-lg font-bold text-gray-900">${selectedOrder.total.toFixed(2)}</span>
+              <span className="text-lg font-bold text-gray-900">${(selectedOrder.total || 0).toFixed(2)}</span>
             </div>
           </div>
         )}

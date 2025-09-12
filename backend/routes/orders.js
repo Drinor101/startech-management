@@ -46,6 +46,7 @@ router.get('/', authenticateUser, async (req, res) => {
       customer: order.customer,
       products: order.order_products?.map(op => ({
         ...op.product,
+        finalPrice: op.product?.final_price || 0,
         quantity: op.quantity,
         subtotal: op.subtotal
       })) || [],
@@ -120,6 +121,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
       customer: data.customer,
       products: data.order_products?.map(op => ({
         ...op.product,
+        finalPrice: op.product?.final_price || 0,
         quantity: op.quantity,
         subtotal: op.subtotal
       })) || [],

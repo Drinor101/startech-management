@@ -106,7 +106,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const calculateTotal = () => {
     return formData.items.reduce((total, item) => {
       const product = products.find(p => p.id === item.productId);
-      return total + (product ? product.finalPrice * item.quantity : 0);
+      return total + (product ? (product.finalPrice || 0) * (item.quantity || 0) : 0);
     }, 0);
   };
 
@@ -154,7 +154,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                   ) : (
                     products.map(product => (
                       <option key={product.id} value={product.id}>
-                        {product.title} - ${product.finalPrice}
+                        {product.title} - ${(product.finalPrice || 0).toFixed(2)}
                       </option>
                     ))
                   )}
