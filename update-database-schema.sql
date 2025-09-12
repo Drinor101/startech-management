@@ -132,22 +132,25 @@ DECLARE
   new_id TEXT;
   counter INTEGER;
   current_year TEXT;
+  max_num INTEGER;
 BEGIN
   -- Merr vitin aktual
   current_year := EXTRACT(YEAR FROM NOW())::TEXT;
   
-  -- Merr numrin e fundit për këtë prefiks dhe vit
-  SELECT COALESCE(MAX(CAST(SUBSTRING(id FROM LENGTH(prefix) + 6) AS INTEGER)), 0) + 1
-  INTO counter
+  -- Merr numrin e fundit për këtë prefiks dhe vit duke përdorur regex
+  SELECT COALESCE(MAX(CAST(regexp_replace(id, '^' || prefix || '-' || current_year || '-(\\d+)$', '\\1') AS INTEGER)), 0)
+  INTO max_num
   FROM (
-    SELECT id FROM tasks WHERE id LIKE prefix || '-' || current_year || '-%'
+    SELECT id FROM tasks WHERE id ~ ('^' || prefix || '-' || current_year || '-\\d+$')
     UNION ALL
-    SELECT id FROM services WHERE id LIKE prefix || '-' || current_year || '-%'
+    SELECT id FROM services WHERE id ~ ('^' || prefix || '-' || current_year || '-\\d+$')
     UNION ALL
-    SELECT id FROM orders WHERE id LIKE prefix || '-' || current_year || '-%'
+    SELECT id FROM orders WHERE id ~ ('^' || prefix || '-' || current_year || '-\\d+$')
     UNION ALL
-    SELECT id FROM tickets WHERE id LIKE prefix || '-' || current_year || '-%'
+    SELECT id FROM tickets WHERE id ~ ('^' || prefix || '-' || current_year || '-\\d+$')
   ) all_ids;
+  
+  counter := max_num + 1;
   
   -- Krijon ID-në e re në format PREFIX-YYYY-NNN
   new_id := prefix || '-' || current_year || '-' || LPAD(counter::TEXT, 3, '0');
