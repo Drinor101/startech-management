@@ -83,7 +83,7 @@ const ProductsList: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchProducts(currentPage);git p
+    fetchProducts(currentPage);
   }, [currentPage]);
 
   // Get unique categories from products
