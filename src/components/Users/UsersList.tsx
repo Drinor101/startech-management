@@ -249,9 +249,6 @@ const UsersList: React.FC = () => {
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(selectedUser.role)}`}>
                     {selectedUser.role}
                   </span>
-                  <span className="text-sm text-gray-600">
-                    {selectedUser.department || 'N/A'}
-                  </span>
                 </div>
               </div>
             </div>

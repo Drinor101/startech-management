@@ -13,7 +13,6 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
     email: user?.email || '',
     role: user?.role || 'Agjent mbështetje',
     phone: user?.phone || '',
-    department: user?.department || '',
     password: '' // Only for new users
   });
   const [loading, setLoading] = useState(false);
@@ -33,8 +32,7 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
             name: formData.name,
             email: formData.email,
             role: formData.role,
-            phone: formData.phone,
-            department: formData.department
+            phone: formData.phone
           })
         });
       } else {
@@ -46,7 +44,6 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
             email: formData.email,
             role: formData.role,
             phone: formData.phone,
-            department: formData.department,
             password: formData.password
           })
         });
@@ -129,23 +126,6 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti</label>
-        <select 
-          name="department"
-          value={formData.department}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">Zgjidh Departamentin</option>
-          <option value="IT">IT</option>
-          <option value="Marketing">Marketingu</option>
-          <option value="Sales">Shitjet</option>
-          <option value="Support">Mbështetja</option>
-          <option value="Design">Dizajni</option>
-          <option value="Management">Menaxhimi</option>
-        </select>
-      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Roli</label>
@@ -156,6 +136,7 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           required
         >
+          <option value="">Zgjidh Rolin</option>
           <option value="Administrator">Administrator</option>
           <option value="Menaxher">Menaxher</option>
           <option value="Marketer">Marketer</option>
