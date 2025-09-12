@@ -4,6 +4,7 @@ import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const OrdersList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -13,27 +14,28 @@ const OrdersList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Fetch orders from API
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await apiCall(apiConfig.endpoints.orders);
-        console.log('Orders API response:', response);
-        
-        // Handle the correct API response structure
-        const data = response.success ? response.data : [];
-        setOrders(data || []);
-      } catch (err) {
-        console.error('Error fetching orders:', err);
-        setError('Gabim në ngarkimin e porosive');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.orders);
+      console.log('Orders API response:', response);
+      
+      // Handle the correct API response structure
+      const data = response.success ? response.data : [];
+      setOrders(data || []);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Gabim në ngarkimin e porosive');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrders();
   }, []);
 
@@ -46,6 +48,23 @@ const OrdersList: React.FC = () => {
       'cancelled': 'bg-red-100 text-red-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
+  };
+
+  const handleDeleteOrder = async (order: Order) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini porosinë "${order.id}"?`)) {
+      try {
+        await apiCall(`${apiConfig.endpoints.orders}/${order.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the orders list
+        await fetchOrders();
+        alert('Porosia u fshi me sukses');
+      } catch (error) {
+        console.error('Error deleting order:', error);
+        alert('Gabim në fshirjen e porosisë');
+      }
+    }
   };
 
   // Function to translate status values to Albanian
@@ -253,19 +272,24 @@ const OrdersList: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button 
-                          onClick={() => handleEditOrder(order)}
-                          className="text-green-600 hover:text-green-900 p-1"
-                          title="Modifiko"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="text-red-600 hover:text-red-900 p-1"
-                          title="Fshij"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canEdit('orders') && (
+                          <button 
+                            onClick={() => handleEditOrder(order)}
+                            className="text-green-600 hover:text-green-900 p-1"
+                            title="Modifiko"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete('orders') && (
+                          <button
+                            onClick={() => handleDeleteOrder(order)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Fshij"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
