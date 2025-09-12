@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Eye, Edit, AlertCircle, Clock, User, QrCode, Mail, Calendar } from 'lucide-react';
+import { Grid3X3, List, Eye, Edit, Trash2, AlertCircle, Clock, User, QrCode, Mail, Calendar } from 'lucide-react';
 import { Service, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
@@ -247,7 +247,13 @@ const ServicesList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Servis ID
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Krijuar nga
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Përcaktuar për
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Klienti
@@ -259,13 +265,10 @@ const ServicesList: React.FC = () => {
                   Statusi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Caktuar për
+                  Garancioni
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Garanci
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Njoftimet
+                  Data
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Veprimet
@@ -277,8 +280,19 @@ const ServicesList: React.FC = () => {
                 <tr key={service.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <QrCode className="w-4 h-4 text-gray-400" />
+                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                        SRV
+                      </span>
                       <span className="text-sm font-medium text-gray-900">{service.id}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="text-sm text-gray-900">{service.createdBy || 'N/A'}</span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-900">{service.assignedTo || 'N/A'}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -290,11 +304,11 @@ const ServicesList: React.FC = () => {
                       </div>
                     </div>
                   </td>
-                                     <td className="px-6 py-4">
-                     <div className="max-w-xs">
-                       <p className="text-sm text-gray-900 truncate">{service.problem_description || 'N/A'}</p>
-                     </div>
-                   </td>
+                  <td className="px-6 py-4">
+                    <div className="max-w-xs">
+                      <p className="text-sm text-gray-900 truncate">{service.problemDescription || 'N/A'}</p>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <span 
@@ -311,12 +325,6 @@ const ServicesList: React.FC = () => {
                       )}
                     </div>
                   </td>
-                                     <td className="px-6 py-4 whitespace-nowrap">
-                     <div className="flex items-center gap-2">
-                       <User className="w-4 h-4 text-gray-400" />
-                       <span className="text-sm text-gray-900">{service.assigned_to || 'N/A'}</span>
-                     </div>
-                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {service.underWarranty ? 'Po' : 'Jo'}
@@ -324,26 +332,33 @@ const ServicesList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      {service.emailNotificationsSent ? (
-                        <Mail className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <Mail className="w-4 h-4 text-gray-400" />
-                      )}
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-900">
+                        {new Date(service.createdAt).toLocaleDateString('sq-AL')}
+                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleViewService(service)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 p-1"
+                        title="Shih"
                       >
                         <Eye className="w-4 h-4" />
                       </button>
                       <button 
                         onClick={() => handleEditService(service)}
-                        className="text-gray-600 hover:text-gray-900"
+                        className="text-green-600 hover:text-green-900 p-1"
+                        title="Modifiko"
                       >
                         <Edit className="w-4 h-4" />
+                      </button>
+                      <button
+                        className="text-red-600 hover:text-red-900 p-1"
+                        title="Fshij"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </td>

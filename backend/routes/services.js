@@ -36,9 +36,32 @@ router.get('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Transform data to match frontend interface
+    const transformedData = data.map(service => ({
+      id: service.id,
+      createdBy: service.created_by,
+      assignedBy: service.assigned_by,
+      customer: service.customer,
+      orderId: service.order_id,
+      relatedProducts: service.related_products || [],
+      problemDescription: service.problem_description,
+      status: service.status,
+      category: service.category,
+      assignedTo: service.assigned_to,
+      warrantyInfo: service.warranty_info,
+      serviceHistory: service.service_history || [],
+      receptionPoint: service.reception_point,
+      underWarranty: service.under_warranty,
+      qrCode: service.qr_code,
+      createdAt: service.created_at,
+      updatedAt: service.updated_at,
+      completedAt: service.completed_at,
+      emailNotificationsSent: service.email_notifications_sent
+    }));
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -97,13 +120,28 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një shërbim të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
-    // Generate a unique service ID
-    const serviceId = `SRV-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID mungon'
+      });
+    }
+
+    // Get user info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single();
+
+    const userName = userData?.name || userData?.email || 'Unknown';
     
     const serviceData = {
-      id: serviceId,
       ...req.body,
       status: req.body.status || 'received',
+      created_by: userName,
+      assigned_by: req.body.assignedBy || userName,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -119,9 +157,40 @@ router.post('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Add to history
+    await supabase
+      .from('service_history')
+      .insert({
+        service_id: data.id,
+        action: 'Shërbimi u krijua',
+        user_id: userId,
+        user_name: userName,
+        notes: `Shërbimi u krijua për klientin ${data.customer_id}`
+      });
+
     res.status(201).json({
       success: true,
-      data: data,
+      data: {
+        id: data.id,
+        createdBy: data.created_by,
+        assignedBy: data.assigned_by,
+        customer: data.customer,
+        orderId: data.order_id,
+        relatedProducts: data.related_products || [],
+        problemDescription: data.problem_description,
+        status: data.status,
+        category: data.category,
+        assignedTo: data.assigned_to,
+        warrantyInfo: data.warranty_info,
+        serviceHistory: [],
+        receptionPoint: data.reception_point,
+        underWarranty: data.under_warranty,
+        qrCode: data.qr_code,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        completedAt: data.completed_at,
+        emailNotificationsSent: data.email_notifications_sent
+      },
       message: 'Shërbimi u krijua me sukses'
     });
   } catch (error) {
