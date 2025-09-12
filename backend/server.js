@@ -33,6 +33,7 @@ const setupRoutes = async () => {
   const orderRoutes = (await import('./routes/orders.js')).default;
   const serviceRoutes = (await import('./routes/services.js')).default;
   const taskRoutes = (await import('./routes/tasks.js')).default;
+  const ticketRoutes = (await import('./routes/tickets.js')).default;
   const customerRoutes = (await import('./routes/customers.js')).default;
   const reportRoutes = (await import('./routes/reports.js')).default;
 
@@ -42,6 +43,7 @@ const setupRoutes = async () => {
   app.use('/api/orders', orderRoutes);
   app.use('/api/services', serviceRoutes);
   app.use('/api/tasks', taskRoutes);
+  app.use('/api/tickets', ticketRoutes);
   app.use('/api/customers', customerRoutes);
   app.use('/api/reports', reportRoutes);
 };

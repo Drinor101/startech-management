@@ -6,7 +6,7 @@ import Header from './components/Layout/Header';
 import Dashboard from './components/Dashboard/Dashboard';
 import ServicesList from './components/Services/ServicesList';
 import TasksList from './components/Tasks/TasksList';
-import TicketsList from './components/Tasks/TicketsList';
+import TicketsList from './components/Tickets/TicketsList';
 import OrdersList from './components/Orders/OrdersList';
 import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
