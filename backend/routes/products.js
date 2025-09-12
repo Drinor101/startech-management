@@ -7,12 +7,14 @@ const router = express.Router();
 // Merr të gjithë produktet
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, status } = req.query;
+    console.log('Fetching products from database...');
+    
+    const { page = 1, limit = 100, category, status } = req.query;
     const offset = (page - 1) * limit;
 
     let query = supabase
       .from('products')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false });
 
     // Filtra
@@ -29,11 +31,64 @@ router.get('/', authenticateUser, async (req, res) => {
     const { data, error, count } = await query;
 
     if (error) {
+      console.error('Database error:', error);
       throw error;
     }
 
+    console.log(`Found ${data?.length || 0} products in database`);
+
+    // If no products in database, try to sync with WooCommerce first
+    if (!data || data.length === 0) {
+      console.log('No products in database, attempting WooCommerce sync...');
+      try {
+        // WooCommerce API configuration
+        const wooCommerceConfig = {
+          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
+          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+        };
+
+        // Fetch and sync products from WooCommerce
+        const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+        if (wooCommerceProducts && wooCommerceProducts.length > 0) {
+          const syncedProducts = await syncProductsToDatabase(wooCommerceProducts);
+          console.log(`Synced ${syncedProducts.length} products from WooCommerce`);
+          
+          // Return the synced products
+          const transformedData = syncedProducts.map(product => ({
+            id: product.id,
+            image: product.image || '',
+            title: product.title || '',
+            category: product.category || '',
+            basePrice: parseFloat(product.base_price || 0),
+            additionalCost: parseFloat(product.additional_cost || 0),
+            finalPrice: parseFloat(product.final_price || 0),
+            supplier: product.supplier || '',
+            wooCommerceStatus: product.woo_commerce_status || 'draft',
+            wooCommerceCategory: product.woo_commerce_category || '',
+            lastSyncDate: product.last_sync_date || new Date().toISOString()
+          }));
+
+          return res.json({
+            success: true,
+            data: transformedData,
+            pagination: {
+              page: parseInt(page),
+              limit: parseInt(limit),
+              total: syncedProducts.length,
+              pages: Math.ceil(syncedProducts.length / limit)
+            },
+            message: 'Products synced from WooCommerce'
+          });
+        }
+      } catch (syncError) {
+        console.error('WooCommerce sync failed:', syncError);
+        // Continue with empty data if sync fails
+      }
+    }
+
     // Transform the data to match frontend expectations
-    const transformedData = data.map(product => ({
+    const transformedData = (data || []).map(product => ({
       id: product.id,
       image: product.image || '',
       title: product.title || '',
@@ -53,8 +108,8 @@ router.get('/', authenticateUser, async (req, res) => {
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: count,
-        pages: Math.ceil(count / limit)
+        total: count || 0,
+        pages: Math.ceil((count || 0) / limit)
       }
     });
   } catch (error) {
