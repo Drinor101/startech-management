@@ -123,6 +123,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
@@ -340,6 +341,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         </div>
       </div>
     )}
+    </>
   );
 };
 
