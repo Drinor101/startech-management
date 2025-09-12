@@ -26,8 +26,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     shippingZipCode: order?.shippingInfo?.zipCode || '',
     shippingMethod: order?.shippingInfo?.method || 'Standard Post',
     notes: order?.notes || '',
-    teamNotes: order?.teamNotes || '',
-    emailNotifications: true
+    teamNotes: order?.teamNotes || ''
   });
 
   // Fetch products from API
@@ -279,16 +278,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         </div>
       )}
 
-      <div className="flex items-center">
-        <input
-          type="checkbox"
-          name="emailNotifications"
-          checked={formData.emailNotifications}
-          onChange={handleChange}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-        />
-        <label className="ml-2 block text-sm text-gray-900">Dërgo njoftime në email për klientin</label>
-      </div>
 
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex justify-between items-center">
