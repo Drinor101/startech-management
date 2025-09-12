@@ -155,7 +155,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një porosi të re
 router.post('/', authenticateUser, async (req, res) => {
   try {
-    const { customerId, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
+    const { customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
     
     // Generate PRS-YYYY-NNN ID
     const currentYear = new Date().getFullYear();
@@ -174,6 +174,34 @@ router.post('/', authenticateUser, async (req, res) => {
     }
     
     const orderId = `PRS-${currentYear}-${orderNumber.toString().padStart(3, '0')}`;
+    
+    // Create or find customer
+    let customerId;
+    const { data: existingCustomer } = await supabase
+      .from('customers')
+      .select('id')
+      .eq('name', customer)
+      .single();
+    
+    if (existingCustomer) {
+      customerId = existingCustomer.id;
+    } else {
+      // Create new customer
+      const { data: newCustomer, error: customerError } = await supabase
+        .from('customers')
+        .insert({
+          name: customer,
+          email: `${customer.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+          source: 'Internal'
+        })
+        .select('id')
+        .single();
+      
+      if (customerError) {
+        throw customerError;
+      }
+      customerId = newCustomer.id;
+    }
     
     // Calculate total from items
     const { data: products } = await supabase
@@ -248,7 +276,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { 
-      customerId, 
+      customer, 
       status, 
       shippingAddress, 
       shippingCity, 
@@ -259,8 +287,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       items 
     } = req.body;
 
-    const updateData = {
-      customer_id: customerId,
+    let updateData = {
       status: status,
       shipping_address: shippingAddress,
       shipping_city: shippingCity,
@@ -270,6 +297,39 @@ router.put('/:id', authenticateUser, async (req, res) => {
       team_notes: teamNotes,
       updated_at: new Date().toISOString()
     };
+
+    // Handle customer update if provided
+    if (customer) {
+      // Create or find customer
+      let customerId;
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('name', customer)
+        .single();
+      
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            name: customer,
+            email: `${customer.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            source: 'Internal'
+          })
+          .select('id')
+          .single();
+        
+        if (customerError) {
+          throw customerError;
+        }
+        customerId = newCustomer.id;
+      }
+      
+      updateData.customer_id = customerId;
+    }
 
     // Remove undefined fields
     Object.keys(updateData).forEach(key => {

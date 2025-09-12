@@ -19,7 +19,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    customerId: order?.customerId || '',
+    customer: order?.customer?.name || '',
     items: order?.products?.map(p => ({ productId: p.id, quantity: p.quantity })) || [{ productId: '', quantity: 1 }] as OrderItem[],
     shippingAddress: order?.shippingInfo?.address || '',
     shippingCity: order?.shippingInfo?.city || '',
@@ -114,19 +114,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Klienti</label>
-        <select
-          name="customerId"
-          value={formData.customerId}
+        <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
+        <input
+          type="text"
+          name="customer"
+          value={formData.customer || ''}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Emri i klientit"
           required
-        >
-          <option value="">Zgjidh Klientin</option>
-          {mockCustomers.map(customer => (
-            <option key={customer.id} value={customer.id}>{customer.name}</option>
-          ))}
-        </select>
+        />
       </div>
 
       <div>
