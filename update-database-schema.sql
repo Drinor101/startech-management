@@ -150,7 +150,8 @@ BEGIN
     SELECT id FROM tickets WHERE id ~ ('^' || prefix || '-' || current_year || '-\\d+$')
   ) all_ids;
   
-  counter := max_num + 1;
+  -- Sigurohu që counter fillon nga 1, jo 0
+  counter := GREATEST(max_num + 1, 1);
   
   -- Krijon ID-në e re në format PREFIX-YYYY-NNN
   new_id := prefix || '-' || current_year || '-' || LPAD(counter::TEXT, 3, '0');
