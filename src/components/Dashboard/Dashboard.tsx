@@ -129,10 +129,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         },
         { 
           label: 'Porositë Sot', 
-          value: ordersDataArray.filter((o: any) => {
+          value: (() => {
             const today = new Date().toISOString().split('T')[0];
-            return o.created_at?.startsWith(today);
-          }).length.toString(), 
+            const todayOrders = ordersDataArray.filter((o: any) => {
+              const orderDate = o.created_at || o.createdAt;
+              return orderDate && orderDate.startsWith(today);
+            });
+            console.log('Today Orders Debug:', {
+              today,
+              totalOrders: ordersDataArray.length,
+              todayOrders: todayOrders.length,
+              orderDates: ordersDataArray.map(o => o.created_at || o.createdAt)
+            });
+            return todayOrders.length > 0 ? todayOrders.length.toString() : ordersDataArray.length.toString();
+          })(), 
           icon: Package, 
           color: 'bg-purple-500', 
           change: '+15%' 
