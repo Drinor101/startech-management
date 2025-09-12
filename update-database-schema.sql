@@ -10,7 +10,10 @@ ADD COLUMN IF NOT EXISTS assigned_by TEXT;
 ALTER TABLE services 
 ADD COLUMN IF NOT EXISTS created_by TEXT,
 ADD COLUMN IF NOT EXISTS assigned_by TEXT,
-ADD COLUMN IF NOT EXISTS warranty_info TEXT;
+ADD COLUMN IF NOT EXISTS assigned_to TEXT,
+ADD COLUMN IF NOT EXISTS warranty_info TEXT,
+ADD COLUMN IF NOT EXISTS problem_description TEXT,
+ADD COLUMN IF NOT EXISTS reception_point TEXT;
 
 -- 3. Shtimi i fushave të reja në tabelën e porosive (për PRS prefix)
 ALTER TABLE orders 
@@ -107,10 +110,19 @@ ALTER TABLE media_files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE media_calendar ENABLE ROW LEVEL SECURITY;
 
 -- 12. Politikat e sigurisë për tabelat e reja
+DROP POLICY IF EXISTS "Authenticated users can read all tickets" ON tickets;
 CREATE POLICY "Authenticated users can read all tickets" ON tickets FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can read all ticket comments" ON ticket_comments;
 CREATE POLICY "Authenticated users can read all ticket comments" ON ticket_comments FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can read all ticket history" ON ticket_history;
 CREATE POLICY "Authenticated users can read all ticket history" ON ticket_history FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can read all media files" ON media_files;
 CREATE POLICY "Authenticated users can read all media files" ON media_files FOR SELECT TO authenticated USING (true);
+
+DROP POLICY IF EXISTS "Authenticated users can read all media calendar" ON media_calendar;
 CREATE POLICY "Authenticated users can read all media calendar" ON media_calendar FOR SELECT TO authenticated USING (true);
 
 -- 13. Funksioni për gjenerimin e ID-ve me prefiks

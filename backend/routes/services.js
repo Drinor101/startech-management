@@ -137,25 +137,7 @@ router.post('/', authenticateUser, async (req, res) => {
 
     const userName = userData?.name || userData?.email || 'Unknown';
 
-    // Generate SRV ID
-    const { data: lastService } = await supabase
-      .from('services')
-      .select('id')
-      .like('id', 'SRV%')
-      .order('id', { ascending: false })
-      .limit(1)
-      .single();
-
-    let serviceNumber = 1;
-    if (lastService?.id) {
-      const lastNumber = parseInt(lastService.id.replace('SRV', ''));
-      serviceNumber = lastNumber + 1;
-    }
-
-    const serviceId = `SRV${serviceNumber.toString().padStart(4, '0')}`;
-    
     const serviceData = {
-      id: serviceId,
       problem_description: req.body.problemDescription,
       status: req.body.status || 'received',
       category: req.body.category,
