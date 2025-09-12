@@ -34,7 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     { label: 'Servisi Aktivë', value: '0', icon: Settings, color: 'bg-blue-500', change: '+0%' },
     { label: 'Taskat e Hapura', value: '0', icon: CheckSquare, color: 'bg-green-500', change: '+0%' },
     { label: 'Porositë Sot', value: '0', icon: Package, color: 'bg-purple-500', change: '+0%' },
-    { label: 'Klientët', value: '0', icon: Users, color: 'bg-orange-500', change: '+0%' },
+    { label: 'Produktet', value: '0', icon: Package, color: 'bg-indigo-500', change: '+0%' },
   ]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +42,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [tasks, setTasks] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -63,20 +64,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       console.log('User from localStorage:', user);
       
       // Fetch all data in parallel
-      const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes] = await Promise.all([
+      const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes, productsRes] = await Promise.all([
         fetch(`${apiUrl}/api/services`, { headers }),
         fetch(`${apiUrl}/api/tasks`, { headers }),
         fetch(`${apiUrl}/api/tickets`, { headers }),
         fetch(`${apiUrl}/api/orders`, { headers }),
-        fetch(`${apiUrl}/api/customers`, { headers })
+        fetch(`${apiUrl}/api/customers`, { headers }),
+        fetch(`${apiUrl}/api/products`, { headers })
       ]);
 
-      const [servicesData, tasksData, ticketsData, ordersData, customersData] = await Promise.all([
+      const [servicesData, tasksData, ticketsData, ordersData, customersData, productsData] = await Promise.all([
         servicesRes.ok ? servicesRes.json() : { data: [] },
         tasksRes.ok ? tasksRes.json() : { data: [] },
         ticketsRes.ok ? ticketsRes.json() : { data: [] },
         ordersRes.ok ? ordersRes.json() : { data: [] },
-        customersRes.ok ? customersRes.json() : { data: [] }
+        customersRes.ok ? customersRes.json() : { data: [] },
+        productsRes.ok ? productsRes.json() : { data: [] }
       ]);
 
       console.log('API Responses:', {
@@ -84,7 +87,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         tasks: tasksData,
         tickets: ticketsData,
         orders: ordersData,
-        customers: customersData
+        customers: customersData,
+        products: productsData
       });
 
       const servicesDataArray = servicesData.data || servicesData || [];
@@ -92,12 +96,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       const ticketsDataArray = ticketsData.data || ticketsData || [];
       const ordersDataArray = ordersData.data || ordersData || [];
       const customers = customersData.data || customersData || [];
+      const products = productsData.data || productsData || [];
       
       // Set state for chart data
       setServices(servicesDataArray);
       setTasks(tasksDataArray);
       setTickets(ticketsDataArray);
       setOrders(ordersDataArray);
+      setProducts(products);
 
       // Update stats with real data
       const activeServices = servicesDataArray.filter((s: any) => s.status === 'in-progress');
@@ -148,10 +154,10 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           change: '+15%' 
         },
         { 
-          label: 'Klientët', 
-          value: customers.length.toString(), 
-          icon: Users, 
-          color: 'bg-orange-500', 
+          label: 'Produktet', 
+          value: products.length.toString(), 
+          icon: Package, 
+          color: 'bg-indigo-500', 
           change: '+5%' 
         },
       ]);
@@ -222,6 +228,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         });
       });
       
+      // Add recent products (latest 1)
+      const recentProducts = products
+        .sort((a, b) => new Date(b.lastSyncDate || b.createdAt) - new Date(a.lastSyncDate || a.createdAt))
+        .slice(0, 1);
+      
+      recentProducts.forEach((product) => {
+        recentActivities.push({
+          id: `product-${product.id}`,
+          action: `Produkt i ri u shtua: ${product.title}`,
+          user: 'WooCommerce',
+          time: new Date(product.lastSyncDate || product.createdAt).toLocaleString('sq-AL')
+        });
+      });
+      
       // Sort by creation time and take latest 4
       recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
       console.log('Recent Activities:', recentActivities);
@@ -263,13 +283,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   };
 
   // Chart data for service requests trend (using real data)
-  const generateChartData = (services: any[], tasks: any[]) => {
+  const generateChartData = (services: any[], tasks: any[], products: any[]) => {
     const months = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj'];
     const currentMonth = new Date().getMonth();
-    
+     
     // Generate data for last 6 months
     const serviceData = [];
     const taskData = [];
+    const productData = [];
     
     for (let i = 5; i >= 0; i--) {
       const targetMonth = new Date();
@@ -287,8 +308,14 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         return createdDate >= monthStart && createdDate <= monthEnd;
       }).length;
       
+      const productsInMonth = products.filter(p => {
+        const createdDate = new Date(p.lastSyncDate || p.createdAt);
+        return createdDate >= monthStart && createdDate <= monthEnd;
+      }).length;
+      
       serviceData.push(servicesInMonth);
       taskData.push(tasksInMonth);
+      productData.push(productsInMonth);
     }
     
     return {
@@ -309,12 +336,20 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           backgroundColor: 'rgba(34, 197, 94, 0.1)',
           tension: 0.4,
           fill: true,
+        },
+        {
+          label: 'Produktet e Sinkronizuar',
+          data: productData,
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          tension: 0.4,
+          fill: true,
         }
       ],
     };
   };
 
-  const chartData = generateChartData(services, tasks);
+  const chartData = generateChartData(services, tasks, products);
 
   const chartOptions = {
     responsive: true,
