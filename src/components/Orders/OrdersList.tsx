@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Eye, Edit, Trash2, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle, Plus } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -12,6 +12,7 @@ const OrdersList: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Fetch orders from API
   useEffect(() => {
@@ -76,6 +77,29 @@ const OrdersList: React.FC = () => {
     setIsModalOpen(true);
   };
 
+  const handleEditOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.orders);
+      console.log('Orders API response:', response);
+      
+      const data = response.success ? response.data : [];
+      setOrders(data || []);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      setError('Gabim në ngarkimin e porosive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -105,11 +129,16 @@ const OrdersList: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Porositë</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
         <button 
-          onClick={() => setIsFormOpen(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          onClick={() => {
+            setSelectedOrder(null);
+            setIsEditMode(false);
+            setIsFormOpen(true);
+          }}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
         >
+          <Plus className="w-4 h-4" />
           Porosi e Re
         </button>
       </div>
@@ -251,46 +280,49 @@ const OrdersList: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Order Details"
+        title="Detajet e Porosisë"
         size="lg"
       >
         {selectedOrder && (
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-start justify-between">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Order ID</label>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-gray-900">{selectedOrder.id}</p>
-                  <span 
-                    className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(selectedOrder.source)}`}
-                  >
-                    {(() => {
-                      const SourceIcon = getSourceIcon(selectedOrder.source);
-                      return <SourceIcon className="w-3 h-3" />;
-                    })()}
-                    {selectedOrder.source}
-                  </span>
-                </div>
+                <h3 className="text-lg font-medium text-gray-900">{selectedOrder.id}</h3>
+                <p className="text-sm text-gray-500 mt-1">Porosi</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                  PRS
+                </span>
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedOrder.status)}`}>
                   {translateStatus(selectedOrder.status)}
                 </span>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Customer Information</label>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="font-medium">{selectedOrder.customer.name}</p>
-                <p className="text-sm text-gray-600">{selectedOrder.customer.email}</p>
-                <p className="text-sm text-gray-600">{selectedOrder.customer.phone}</p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Klienti</label>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="font-medium">{selectedOrder.customer.name}</p>
+                  <p className="text-sm text-gray-600">{selectedOrder.customer.email}</p>
+                  <p className="text-sm text-gray-600">{selectedOrder.customer.phone}</p>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>
+                <div className="flex items-center gap-2">
+                  {(() => {
+                    const SourceIcon = getSourceIcon(selectedOrder.source);
+                    return <SourceIcon className="w-4 h-4 text-gray-400" />;
+                  })()}
+                  <span className="text-sm text-gray-900">{selectedOrder.source}</span>
+                </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Products</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Produktet</label>
               <div className="space-y-2">
                 {selectedOrder.products.map((product) => (
                   <div key={product.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
@@ -305,6 +337,7 @@ const OrdersList: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">${product.finalPrice.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">Sasi: {product.quantity}</p>
                     </div>
                   </div>
                 ))}
@@ -312,15 +345,45 @@ const OrdersList: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Information</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Adresa e dërgimit</label>
               <div className="bg-gray-50 p-3 rounded-lg">
                 <p className="text-sm text-gray-900">{selectedOrder.shippingInfo.address}</p>
                 <p className="text-sm text-gray-900">{selectedOrder.shippingInfo.city}, {selectedOrder.shippingInfo.zipCode}</p>
+                <p className="text-sm text-gray-600 mt-1">Metoda: {selectedOrder.shippingInfo.method}</p>
+              </div>
+            </div>
+
+            {selectedOrder.teamNotes && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Shënim shtesë (për ekipin)</label>
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-900">{selectedOrder.teamNotes}</p>
+                </div>
+              </div>
+            )}
+
+            {selectedOrder.notes && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Shënime</label>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-900">{selectedOrder.notes}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedOrder.createdAt).toLocaleString('sq-AL')}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedOrder.updatedAt).toLocaleString('sq-AL')}</p>
               </div>
             </div>
 
             <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-              <span className="text-lg font-medium text-gray-900">Total</span>
+              <span className="text-lg font-medium text-gray-900">Totali</span>
               <span className="text-lg font-bold text-gray-900">${selectedOrder.total.toFixed(2)}</span>
             </div>
           </div>
@@ -330,11 +393,28 @@ const OrdersList: React.FC = () => {
       {/* Order Form Modal */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="New Order"
+        onClose={() => {
+          setIsFormOpen(false);
+          setIsEditMode(false);
+          setSelectedOrder(null);
+        }}
+        title={isEditMode ? "Modifiko Porosinë" : "Porosi e Re"}
         size="xl"
       >
-        <OrderForm onClose={() => setIsFormOpen(false)} />
+        <OrderForm 
+          order={isEditMode ? selectedOrder : undefined}
+          onClose={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedOrder(null);
+          }}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedOrder(null);
+            fetchOrders();
+          }}
+        />
       </Modal>
     </div>
   );

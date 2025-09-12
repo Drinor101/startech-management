@@ -61,7 +61,8 @@ router.get('/', authenticateUser, async (req, res) => {
       createdAt: order.created_at,
       updatedAt: order.updated_at,
       isEditable: order.is_editable,
-      notes: order.notes
+      notes: order.notes,
+      teamNotes: order.team_notes
     }));
 
     res.json({
@@ -134,7 +135,8 @@ router.get('/:id', authenticateUser, async (req, res) => {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       isEditable: data.is_editable,
-      notes: data.notes
+      notes: data.notes,
+      teamNotes: data.team_notes
     };
 
     res.json({
@@ -153,25 +155,83 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një porosi të re
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    const { customerId, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
+    
+    // Generate PRS-YYYY-NNN ID
+    const currentYear = new Date().getFullYear();
+    const { data: lastOrder } = await supabase
+      .from('orders')
+      .select('id')
+      .like('id', `PRS-${currentYear}-%`)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+    
+    let orderNumber = 1;
+    if (lastOrder?.id) {
+      const lastNumber = parseInt(lastOrder.id.split('-')[2]);
+      orderNumber = lastNumber + 1;
+    }
+    
+    const orderId = `PRS-${currentYear}-${orderNumber.toString().padStart(3, '0')}`;
+    
+    // Calculate total from items
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, final_price')
+      .in('id', items.map(item => item.productId));
+    
+    const total = items.reduce((sum, item) => {
+      const product = products?.find(p => p.id === item.productId);
+      return sum + (product ? product.final_price * item.quantity : 0);
+    }, 0);
+
     const orderData = {
-      ...req.body,
+      id: orderId,
+      customer_id: customerId,
+      status: 'pending',
+      source: 'Manual',
+      shipping_address: shippingAddress,
+      shipping_city: shippingCity,
+      shipping_zip_code: shippingZipCode,
+      shipping_method: shippingMethod,
+      total: total,
+      notes: notes,
+      team_notes: teamNotes,
+      is_editable: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
 
-    const { data, error } = await supabase
+    const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert(orderData)
       .select()
       .single();
 
-    if (error) {
-      throw error;
+    if (orderError) {
+      throw orderError;
+    }
+
+    // Insert order products
+    const orderProducts = items.map(item => ({
+      order_id: orderId,
+      product_id: item.productId,
+      quantity: item.quantity,
+      subtotal: products?.find(p => p.id === item.productId)?.final_price * item.quantity || 0
+    }));
+
+    const { error: productsError } = await supabase
+      .from('order_products')
+      .insert(orderProducts);
+
+    if (productsError) {
+      throw productsError;
     }
 
     res.status(201).json({
       success: true,
-      data: data,
+      data: order,
       message: 'Porosia u krijua me sukses'
     });
   } catch (error) {
@@ -187,24 +247,84 @@ router.post('/', authenticateUser, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = {
-      ...req.body,
+    const { 
+      customerId, 
+      status, 
+      shippingAddress, 
+      shippingCity, 
+      shippingZipCode, 
+      shippingMethod, 
+      notes, 
+      teamNotes,
+      items 
+    } = req.body;
+
+    const updateData = {
+      customer_id: customerId,
+      status: status,
+      shipping_address: shippingAddress,
+      shipping_city: shippingCity,
+      shipping_zip_code: shippingZipCode,
+      shipping_method: shippingMethod,
+      notes: notes,
+      team_notes: teamNotes,
       updated_at: new Date().toISOString()
     };
 
-    // Heq fushët që nuk duhet të përditësohen
-    delete updates.id;
-    delete updates.created_at;
+    // Remove undefined fields
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
 
     const { data, error } = await supabase
       .from('orders')
-      .update(updates)
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();
 
     if (error) {
       throw error;
+    }
+
+    // If items are provided, update order products
+    if (items && items.length > 0) {
+      // Delete existing order products
+      await supabase
+        .from('order_products')
+        .delete()
+        .eq('order_id', id);
+
+      // Get product prices
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, final_price')
+        .in('id', items.map(item => item.productId));
+
+      // Insert new order products
+      const orderProducts = items.map(item => ({
+        order_id: id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        subtotal: products?.find(p => p.id === item.productId)?.final_price * item.quantity || 0
+      }));
+
+      await supabase
+        .from('order_products')
+        .insert(orderProducts);
+
+      // Recalculate total
+      const total = items.reduce((sum, item) => {
+        const product = products?.find(p => p.id === item.productId);
+        return sum + (product ? product.final_price * item.quantity : 0);
+      }, 0);
+
+      await supabase
+        .from('orders')
+        .update({ total: total })
+        .eq('id', id);
     }
 
     res.json({

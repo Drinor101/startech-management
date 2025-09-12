@@ -5,7 +5,9 @@ import { apiCall } from '../../config/api';
 import { Product } from '../../types';
 
 interface OrderFormProps {
+  order?: any;
   onClose: () => void;
+  onSuccess?: () => void;
 }
 
 interface OrderItem {
@@ -13,17 +15,18 @@ interface OrderItem {
   quantity: number;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
-    customerId: '',
-    items: [{ productId: '', quantity: 1 }] as OrderItem[],
-    shippingAddress: '',
-    shippingCity: '',
-    shippingZipCode: '',
-    shippingMethod: 'Standard Post',
-    notes: '',
+    customerId: order?.customerId || '',
+    items: order?.products?.map(p => ({ productId: p.id, quantity: p.quantity })) || [{ productId: '', quantity: 1 }] as OrderItem[],
+    shippingAddress: order?.shippingInfo?.address || '',
+    shippingCity: order?.shippingInfo?.city || '',
+    shippingZipCode: order?.shippingInfo?.zipCode || '',
+    shippingMethod: order?.shippingInfo?.method || 'Standard Post',
+    notes: order?.notes || '',
+    teamNotes: order?.teamNotes || '',
     emailNotifications: true
   });
 
@@ -48,10 +51,26 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
     fetchProducts();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Order form data:', formData);
-    onClose();
+    try {
+      const url = order ? `/api/orders/${order.id}` : '/api/orders';
+      const method = order ? 'PUT' : 'POST';
+      
+      const response = await apiCall(url, {
+        method,
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.success) {
+        console.log('Order saved successfully:', response);
+        onSuccess?.();
+      } else {
+        console.error('Error saving order:', response.error);
+      }
+    } catch (error) {
+      console.error('Error saving order:', error);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -233,6 +252,36 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Shënim shtesë (për ekipin)</label>
+        <textarea
+          name="teamNotes"
+          value={formData.teamNotes}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Shënime të veçanta për ekipin e punës..."
+        />
+      </div>
+
+      {order && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Statusi</label>
+          <select
+            name="status"
+            value={formData.status || order.status}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="pending">Në Pritje</option>
+            <option value="processing">Në Procesim</option>
+            <option value="shipped">Dërguar</option>
+            <option value="delivered">Dërguar</option>
+            <option value="cancelled">Anuluar</option>
+          </select>
+        </div>
+      )}
+
       <div className="flex items-center">
         <input
           type="checkbox"
@@ -263,7 +312,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ onClose }) => {
           type="submit"
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          Krijo Porosi
+          {order ? 'Përditëso Porosinë' : 'Krijo Porosi'}
         </button>
       </div>
     </form>
