@@ -11,15 +11,7 @@ router.get('/', authenticateUser, async (req, res) => {
     
     const { data, error } = await supabase
       .from('tickets')
-      .select(`
-        *,
-        customers:customer_id (
-          id,
-          name,
-          email,
-          phone
-        )
-      `)
+      .select('*')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -40,9 +32,6 @@ router.get('/', authenticateUser, async (req, res) => {
       status: ticket.status,
       description: ticket.description,
       assignedTo: ticket.assigned_to,
-      customerId: ticket.customer_id,
-      customer: ticket.customers,
-      relatedOrderId: ticket.related_order_id,
       createdAt: ticket.created_at,
       updatedAt: ticket.updated_at,
       resolvedAt: ticket.resolved_at,
@@ -75,15 +64,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
     
     const { data: ticket, error: ticketError } = await supabase
       .from('tickets')
-      .select(`
-        *,
-        customers:customer_id (
-          id,
-          name,
-          email,
-          phone
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
@@ -118,9 +99,6 @@ router.get('/:id', authenticateUser, async (req, res) => {
       status: ticket.status,
       description: ticket.description,
       assignedTo: ticket.assigned_to,
-      customerId: ticket.customer_id,
-      customer: ticket.customers,
-      relatedOrderId: ticket.related_order_id,
       createdAt: ticket.created_at,
       updatedAt: ticket.updated_at,
       resolvedAt: ticket.resolved_at,
@@ -149,9 +127,7 @@ router.post('/', authenticateUser, async (req, res) => {
       source,
       priority = 'medium',
       description,
-      assignedTo,
-      customerId,
-      relatedOrderId
+      assignedTo
     } = req.body;
 
     const userId = req.headers['x-user-id'];
@@ -171,22 +147,25 @@ router.post('/', authenticateUser, async (req, res) => {
 
     const createdBy = userData?.name || userData?.email || 'Unknown';
 
-    // Generate TIK ID
+    // Generate TIK ID manually
+    const currentYear = new Date().getFullYear().toString();
     const { data: lastTicket } = await supabase
       .from('tickets')
       .select('id')
-      .like('id', 'TIK%')
+      .like('id', `TIK-${currentYear}-%`)
       .order('id', { ascending: false })
       .limit(1)
       .single();
 
-    let ticketNumber = 1;
-    if (lastTicket?.id) {
-      const lastNumber = parseInt(lastTicket.id.replace('TIK', ''));
-      ticketNumber = lastNumber + 1;
+    let counter = 1;
+    if (lastTicket && lastTicket.id) {
+      const match = lastTicket.id.match(new RegExp(`^TIK-${currentYear}-(\\d+)$`));
+      if (match) {
+        counter = parseInt(match[1]) + 1;
+      }
     }
 
-    const ticketId = `TIK${ticketNumber.toString().padStart(4, '0')}`;
+    const ticketId = `TIK-${currentYear}-${counter.toString().padStart(3, '0')}`;
 
     const { data, error } = await supabase
       .from('tickets')
@@ -198,9 +177,7 @@ router.post('/', authenticateUser, async (req, res) => {
         priority,
         status: 'open',
         description,
-        assigned_to: assignedTo,
-        customer_id: customerId,
-        related_order_id: relatedOrderId
+        assigned_to: assignedTo
       })
       .select()
       .single();
@@ -235,8 +212,6 @@ router.post('/', authenticateUser, async (req, res) => {
         status: data.status,
         description: data.description,
         assignedTo: data.assigned_to,
-        customerId: data.customer_id,
-        relatedOrderId: data.related_order_id,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         comments: [],
@@ -262,9 +237,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       priority,
       status,
       description,
-      assignedTo,
-      customerId,
-      relatedOrderId
+      assignedTo
     } = req.body;
 
     const userId = req.headers['x-user-id'];
@@ -291,8 +264,6 @@ router.put('/:id', authenticateUser, async (req, res) => {
       status,
       description,
       assigned_to: assignedTo,
-      customer_id: customerId,
-      related_order_id: relatedOrderId,
       updated_at: new Date().toISOString()
     };
 
@@ -338,8 +309,6 @@ router.put('/:id', authenticateUser, async (req, res) => {
         status: data.status,
         description: data.description,
         assignedTo: data.assigned_to,
-        customerId: data.customer_id,
-        relatedOrderId: data.related_order_id,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         resolvedAt: data.resolved_at
