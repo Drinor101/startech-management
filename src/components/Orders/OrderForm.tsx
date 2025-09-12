@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, CheckCircle, X } from 'lucide-react';
 import { apiCall } from '../../config/api';
 import { Product } from '../../types';
 
@@ -17,6 +17,7 @@ interface OrderItem {
 const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
   const [formData, setFormData] = useState({
     customer: order?.customer?.name || '',
     items: order?.products?.map(p => ({ productId: p.id, quantity: p.quantity })) || [{ productId: '', quantity: 1 }] as OrderItem[],
@@ -67,8 +68,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       
       if (response.success) {
         console.log('Order saved successfully:', response);
-        alert('Porosia u krijua me sukses!');
-        onSuccess?.();
+        setShowSuccess(true);
+        // Auto close after 3 seconds
+        setTimeout(() => {
+          setShowSuccess(false);
+          onSuccess?.();
+        }, 3000);
       } else {
         console.error('Error saving order:', response.error);
         alert(`Gabim në krijimin e porosisë: ${response.error}`);
@@ -309,6 +314,32 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         </button>
       </div>
     </form>
+
+    {/* Success Notification */}
+    {showSuccess && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+          <div className="flex items-center justify-center mb-4">
+            <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Sukses!
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Porosia u krijua me sukses dhe do të mbyllet automatikisht.
+            </p>
+            <div className="flex justify-center">
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-green-600 h-2 rounded-full animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   );
 };
 
