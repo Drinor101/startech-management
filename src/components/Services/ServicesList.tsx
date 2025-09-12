@@ -15,6 +15,7 @@ const ServicesList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -232,7 +233,7 @@ const ServicesList: React.FC = () => {
             </button>
           </div>
           <button 
-            onClick={() => setIsFormOpen(true)}
+            onClick={() => setShowForm(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Servis i Ri
@@ -511,6 +512,17 @@ const ServicesList: React.FC = () => {
           }}
         />
       </Modal>
+
+      {/* Service Form Modal */}
+      {showForm && (
+        <ServiceForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            setShowForm(false);
+            fetchServices();
+          }}
+        />
+      )}
     </div>
   );
 };

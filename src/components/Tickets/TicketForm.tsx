@@ -12,6 +12,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
   const [formData, setFormData] = useState({
     title: ticket?.title || '',
     source: ticket?.source || 'Email',
+    createdBy: ticket?.createdBy || '',
     priority: ticket?.priority || 'medium',
     status: ticket?.status || 'open',
     description: ticket?.description || '',
@@ -113,6 +114,21 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 <option value="In Person">Në Person</option>
                 <option value="Internal">I Brendshëm</option>
               </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Krijuar nga *
+              </label>
+              <input
+                type="text"
+                name="createdBy"
+                value={formData.createdBy}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Emri i përdoruesit që krijoi"
+              />
             </div>
 
             <div>

@@ -15,6 +15,7 @@ const TasksList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   // Fetch tasks from API
@@ -269,7 +270,7 @@ const TasksList: React.FC = () => {
             ))}
           </select>
           <button 
-            onClick={() => setIsFormOpen(true)}
+            onClick={() => setShowForm(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -531,6 +532,17 @@ const TasksList: React.FC = () => {
           }}
         />
       </Modal>
+
+      {/* Task Form Modal */}
+      {showForm && (
+        <TaskForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            setShowForm(false);
+            fetchTasks();
+          }}
+        />
+      )}
     </div>
   );
 };
