@@ -177,7 +177,28 @@ router.post('/', authenticateUser, async (req, res) => {
       }
     }
 
+    // Generate SRV ID manually
+    const currentYear = new Date().getFullYear().toString();
+    const { data: lastService } = await supabase
+      .from('services')
+      .select('id')
+      .like('id', `SRV-${currentYear}-%`)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    let counter = 1;
+    if (lastService && lastService.id) {
+      const match = lastService.id.match(new RegExp(`^SRV-${currentYear}-(\\d+)$`));
+      if (match) {
+        counter = parseInt(match[1]) + 1;
+      }
+    }
+
+    const serviceId = `SRV-${currentYear}-${counter.toString().padStart(3, '0')}`;
+
     const serviceData = {
+      id: serviceId,
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status || 'received',
       assigned_to: req.body.assignedTo,
