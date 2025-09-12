@@ -341,7 +341,9 @@ router.post('/', authenticateUser, async (req, res) => {
           woo_commerce_status: 'active',
           woo_commerce_category: '',
           last_sync_date: new Date().toISOString(),
-          woo_commerce_id: parseInt(item.productId)
+          woo_commerce_id: parseInt(item.productId),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
         
         console.log(`Creating product with data:`, productData);
@@ -356,6 +358,12 @@ router.post('/', authenticateUser, async (req, res) => {
         
         if (insertError) {
           console.error(`Error creating product ${item.productId}:`, insertError);
+          console.error(`Insert error details:`, {
+            message: insertError.message,
+            details: insertError.details,
+            hint: insertError.hint,
+            code: insertError.code
+          });
           continue;
         }
         
