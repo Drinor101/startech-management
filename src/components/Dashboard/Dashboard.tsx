@@ -40,6 +40,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [tickets, setTickets] = useState([]);
+  const [orders, setOrders] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -58,28 +60,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       };
       
       // Fetch all data in parallel
-      const [servicesRes, tasksRes, ordersRes, customersRes] = await Promise.all([
+      const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes] = await Promise.all([
         fetch(`${apiUrl}/api/services`, { headers }),
         fetch(`${apiUrl}/api/tasks`, { headers }),
+        fetch(`${apiUrl}/api/tickets`, { headers }),
         fetch(`${apiUrl}/api/orders`, { headers }),
         fetch(`${apiUrl}/api/customers`, { headers })
       ]);
 
-      const [servicesData, tasksData, ordersData, customersData] = await Promise.all([
+      const [servicesData, tasksData, ticketsData, ordersData, customersData] = await Promise.all([
         servicesRes.ok ? servicesRes.json() : { data: [] },
         tasksRes.ok ? tasksRes.json() : { data: [] },
+        ticketsRes.ok ? ticketsRes.json() : { data: [] },
         ordersRes.ok ? ordersRes.json() : { data: [] },
         customersRes.ok ? customersRes.json() : { data: [] }
       ]);
 
       const servicesDataArray = servicesData.data || [];
       const tasksDataArray = tasksData.data || [];
-      const orders = ordersData.data || [];
+      const ticketsDataArray = ticketsData.data || [];
+      const ordersDataArray = ordersData.data || [];
       const customers = customersData.data || [];
       
       // Set state for chart data
       setServices(servicesDataArray);
       setTasks(tasksDataArray);
+      setTickets(ticketsDataArray);
+      setOrders(ordersDataArray);
 
       // Update stats with real data
       setStats([
@@ -99,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         },
         { 
           label: 'Porositë Sot', 
-          value: orders.filter((o: any) => {
+          value: ordersDataArray.filter((o: any) => {
             const today = new Date().toISOString().split('T')[0];
             return o.created_at?.startsWith(today);
           }).length.toString(), 
@@ -119,8 +126,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       // Set recent activities based on real data
       const recentActivities = [];
       
-      // Add recent services
-      servicesDataArray.slice(0, 2).forEach((service, index) => {
+      console.log('Dashboard Data:', {
+        services: servicesDataArray.length,
+        tasks: tasksDataArray.length,
+        tickets: ticketsDataArray.length,
+        orders: ordersDataArray.length
+      });
+      
+      // Add recent services (latest 2)
+      const recentServices = servicesDataArray
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 2);
+      
+      recentServices.forEach((service) => {
         recentActivities.push({
           id: `service-${service.id}`,
           action: `Servis i ri u krijua: ${service.id}`,
@@ -129,8 +147,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         });
       });
       
-      // Add recent tasks
-      tasksDataArray.slice(0, 2).forEach((task, index) => {
+      // Add recent tasks (latest 2)
+      const recentTasks = tasksDataArray
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 2);
+      
+      recentTasks.forEach((task) => {
         recentActivities.push({
           id: `task-${task.id}`,
           action: `Task i ri u krijua: ${task.title}`,
@@ -139,8 +161,26 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         });
       });
       
-      // Add recent orders
-      orders.slice(0, 1).forEach((order, index) => {
+      // Add recent tickets (latest 1)
+      const recentTickets = ticketsDataArray
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 1);
+      
+      recentTickets.forEach((ticket) => {
+        recentActivities.push({
+          id: `ticket-${ticket.id}`,
+          action: `Tiket i ri u krijua: ${ticket.id}`,
+          user: ticket.createdBy || 'Sistemi',
+          time: new Date(ticket.createdAt).toLocaleString('sq-AL')
+        });
+      });
+      
+      // Add recent orders (latest 1)
+      const recentOrders = ordersDataArray
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 1);
+      
+      recentOrders.forEach((order) => {
         recentActivities.push({
           id: `order-${order.id}`,
           action: `Porosi e re u regjistrua: ${order.id}`,
@@ -151,7 +191,21 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       
       // Sort by creation time and take latest 4
       recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
-      setRecentActivities(recentActivities.slice(0, 4));
+      console.log('Recent Activities:', recentActivities);
+      
+      // If no activities, show a default message
+      if (recentActivities.length === 0) {
+        setRecentActivities([
+          {
+            id: 'no-activities',
+            action: 'Nuk ka aktivitete të reja',
+            user: 'Sistemi',
+            time: 'Tani'
+          }
+        ]);
+      } else {
+        setRecentActivities(recentActivities.slice(0, 4));
+      }
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
