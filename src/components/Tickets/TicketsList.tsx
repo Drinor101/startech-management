@@ -273,28 +273,24 @@ const TicketsList: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Tiketat ({tickets.length})</h2>
         <div className="flex items-center gap-3">
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'list' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
-              title="Lista"
             >
               <List className="w-4 h-4" />
+              Lista
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`p-2 rounded-md transition-colors ${
-                viewMode === 'kanban' 
-                  ? 'bg-white text-blue-600 shadow-sm' 
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
-              title="Kanban"
             >
               <Grid3X3 className="w-4 h-4" />
+              Kanban
             </button>
           </div>
           <select
