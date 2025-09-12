@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Ticket } from '../../types';
 import { apiCall } from '../../config/api';
+import TicketForm from './TicketForm';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -345,6 +346,17 @@ const TicketsList: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Ticket Form Modal */}
+      {showForm && (
+        <TicketForm
+          onClose={() => setShowForm(false)}
+          onSuccess={() => {
+            setShowForm(false);
+            fetchTickets();
+          }}
+        />
+      )}
     </div>
   );
 };

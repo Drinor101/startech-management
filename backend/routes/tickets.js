@@ -171,9 +171,27 @@ router.post('/', authenticateUser, async (req, res) => {
 
     const createdBy = userData?.name || userData?.email || 'Unknown';
 
+    // Generate TIK ID
+    const { data: lastTicket } = await supabase
+      .from('tickets')
+      .select('id')
+      .like('id', 'TIK%')
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    let ticketNumber = 1;
+    if (lastTicket?.id) {
+      const lastNumber = parseInt(lastTicket.id.replace('TIK', ''));
+      ticketNumber = lastNumber + 1;
+    }
+
+    const ticketId = `TIK${ticketNumber.toString().padStart(4, '0')}`;
+
     const { data, error } = await supabase
       .from('tickets')
       .insert({
+        id: ticketId,
         title,
         source,
         created_by: createdBy,
