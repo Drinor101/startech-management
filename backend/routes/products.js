@@ -265,8 +265,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
       });
     }
 
-    // Fetch products from WooCommerce API
-    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+    // Fetch products from WooCommerce API (limit to 100 for sync)
+    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig, 100);
     
     if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
       return res.status(404).json({
@@ -299,14 +299,14 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
 });
 
 // Fetch products from WooCommerce API
-async function fetchWooCommerceProducts(config) {
+async function fetchWooCommerceProducts(config, maxProducts = 100) {
   try {
-    console.log('Fetching products from WooCommerce...');
+    console.log(`Fetching products from WooCommerce (max ${maxProducts})...`);
     const products = [];
     let page = 1;
     const perPage = 100;
     
-    while (true) {
+    while (products.length < maxProducts) {
       const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
       const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
       
@@ -330,12 +330,21 @@ async function fetchWooCommerceProducts(config) {
         break; // No more products
       }
       
-      products.push(...pageProducts);
+      // Add only up to maxProducts
+      const remainingSlots = maxProducts - products.length;
+      const productsToAdd = pageProducts.slice(0, remainingSlots);
+      products.push(...productsToAdd);
+      
+      // If we've added all products from this page and reached our limit, stop
+      if (productsToAdd.length < pageProducts.length || products.length >= maxProducts) {
+        break;
+      }
+      
       page++;
       
       // Safety limit to prevent infinite loops
-      if (page > 50) {
-        console.log('Reached page limit (50), stopping...');
+      if (page > 10) {
+        console.log('Reached page limit (10), stopping...');
         break;
       }
     }
