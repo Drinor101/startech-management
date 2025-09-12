@@ -252,16 +252,16 @@ router.post('/', authenticateUser, async (req, res) => {
           // Use default price if product not found
           productDetails.push({
             id: item.productId,
-            price: 0,
-            name: 'Unknown Product'
+            price: 100, // Default price instead of 0
+            name: `Product ${item.productId}`
           });
         }
       } catch (error) {
         console.error(`Error fetching product ${item.productId}:`, error);
         productDetails.push({
           id: item.productId,
-          price: 0,
-          name: 'Unknown Product'
+          price: 100, // Default price instead of 0
+          name: `Product ${item.productId}`
         });
       }
     }
