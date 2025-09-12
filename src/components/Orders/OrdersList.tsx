@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Eye, Edit, Trash2, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -120,7 +120,7 @@ const OrdersList: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID e Porosisë
+                  ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Klienti
@@ -129,13 +129,19 @@ const OrdersList: React.FC = () => {
                   Produktet
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statusi
+                  Adresa e dërgimit
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Totali
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Krijuar
+                  Statusi
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Shënim shtesë
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Data
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Veprimet
@@ -149,17 +155,10 @@ const OrdersList: React.FC = () => {
                   <tr key={order.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <Package className="w-4 h-4 text-gray-400" />
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">{order.id}</span>
-                          <span 
-                            className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getSourceColor(order.source)}`}
-                            title={order.source === 'Woo' ? 'Porosi WooCommerce' : 'Porosi Manuale'}
-                          >
-                            <SourceIcon className="w-3 h-3" />
-                            {order.source}
-                          </span>
-                        </div>
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                          PRS
+                        </span>
+                        <span className="text-sm font-medium text-gray-900">{order.id}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -180,10 +179,13 @@ const OrdersList: React.FC = () => {
                         {order.products.map(p => p.title).join(', ').length > 50 ? '...' : ''}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                        {translateStatus(order.status)}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {order.shippingInfo.address || 'N/A'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {order.shippingInfo.city}, {order.shippingInfo.zipCode}
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
@@ -192,10 +194,20 @@ const OrdersList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                        {translateStatus(order.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 max-w-xs truncate">
+                        {order.teamNotes || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900">
-                          {new Date(order.createdAt).toLocaleDateString()}
+                          {new Date(order.createdAt).toLocaleDateString('sq-AL')}
                         </span>
                       </div>
                     </td>
@@ -207,12 +219,23 @@ const OrdersList: React.FC = () => {
                             e.stopPropagation();
                             handleViewOrder(order);
                           }}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shih"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900">
+                        <button 
+                          onClick={() => handleEditOrder(order)}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
+                        >
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
