@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiCall, apiConfig } from '../../config/api';
+import Notification from '../Common/Notification';
 
 interface UserFormProps {
   onClose: () => void;
@@ -17,6 +18,15 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,14 +60,18 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
       }
       
       onSuccess?.();
-      if (user) {
-        alert('Përdoruesi u përditësua me sukses');
-      } else {
-        alert('Përdoruesi u shtua me sukses');
-      }
-      onClose();
+      setNotification({
+        type: 'success',
+        message: user ? 'Përdoruesi u përditësua me sukses' : 'Përdoruesi u shtua me sukses',
+        isVisible: true
+      });
+      onClose(); // Close modal immediately
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gabim në ruajtjen e përdoruesit');
+      setNotification({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Gabim në ruajtjen e përdoruesit',
+        isVisible: true
+      });
     } finally {
       setLoading(false);
     }
@@ -169,6 +183,14 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
         </button>
       </div>
     </form>
+
+    {/* Notification */}
+    <Notification
+      type={notification.type}
+      message={notification.message}
+      isVisible={notification.isVisible}
+      onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+    />
   );
 };
 

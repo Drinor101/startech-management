@@ -51,9 +51,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
         message: task ? 'Tasku u përditësua me sukses' : 'Tasku u shtua me sukses',
         isVisible: true
       });
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      onClose(); // Close modal immediately
     } catch (err) {
       console.error('Error saving task:', err);
       setError('Gabim në ruajtjen e taskut');

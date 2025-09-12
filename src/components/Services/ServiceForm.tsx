@@ -50,9 +50,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
         message: service ? 'Shërbimi u përditësua me sukses' : 'Shërbimi u shtua me sukses',
         isVisible: true
       });
-      setTimeout(() => {
-        onClose();
-      }, 1500);
+      onClose(); // Close modal immediately
     } catch (err) {
       console.error('Error saving service:', err);
       setError('Gabim në ruajtjen e shërbimit');

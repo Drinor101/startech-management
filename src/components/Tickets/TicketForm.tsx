@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Save, AlertCircle } from 'lucide-react';
 import { apiCall } from '../../config/api';
+import Notification from '../Common/Notification';
 
 interface TicketFormProps {
   onClose: () => void;
@@ -20,6 +21,15 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +46,19 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
       });
 
       onSuccess();
-      onClose();
+      setNotification({
+        type: 'success',
+        message: ticket ? 'Tiketa u përditësua me sukses' : 'Tiketa u shtua me sukses',
+        isVisible: true
+      });
+      onClose(); // Close modal immediately
     } catch (err) {
       console.error('Error saving ticket:', err);
-      setError('Gabim në ruajtjen e tiketës');
+      setNotification({
+        type: 'error',
+        message: 'Gabim në ruajtjen e tiketës',
+        isVisible: true
+      });
     } finally {
       setLoading(false);
     }
@@ -203,6 +222,14 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
             </button>
           </div>
         </form>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
   );
 };
 
