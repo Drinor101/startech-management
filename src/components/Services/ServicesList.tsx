@@ -413,18 +413,18 @@ const ServicesList: React.FC = () => {
              </div>
 
             <div className="grid grid-cols-2 gap-4">
-                             <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
-                 <p className="text-sm text-gray-900">
-                   {selectedService.category || 'N/A'}
-                 </p>
-               </div>
-                             <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Përshkruar nga</label>
-                 <p className="text-sm text-gray-900">
-                   {selectedService.assigned_to || 'N/A'}
-                 </p>
-               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <p className="text-sm text-gray-900">
+                  {selectedService.createdBy || 'N/A'}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
+                <p className="text-sm text-gray-900">
+                  {selectedService.assignedTo || 'N/A'}
+                </p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -445,19 +445,11 @@ const ServicesList: React.FC = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Garanci</label>
-                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${selectedService.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                  {selectedService.underWarranty ? 'Garanci' : 'Pa Garanci'}
-                </span>
-              </div>
-                             <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Punkti i Pranueshmërisë</label>
-                 <p className="text-sm text-gray-900">
-                   {selectedService.reception_point || 'N/A'}
-                 </p>
-               </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Garancioni</label>
+              <p className="text-sm text-gray-900">
+                {selectedService.warrantyInfo || 'N/A'}
+              </p>
             </div>
 
             {selectedService.serviceHistory && selectedService.serviceHistory.length > 0 && (
@@ -494,7 +486,7 @@ const ServicesList: React.FC = () => {
           setIsEditMode(false);
           setSelectedService(null);
         }}
-        title={isEditMode ? "Edit Service" : "Shërbim i Ri"}
+        title={isEditMode ? "Modifiko Shërbimin" : "Shërbim i Ri"}
         size="lg"
       >
         <ServiceForm 

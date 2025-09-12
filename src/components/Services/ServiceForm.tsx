@@ -12,10 +12,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   const [formData, setFormData] = useState({
     createdBy: service?.createdBy || '',
     assignedTo: service?.assignedTo || '',
-    customer: service?.customer || '',
-    problem: service?.problem || '',
+    customer: service?.customer?.name || service?.customer || '',
+    problem: service?.problemDescription || service?.problem || '',
     status: service?.status || 'received',
-    warranty: service?.warranty || ''
+    warranty: service?.warrantyInfo || service?.warranty || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
