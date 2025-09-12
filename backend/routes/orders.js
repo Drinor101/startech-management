@@ -157,7 +157,19 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një porosi të re
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    console.log('Creating new order with data:', req.body);
     const { customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
+    
+    console.log('Order data parsed:', {
+      customer,
+      items,
+      shippingAddress,
+      shippingCity,
+      shippingZipCode,
+      shippingMethod,
+      notes,
+      teamNotes
+    });
     
     // Generate PRS-YYYY-NNN ID
     const currentYear = new Date().getFullYear();
@@ -213,9 +225,11 @@ router.post('/', authenticateUser, async (req, res) => {
     };
 
     // Fetch product details from WooCommerce
+    console.log('Fetching product details for items:', items);
     const productDetails = [];
     for (const item of items) {
       try {
+        console.log(`Fetching product ${item.productId} from WooCommerce...`);
         const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
           method: 'GET',
           headers: {
@@ -223,6 +237,8 @@ router.post('/', authenticateUser, async (req, res) => {
             'Content-Type': 'application/json'
           }
         });
+        
+        console.log(`WooCommerce response for product ${item.productId}:`, response.status, response.statusText);
         
         if (response.ok) {
           const product = await response.json();
@@ -308,9 +324,15 @@ router.post('/', authenticateUser, async (req, res) => {
     });
   } catch (error) {
     console.error('Gabim në krijimin e porosisë:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    });
     res.status(500).json({
       success: false,
-      error: 'Gabim në krijimin e porosisë'
+      error: 'Gabim në krijimin e porosisë',
+      details: error.message
     });
   }
 });
