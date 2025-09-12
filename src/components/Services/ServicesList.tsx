@@ -390,7 +390,7 @@ const ServicesList: React.FC = () => {
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="text-lg font-medium text-gray-900">{selectedService.id}</h3>
-                <p className="text-sm text-gray-500 mt-1">Klienti: {selectedService.customer.name}</p>
+                <p className="text-sm text-gray-500 mt-1">Klienti: {selectedService.customer?.name || selectedService.customer || 'N/A'}</p>
               </div>
               <div className="flex items-center gap-2">
                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedService.status)}`}>
@@ -405,12 +405,12 @@ const ServicesList: React.FC = () => {
               </div>
             </div>
 
-                         <div>
-               <label className="block text-sm font-medium text-gray-700 mb-1">Pershkrimi i Problemit</label>
-               <p className="text-sm text-gray-900">
-                 {selectedService.problem_description || 'N/A'}
-               </p>
-             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi i Problemit</label>
+              <p className="text-sm text-gray-900">
+                {selectedService.problemDescription || selectedService.problem_description || selectedService.problem || 'N/A'}
+              </p>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
