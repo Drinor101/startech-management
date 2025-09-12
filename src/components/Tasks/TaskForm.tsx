@@ -11,14 +11,14 @@ interface TaskFormProps {
 const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   const [formData, setFormData] = useState({
     title: task?.title || '',
-    assignedTo: task?.assignedTo || '',
-    assignedBy: task?.assignedBy || '',
+    assignedTo: task?.assignedTo || task?.assigned_to || '',
+    assignedBy: task?.assignedBy || task?.assigned_by || '',
     department: task?.department || '',
     priority: task?.priority || 'medium',
-    status: task?.status || 'pending',
+    status: task?.status || 'todo',
     description: task?.description || '',
-    customerId: task?.customerId || '',
-    relatedOrderId: task?.relatedOrderId || ''
+    customerId: task?.customerId || task?.customer_id || '',
+    relatedOrderId: task?.relatedOrderId || task?.related_order_id || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,10 +170,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
               >
-                <option value="pending">Në Pritje</option>
+                <option value="todo">Për të bërë</option>
                 <option value="in-progress">Në Progres</option>
-                <option value="completed">Përfunduar</option>
-                <option value="cancelled">Anuluar</option>
+                <option value="review">Rishikim</option>
+                <option value="done">Përfunduar</option>
               </select>
             </div>
 

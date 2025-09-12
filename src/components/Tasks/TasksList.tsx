@@ -103,6 +103,7 @@ const TasksList: React.FC = () => {
   };
 
   const handleViewTask = (task: Task) => {
+    console.log('Selected task data:', task);
     setSelectedTask(task);
     setIsModalOpen(true);
   };
@@ -420,7 +421,7 @@ const TasksList: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title="Task Details"
+        title="Detajet e Taskut"
         size="lg"
       >
         {selectedTask && (
@@ -442,14 +443,14 @@ const TasksList: React.FC = () => {
 
             {selectedTask.description && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
                 <p className="text-sm text-gray-900">{selectedTask.description}</p>
               </div>
             )}
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statusi</label>
                 <div className="flex items-center gap-2">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(selectedTask.status)}`}>
                     {translateStatus(selectedTask.status)}
@@ -470,25 +471,36 @@ const TasksList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assigned To</label>
-                <p className="text-sm text-gray-900">{selectedTask.assignedTo}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
+                <p className="text-sm text-gray-900">{selectedTask.assignedTo || 'N/A'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Created</label>
-                <p className="text-sm text-gray-900">{new Date(selectedTask.createdAt).toLocaleString()}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTask.assignedBy || selectedTask.assigned_by || 'N/A'}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTask.createdBy || selectedTask.created_by || 'N/A'}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedTask.createdAt).toLocaleString('sq-AL')}</p>
               </div>
             </div>
 
             {selectedTask.completedAt && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Completed At</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përfunduar më</label>
                 <p className="text-sm text-gray-900">{formatCompletionTime(selectedTask.completedAt)}</p>
               </div>
             )}
 
-            {selectedTask.comments.length > 0 && (
+            {selectedTask.comments && selectedTask.comments.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Comments</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Komentet</label>
                 <div className="space-y-3">
                   {selectedTask.comments.map((comment) => (
                     <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
@@ -514,7 +526,7 @@ const TasksList: React.FC = () => {
           setIsEditMode(false);
           setSelectedTask(null);
         }}
-        title={isEditMode ? "Edit Task" : "New Task"}
+        title={isEditMode ? "Modifiko Taskun" : "Task i Ri"}
         size="lg"
       >
         <TaskForm 

@@ -125,6 +125,8 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një task të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    console.log('Task creation request body:', req.body);
+    
     const userId = req.headers['x-user-id'];
     if (!userId) {
       return res.status(401).json({
@@ -141,13 +143,40 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     const userName = userData?.name || userData?.email || 'Unknown';
+
+    // Generate TSK ID manually
+    const currentYear = new Date().getFullYear().toString();
+    const { data: lastTask } = await supabase
+      .from('tasks')
+      .select('id')
+      .like('id', `TSK-${currentYear}-%`)
+      .order('id', { ascending: false })
+      .limit(1)
+      .single();
+
+    let counter = 1;
+    if (lastTask && lastTask.id) {
+      const match = lastTask.id.match(new RegExp(`^TSK-${currentYear}-(\\d+)$`));
+      if (match) {
+        counter = parseInt(match[1]) + 1;
+      }
+    }
+
+    const taskId = `TSK-${currentYear}-${counter.toString().padStart(3, '0')}`;
     
     const taskData = {
-      ...req.body,
+      id: taskId,
       type: req.body.type || 'task',
+      title: req.body.title,
+      description: req.body.description,
+      priority: req.body.priority || 'medium',
       status: req.body.status || 'todo',
-      created_by: userName,
+      assigned_to: req.body.assignedTo,
       assigned_by: req.body.assignedBy || userName,
+      created_by: userName,
+      department: req.body.department,
+      customer_id: req.body.customerId,
+      related_order_id: req.body.relatedOrderId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -185,17 +214,13 @@ router.post('/', authenticateUser, async (req, res) => {
         assignedTo: data.assigned_to,
         assignedBy: data.assigned_by,
         createdBy: data.created_by,
-        visibleTo: data.visible_to || [],
-        category: data.category,
         department: data.department,
         status: data.status,
-        attachments: data.attachments || [],
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         completedAt: data.completed_at,
         customerId: data.customer_id,
         relatedOrderId: data.related_order_id,
-        source: data.source,
         comments: [],
         history: []
       },
@@ -213,15 +238,44 @@ router.post('/', authenticateUser, async (req, res) => {
 // Përditëson një task
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
+    console.log('Task update request body:', req.body);
+    
     const { id } = req.params;
+    const userId = req.headers['x-user-id'];
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID mungon'
+      });
+    }
+
+    // Get user info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single();
+
+    const userName = userData?.name || userData?.email || 'Unknown';
+
     const updates = {
-      ...req.body,
+      title: req.body.title,
+      description: req.body.description,
+      priority: req.body.priority,
+      status: req.body.status,
+      assigned_to: req.body.assignedTo,
+      assigned_by: req.body.assignedBy,
+      department: req.body.department,
+      customer_id: req.body.customerId,
+      related_order_id: req.body.relatedOrderId,
       updated_at: new Date().toISOString()
     };
 
     // Heq fushët që nuk duhet të përditësohen
     delete updates.id;
     delete updates.created_at;
+    delete updates.created_by;
 
     const { data, error } = await supabase
       .from('tasks')
@@ -234,9 +288,39 @@ router.put('/:id', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Add to history
+    await supabase
+      .from('task_history')
+      .insert({
+        task_id: id,
+        action: 'Tasku u përditësua',
+        user_id: userId,
+        user_name: userName,
+        details: `Tasku "${data.title}" u përditësua`
+      });
+
+    // Transform response data to camelCase
+    const transformedData = {
+      id: data.id,
+      type: data.type,
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      assignedTo: data.assigned_to,
+      assignedBy: data.assigned_by,
+      createdBy: data.created_by,
+      department: data.department,
+      status: data.status,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      completedAt: data.completed_at,
+      customerId: data.customer_id,
+      relatedOrderId: data.related_order_id
+    };
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       message: 'Tasku u përditësua me sukses'
     });
   } catch (error) {
