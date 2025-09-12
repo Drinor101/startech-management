@@ -12,10 +12,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   const [formData, setFormData] = useState({
     createdBy: service?.createdBy || '',
     assignedTo: service?.assignedTo || '',
-    customerId: service?.customerId || '',
-    problemDescription: service?.problemDescription || '',
+    customer: service?.customer || '',
+    problem: service?.problem || '',
     status: service?.status || 'received',
-    warrantyInfo: service?.warrantyInfo || '',
+    warranty: service?.warranty || '',
     category: service?.category || '',
     receptionPoint: service?.receptionPoint || ''
   });
@@ -79,106 +79,54 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Krijuar nga */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Krijuar nga *</label>
-              <input
-                type="text"
-                name="createdBy"
-                value={formData.createdBy}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Emri i përdoruesit që krijoi"
-                required
-              />
-            </div>
+          {/* Krijuar nga */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Krijuar nga *</label>
+            <input
+              type="text"
+              name="createdBy"
+              value={formData.createdBy}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Emri i përdoruesit që krijoi"
+              required
+            />
+          </div>
 
-            {/* Përcaktuar për */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Përcaktuar për *</label>
-              <input
-                type="text"
-                name="assignedTo"
-                value={formData.assignedTo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Emri i përdoruesit që do të merret me shërbimin"
-                required
-              />
-            </div>
+          {/* Përcaktuar për */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Përcaktuar për *</label>
+            <input
+              type="text"
+              name="assignedTo"
+              value={formData.assignedTo}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Emri i përdoruesit që do të merret me shërbimin"
+              required
+            />
+          </div>
 
-            {/* Klienti */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ID e Klientit *</label>
-              <input
-                type="text"
-                name="customerId"
-                value={formData.customerId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="ID e klientit"
-                required
-              />
-            </div>
-
-            {/* Statusi */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Statusi *</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="received">Marrë</option>
-                <option value="in-progress">Në Progres</option>
-                <option value="waiting-parts">Duke Pritur Pjesët</option>
-                <option value="completed">Përfunduar</option>
-                <option value="delivered">Dërguar</option>
-              </select>
-            </div>
-
-            {/* Kategoria */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Kategoria</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Zgjidh Kategorinë</option>
-                <option value="Hardware">Hardware</option>
-                <option value="Software">Software</option>
-                <option value="Network">Rrjeti</option>
-                <option value="Maintenance">Mirëmbajtje</option>
-                <option value="Repair">Riparim</option>
-                <option value="Installation">Instalim</option>
-              </select>
-            </div>
-
-            {/* Garancioni */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Garancioni</label>
-              <input
-                type="text"
-                name="warrantyInfo"
-                value={formData.warrantyInfo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Informacione për garancinë"
-              />
-            </div>
+          {/* Klienti */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Klienti *</label>
+            <input
+              type="text"
+              name="customer"
+              value={formData.customer}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Emri i klientit"
+              required
+            />
           </div>
 
           {/* Problemi */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Problemi *</label>
             <textarea
-              name="problemDescription"
-              value={formData.problemDescription}
+              name="problem"
+              value={formData.problem}
               onChange={handleChange}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -187,16 +135,34 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
             />
           </div>
 
-          {/* Pika e Pranueshmërisë */}
+          {/* Statusi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Pika e Pranueshmërisë</label>
-            <input
-              type="text"
-              name="receptionPoint"
-              value={formData.receptionPoint}
+            <label className="block text-sm font-medium text-gray-700 mb-2">Statusi *</label>
+            <select
+              name="status"
+              value={formData.status}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Ku u pranua pajisja"
+              required
+            >
+              <option value="received">Marrë</option>
+              <option value="in-progress">Në Progres</option>
+              <option value="waiting-parts">Duke Pritur Pjesët</option>
+              <option value="completed">Përfunduar</option>
+              <option value="delivered">Dërguar</option>
+            </select>
+          </div>
+
+          {/* Garancioni */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Garancioni</label>
+            <input
+              type="text"
+              name="warranty"
+              value={formData.warranty}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Informacione për garancinë"
             />
           </div>
 

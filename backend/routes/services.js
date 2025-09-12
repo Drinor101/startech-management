@@ -138,13 +138,13 @@ router.post('/', authenticateUser, async (req, res) => {
     const userName = userData?.name || userData?.email || 'Unknown';
 
     const serviceData = {
-      problem_description: req.body.problemDescription,
+      problem_description: req.body.problem,
       status: req.body.status || 'received',
       category: req.body.category,
       assigned_to: req.body.assignedTo,
-      warranty_info: req.body.warrantyInfo,
+      warranty_info: req.body.warranty,
       reception_point: req.body.receptionPoint,
-      customer_id: req.body.customerId,
+      customer_id: req.body.customer,
       created_by: userName,
       assigned_by: req.body.assignedTo || userName,
       created_at: new Date().toISOString(),
