@@ -386,8 +386,13 @@ router.post('/', authenticateUser, async (req, res) => {
     }
 
     console.log('Order products to insert:', orderProducts);
+    console.log('Order products count:', orderProducts.length);
 
     if (orderProducts.length === 0) {
+      console.error('No order products to insert! Debug info:');
+      console.error('- Items:', items);
+      console.error('- Product details:', productDetails);
+      console.error('- Order products array:', orderProducts);
       throw new Error('No valid products found or created in database');
     }
 
