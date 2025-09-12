@@ -3,7 +3,7 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'Administrator' | 'Manager' | 'E-commerce' | 'Technician' | 'Marketing' | 'Design' | 'Support Agent' | 'Customer';
+  role: 'Administrator' | 'Marketer' | 'Dizajner' | 'Menaxher' | 'Agjent shitjeje' | 'Agjent mbështetje' | 'Serviser';
   department?: string;
   avatar?: string;
   isActive: boolean;
@@ -179,6 +179,80 @@ export interface RolePermissions {
     canExport: boolean;
   };
 }
+
+// Role-based permissions system
+export const ROLE_PERMISSIONS = {
+  'Administrator': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    tickets: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    services: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    orders: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    users: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+  },
+  'Menaxher': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    tickets: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    services: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    orders: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+  },
+  'Agjent shitjeje': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    orders: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    reports: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+  },
+  'Agjent mbështetje': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    orders: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    reports: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+  },
+  'Serviser': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    orders: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    reports: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+  },
+  'Marketer': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    tickets: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    services: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    orders: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    reports: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+  },
+  'Dizajner': {
+    tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    tickets: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    services: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    orders: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    reports: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+  }
+} as const;
 
 // Tiketat (TIK) interface
 export interface Ticket {

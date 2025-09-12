@@ -5,11 +5,13 @@ import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const TasksList: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

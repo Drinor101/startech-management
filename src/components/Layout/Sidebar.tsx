@@ -16,6 +16,7 @@ import {
   List
 } from 'lucide-react';
 import { User } from '../../types';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface SidebarProps {
   currentUser: User;
@@ -25,32 +26,38 @@ interface SidebarProps {
 }
 
 const menuItems = [
-  { id: 'dashboard', label: 'Përmbledhja', icon: Home, roles: ['Administrator', 'Manager'] },
+  { id: 'dashboard', label: 'Përmbledhja', icon: Home, module: 'dashboard' },
   { 
     id: 'detyra', 
     label: 'Detyra', 
     icon: CheckSquare, 
-    roles: ['Administrator', 'Manager', 'Technician', 'Support Agent', 'Design', 'Marketing'],
+    module: 'tasks',
     subItems: [
-      { id: 'all-tasks', label: 'Të gjitha', icon: List },
-      { id: 'services', label: 'Servisi', icon: Wrench },
-      { id: 'tasks', label: 'Taskat', icon: Grid3X3 },
-      { id: 'tickets', label: 'Tiketat', icon: MessageSquare }
+      { id: 'all-tasks', label: 'Të gjitha', icon: List, module: 'tasks' },
+      { id: 'services', label: 'Servisi', icon: Wrench, module: 'services' },
+      { id: 'tasks', label: 'Taskat', icon: Grid3X3, module: 'tasks' },
+      { id: 'tickets', label: 'Tiketat', icon: MessageSquare, module: 'tickets' }
     ]
   },
-  { id: 'orders', label: 'Porositë', icon: ShoppingCart, roles: ['Administrator', 'Manager', 'E-commerce', 'Support Agent'] },
-  { id: 'products', label: 'Produktet', icon: Package, roles: ['Administrator', 'Manager', 'E-commerce'] },
-  { id: 'reports', label: 'Raportet', icon: BarChart3, roles: ['Administrator', 'Manager'] },
-  { id: 'users', label: 'Përdoruesit', icon: Users, roles: ['Administrator'] },
-  { id: 'settings', label: 'Cilësimet', icon: Settings, roles: ['Administrator', 'Manager'] },
+  { id: 'orders', label: 'Porositë', icon: ShoppingCart, module: 'orders' },
+  { id: 'products', label: 'Produktet', icon: Package, module: 'products' },
+  { id: 'reports', label: 'Raportet', icon: BarChart3, module: 'reports' },
+  { id: 'users', label: 'Përdoruesit', icon: Users, module: 'users' },
+  { id: 'settings', label: 'Cilësimet', icon: Settings, module: 'settings' },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleChange, collapsed }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['detyra']);
+  const { canView } = usePermissions();
 
-  const availableItems = menuItems.filter(item => 
-    item.roles.includes(currentUser.role)
-  );
+  const availableItems = menuItems.filter(item => {
+    if (item.id === 'dashboard') return true; // Dashboard is always available
+    if (item.subItems) {
+      // For parent items with sub-items, check if any sub-item is accessible
+      return item.subItems.some(subItem => canView(subItem.module));
+    }
+    return canView(item.module);
+  });
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -126,20 +133,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleCh
                 {/* Sub-items */}
                 {item.subItems && !collapsed && isExpanded && (
                   <div className="ml-6 mt-1 space-y-1">
-                    {item.subItems.map((subItem) => (
-                      <button
-                        key={subItem.id}
-                        onClick={() => onModuleChange(subItem.id)}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
-                          isSubItemActive(subItem.id)
-                            ? 'bg-blue-500 text-white' 
-                            : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                        }`}
-                      >
-                        <subItem.icon className="w-4 h-4" />
-                        <span>{subItem.label}</span>
-                      </button>
-                    ))}
+                    {item.subItems
+                      .filter(subItem => canView(subItem.module))
+                      .map((subItem) => (
+                        <button
+                          key={subItem.id}
+                          onClick={() => onModuleChange(subItem.id)}
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm ${
+                            isSubItemActive(subItem.id)
+                              ? 'bg-blue-500 text-white' 
+                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                          }`}
+                        >
+                          <subItem.icon className="w-4 h-4" />
+                          <span>{subItem.label}</span>
+                        </button>
+                      ))}
                   </div>
                 )}
               </div>

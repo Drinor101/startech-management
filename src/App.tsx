@@ -224,10 +224,10 @@ const AppContent: React.FC = () => {
   // Convert user to the format expected by Sidebar
   const currentUser = user ? {
     id: user.id,
-    name: user.email.split('@')[0], // Use email prefix as name
+    name: user.name || user.email.split('@')[0], // Use name or email prefix as name
     email: user.email,
-    role: (user.role === 'admin' ? 'Administrator' : 'Support Agent') as 'Administrator' | 'Manager' | 'E-commerce' | 'Technician' | 'Marketing' | 'Design' | 'Support Agent' | 'Customer',
-    avatar: `https://ui-avatars.com/api/?name=${user.email.split('@')[0]}&background=3b82f6&color=fff`,
+    role: user.role as 'Administrator' | 'Manager' | 'E-commerce' | 'Technician' | 'Marketing' | 'Design' | 'Support Agent' | 'Customer',
+    avatar: `https://ui-avatars.com/api/?name=${user.name || user.email.split('@')[0]}&background=3b82f6&color=fff`,
     isActive: true,
     credits: 0, // Default credits for new users
     lastLogin: new Date().toISOString()

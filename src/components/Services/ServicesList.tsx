@@ -5,11 +5,13 @@ import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const ServicesList: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -233,12 +235,14 @@ const ServicesList: React.FC = () => {
               Kanban
             </button>
           </div>
-          <button 
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Servis i Ri
-          </button>
+          {canCreate('services') && (
+            <button 
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Servis i Ri
+            </button>
+          )}
         </div>
       </div>
 
@@ -349,19 +353,23 @@ const ServicesList: React.FC = () => {
                       >
                         <Eye className="w-4 h-4" />
                       </button>
-                      <button 
-                        onClick={() => handleEditService(service)}
-                        className="text-green-600 hover:text-green-900 p-1"
-                        title="Modifiko"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        className="text-red-600 hover:text-red-900 p-1"
-                        title="Fshij"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEdit('services') && (
+                        <button 
+                          onClick={() => handleEditService(service)}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete('services') && (
+                        <button
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

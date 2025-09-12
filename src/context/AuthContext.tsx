@@ -4,7 +4,7 @@ import { supabase } from '../config/supabase';
 interface User {
   id: string;
   email: string;
-  role: string;
+  role: 'Administrator' | 'Marketer' | 'Dizajner' | 'Menaxher' | 'Agjent shitjeje' | 'Agjent mbështetje' | 'Serviser';
   name: string;
   department: string;
   phone: string;
