@@ -335,7 +335,6 @@ router.post('/', authenticateUser, async (req, res) => {
         
         const productData = {
           title: product ? product.name : `Product ${item.productId}`,
-          description: '',
           image: '',
           category: 'WooCommerce',
           base_price: product ? parseFloat(product.price || 0) : 100,
