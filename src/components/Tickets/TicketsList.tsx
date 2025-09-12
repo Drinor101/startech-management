@@ -22,7 +22,6 @@ const TicketsList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [showForm, setShowForm] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -195,7 +194,11 @@ const TicketsList: React.FC = () => {
             <option value="low">I ulët</option>
           </select>
           <button 
-            onClick={() => setShowForm(true)}
+            onClick={() => {
+              setSelectedTicket(null);
+              setIsEditMode(false);
+              setIsFormOpen(true);
+            }}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
@@ -421,16 +424,6 @@ const TicketsList: React.FC = () => {
         />
       </Modal>
 
-      {/* Ticket Form Modal */}
-      {showForm && (
-        <TicketForm
-          onClose={() => setShowForm(false)}
-          onSuccess={() => {
-            setShowForm(false);
-            fetchTickets();
-          }}
-        />
-      )}
     </div>
   );
 };
