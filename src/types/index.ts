@@ -181,8 +181,17 @@ export interface RolePermissions {
 }
 
 // Role-based permissions system
+// Sipas specifikimeve:
+// Taska - Taskat e përcaktuar për atë përdorues
+// Tiketat - Agjent shitjeje, Agjent mbështetje, Menaxher, Serviser
+// Servisi - Agjent shitjeje, Agjent mbështetje, Serviser
+// Porositë - Agjent shitjeje, Agjent mbështetje, Serviser, Menaxher
+// Raportet - Menaxher (tash për tash)
+// Përdoruesit - Admin, Menaxher (View only)
+// ***Admin kuptohet çasje e plotë
 export const ROLE_PERMISSIONS = {
   'Administrator': {
+    // Administrator - Çasje e plotë në të gjitha modulet
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
@@ -193,16 +202,18 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },
   'Menaxher': {
+    // Menaxher - Çasje e plotë përveç Users (vetëm view)
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     orders: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true },
+    users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },
   'Agjent shitjeje': {
+    // Agjent shitjeje - Tasks, Tiketat, Servisi, Porositë, Products, Customers
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
@@ -213,6 +224,7 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
   },
   'Agjent mbështetje': {
+    // Agjent mbështetje - Tasks, Tiketat, Servisi, Porositë, Products, Customers
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
@@ -223,6 +235,7 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
   },
   'Serviser': {
+    // Serviser - Tasks, Tiketat, Servisi, Porositë, Products, Customers
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
@@ -233,6 +246,7 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
   },
   'Marketer': {
+    // Marketer - Vetëm Tasks, Products, Customers
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     tickets: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     services: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
@@ -243,6 +257,7 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
   },
   'Dizajner': {
+    // Dizajner - Vetëm Tasks, Products, Customers
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     tickets: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     services: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
