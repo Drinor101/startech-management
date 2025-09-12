@@ -305,18 +305,35 @@ router.post('/', authenticateUser, async (req, res) => {
 
     console.log('Order inserted successfully:', order);
 
-    // Insert order products
-    const orderProducts = items.map(item => {
+    // Insert order products - need to find product UUIDs from database
+    const orderProducts = [];
+    for (const item of items) {
       const product = productDetails.find(p => p.id === item.productId);
-      return {
-        order_id: orderId,
-        product_id: item.productId,
-        quantity: item.quantity,
-        subtotal: product ? product.price * item.quantity : 0
-      };
-    });
+      
+      // Find the product UUID in our database by WooCommerce ID
+      const { data: dbProduct } = await supabase
+        .from('products')
+        .select('id')
+        .eq('woo_commerce_id', parseInt(item.productId))
+        .single();
+      
+      if (dbProduct) {
+        orderProducts.push({
+          order_id: orderId,
+          product_id: dbProduct.id, // Use database UUID
+          quantity: item.quantity,
+          subtotal: product ? product.price * item.quantity : 0
+        });
+      } else {
+        console.warn(`Product ${item.productId} not found in database, skipping...`);
+      }
+    }
 
     console.log('Order products to insert:', orderProducts);
+
+    if (orderProducts.length === 0) {
+      throw new Error('No valid products found in database');
+    }
 
     const { error: productsError } = await supabase
       .from('order_products')
