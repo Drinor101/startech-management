@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { apiCall } from '../../config/api';
+import Notification from '../Common/Notification';
 
 interface TaskFormProps {
   onClose: () => void;
@@ -20,6 +21,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,12 +46,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       });
 
       onSuccess();
-      if (task) {
-        alert('Tasku u përditësua me sukses');
-      } else {
-        alert('Tasku u shtua me sukses');
-      }
-      onClose();
+      setNotification({
+        type: 'success',
+        message: task ? 'Tasku u përditësua me sukses' : 'Tasku u shtua me sukses',
+        isVisible: true
+      });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (err) {
       console.error('Error saving task:', err);
       setError('Gabim në ruajtjen e taskut');
@@ -219,6 +231,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
           </div>
         </form>
       </div>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

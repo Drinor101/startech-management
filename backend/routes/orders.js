@@ -431,7 +431,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një porosi
-router.put('/:id', authenticateUser, async (req, res) => {
+router.patch('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -560,8 +560,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Fshin një porosi (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+// Fshin një porosi
+router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
 

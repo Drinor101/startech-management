@@ -6,6 +6,7 @@ import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 import { usePermissions } from '../../hooks/usePermissions';
+import Notification from '../Common/Notification';
 
 const TasksList: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
@@ -18,6 +19,15 @@ const TasksList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   // Fetch tasks from API
@@ -125,10 +135,18 @@ const TasksList: React.FC = () => {
         
         // Refresh the tasks list
         await fetchTasks();
-        alert('Tasku u fshi me sukses');
+        setNotification({
+          type: 'success',
+          message: 'Tasku u fshi me sukses',
+          isVisible: true
+        });
       } catch (error) {
         console.error('Error deleting task:', error);
-        alert('Gabim në fshirjen e taskut');
+        setNotification({
+          type: 'error',
+          message: 'Gabim në fshirjen e taskut',
+          isVisible: true
+        });
       }
     }
   };
@@ -577,6 +595,14 @@ const TasksList: React.FC = () => {
           }}
         />
       )}
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

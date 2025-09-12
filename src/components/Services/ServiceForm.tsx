@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { apiCall } from '../../config/api';
+import Notification from '../Common/Notification';
 
 interface ServiceFormProps {
   onClose: () => void;
@@ -19,6 +20,15 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,12 +45,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
       });
 
       onSuccess();
-      if (service) {
-        alert('Shërbimi u përditësua me sukses');
-      } else {
-        alert('Shërbimi u shtua me sukses');
-      }
-      onClose();
+      setNotification({
+        type: 'success',
+        message: service ? 'Shërbimi u përditësua me sukses' : 'Shërbimi u shtua me sukses',
+        isVisible: true
+      });
+      setTimeout(() => {
+        onClose();
+      }, 1500);
     } catch (err) {
       console.error('Error saving service:', err);
       setError('Gabim në ruajtjen e shërbimit');
@@ -192,6 +204,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
           </div>
         </form>
       </div>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

@@ -18,6 +18,7 @@ import { apiCall } from '../../config/api';
 import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
 import KanbanBoard from '../Common/KanbanBoard';
+import Notification from '../Common/Notification';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -30,6 +31,15 @@ const TicketsList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   useEffect(() => {
     fetchTickets();
@@ -231,6 +241,7 @@ const TicketsList: React.FC = () => {
           <Edit className="w-3 h-3" />
         </button>
         <button
+          onClick={() => handleDeleteTicket(ticket)}
           className="text-red-600 hover:text-red-900 p-1"
           title="Fshij"
         >
@@ -239,6 +250,31 @@ const TicketsList: React.FC = () => {
       </div>
     </div>
   );
+
+  const handleDeleteTicket = async (ticket: Ticket) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini tiketën "${ticket.id}"?`)) {
+      try {
+        await apiCall(`/api/tasks/${ticket.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the tickets list
+        await fetchTickets();
+        setNotification({
+          type: 'success',
+          message: 'Tiketa u fshi me sukses',
+          isVisible: true
+        });
+      } catch (error) {
+        console.error('Error deleting ticket:', error);
+        setNotification({
+          type: 'error',
+          message: 'Gabim në fshirjen e tiketës',
+          isVisible: true
+        });
+      }
+    }
+  };
 
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
@@ -428,6 +464,7 @@ const TicketsList: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handleDeleteTicket(ticket)}
                           className="text-red-600 hover:text-red-900 p-1"
                           title="Fshij"
                         >
@@ -555,6 +592,13 @@ const TicketsList: React.FC = () => {
         />
       </Modal>
 
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

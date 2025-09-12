@@ -5,6 +5,7 @@ import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
 import { usePermissions } from '../../hooks/usePermissions';
+import Notification from '../Common/Notification';
 
 const OrdersList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -15,6 +16,15 @@ const OrdersList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const { canCreate, canEdit, canDelete } = usePermissions();
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   // Fetch orders from API
   const fetchOrders = async () => {
@@ -59,10 +69,18 @@ const OrdersList: React.FC = () => {
         
         // Refresh the orders list
         await fetchOrders();
-        alert('Porosia u fshi me sukses');
+        setNotification({
+          type: 'success',
+          message: 'Porosia u fshi me sukses',
+          isVisible: true
+        });
       } catch (error) {
         console.error('Error deleting order:', error);
-        alert('Gabim në fshirjen e porosisë');
+        setNotification({
+          type: 'error',
+          message: 'Gabim në fshirjen e porosisë',
+          isVisible: true
+        });
       }
     }
   };
@@ -423,6 +441,14 @@ const OrdersList: React.FC = () => {
           }}
         />
       </Modal>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
 import { usePermissions } from '../../hooks/usePermissions';
+import Notification from '../Common/Notification';
 
 const ServicesList: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -18,6 +19,15 @@ const ServicesList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -93,10 +103,18 @@ const ServicesList: React.FC = () => {
         
         // Refresh the services list
         await fetchServices();
-        alert('Shërbimi u fshi me sukses');
+        setNotification({
+          type: 'success',
+          message: 'Shërbimi u fshi me sukses',
+          isVisible: true
+        });
       } catch (error) {
         console.error('Error deleting service:', error);
-        alert('Gabim në fshirjen e shërbimit');
+        setNotification({
+          type: 'error',
+          message: 'Gabim në fshirjen e shërbimit',
+          isVisible: true
+        });
       }
     }
   };
@@ -542,6 +560,14 @@ const ServicesList: React.FC = () => {
           }}
         />
       )}
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </div>
   );
 };

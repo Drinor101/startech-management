@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Trash2, CheckCircle, X } from 'lucide-react';
+import { Plus, Trash2, X } from 'lucide-react';
 import { apiCall } from '../../config/api';
 import { Product } from '../../types';
+import Notification from '../Common/Notification';
 
 interface OrderFormProps {
   order?: any;
@@ -54,7 +55,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     e.preventDefault();
     try {
       const url = order ? `/api/orders/${order.id}` : '/api/orders';
-      const method = order ? 'PUT' : 'POST';
+      const method = order ? 'PATCH' : 'POST';
       
       console.log('OrderForm - Submitting order:', formData);
       console.log('OrderForm - URL:', url, 'Method:', method);
@@ -317,30 +318,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     </form>
 
     {/* Success Notification */}
-    {showSuccess && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-          <div className="flex items-center justify-center mb-4">
-            <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Sukses!
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Porosia u krijua me sukses dhe do të mbyllet automatikisht.
-            </p>
-            <div className="flex justify-center">
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div className="bg-green-600 h-2 rounded-full animate-pulse"></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
+    <Notification
+      type="success"
+      message={order ? 'Porosia u përditësua me sukses!' : 'Porosia u shtua me sukses!'}
+      isVisible={showSuccess}
+      onClose={() => setShowSuccess(false)}
+    />
     </>
   );
 };
