@@ -38,6 +38,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   ]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -48,35 +50,49 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setLoading(true);
       const apiUrl = import.meta.env.VITE_API_URL || 'https://startech-management-production.up.railway.app';
       
+      // Get user token for authentication
+      const token = localStorage.getItem('token');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+      };
+      
       // Fetch all data in parallel
-      const [servicesRes, tasksRes, ordersRes, customersRes, reportsRes] = await Promise.all([
-        fetch(`${apiUrl}/api/services`),
-        fetch(`${apiUrl}/api/tasks`),
-        fetch(`${apiUrl}/api/orders`),
-        fetch(`${apiUrl}/api/customers`),
-        fetch(`${apiUrl}/api/reports`)
+      const [servicesRes, tasksRes, ordersRes, customersRes] = await Promise.all([
+        fetch(`${apiUrl}/api/services`, { headers }),
+        fetch(`${apiUrl}/api/tasks`, { headers }),
+        fetch(`${apiUrl}/api/orders`, { headers }),
+        fetch(`${apiUrl}/api/customers`, { headers })
       ]);
 
-      const [services, tasks, orders, customers, reports] = await Promise.all([
-        servicesRes.ok ? servicesRes.json() : [],
-        tasksRes.ok ? tasksRes.json() : [],
-        ordersRes.ok ? ordersRes.json() : [],
-        customersRes.ok ? customersRes.json() : [],
-        reportsRes.ok ? reportsRes.json() : []
+      const [servicesData, tasksData, ordersData, customersData] = await Promise.all([
+        servicesRes.ok ? servicesRes.json() : { data: [] },
+        tasksRes.ok ? tasksRes.json() : { data: [] },
+        ordersRes.ok ? ordersRes.json() : { data: [] },
+        customersRes.ok ? customersRes.json() : { data: [] }
       ]);
+
+      const servicesDataArray = servicesData.data || [];
+      const tasksDataArray = tasksData.data || [];
+      const orders = ordersData.data || [];
+      const customers = customersData.data || [];
+      
+      // Set state for chart data
+      setServices(servicesDataArray);
+      setTasks(tasksDataArray);
 
       // Update stats with real data
       setStats([
         { 
           label: 'Servisi Aktivë', 
-          value: services.filter((s: any) => s.status === 'in-progress').length.toString(), 
+          value: servicesDataArray.filter((s: any) => s.status === 'in-progress').length.toString(), 
           icon: Settings, 
           color: 'bg-blue-500', 
           change: '+12%' 
         },
         { 
           label: 'Taskat e Hapura', 
-          value: tasks.filter((t: any) => t.status === 'todo' || t.status === 'in-progress').length.toString(), 
+          value: tasksDataArray.filter((t: any) => t.status === 'todo' || t.status === 'in-progress').length.toString(), 
           icon: CheckSquare, 
           color: 'bg-green-500', 
           change: '+8%' 
@@ -100,13 +116,42 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         },
       ]);
 
-      // Set recent activities (you can customize this based on your needs)
-      setRecentActivities([
-        { id: 1, action: 'Kërkesë e re për servis u krijua', user: 'Sistemi', time: '2 min më parë' },
-        { id: 2, action: 'Porosi e re u regjistrua', user: 'Sistemi', time: '15 min më parë' },
-        { id: 3, action: 'Task i ri u krijuar', user: 'Sistemi', time: '1 orë më parë' },
-        { id: 4, action: 'Klient i ri u regjistrua', user: 'Sistemi', time: '2 orë më parë' },
-      ]);
+      // Set recent activities based on real data
+      const recentActivities = [];
+      
+      // Add recent services
+      servicesDataArray.slice(0, 2).forEach((service, index) => {
+        recentActivities.push({
+          id: `service-${service.id}`,
+          action: `Servis i ri u krijua: ${service.id}`,
+          user: service.createdBy || 'Sistemi',
+          time: new Date(service.createdAt).toLocaleString('sq-AL')
+        });
+      });
+      
+      // Add recent tasks
+      tasksDataArray.slice(0, 2).forEach((task, index) => {
+        recentActivities.push({
+          id: `task-${task.id}`,
+          action: `Task i ri u krijua: ${task.title}`,
+          user: task.createdBy || 'Sistemi',
+          time: new Date(task.createdAt).toLocaleString('sq-AL')
+        });
+      });
+      
+      // Add recent orders
+      orders.slice(0, 1).forEach((order, index) => {
+        recentActivities.push({
+          id: `order-${order.id}`,
+          action: `Porosi e re u regjistrua: ${order.id}`,
+          user: 'Sistemi',
+          time: new Date(order.createdAt).toLocaleString('sq-AL')
+        });
+      });
+      
+      // Sort by creation time and take latest 4
+      recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
+      setRecentActivities(recentActivities.slice(0, 4));
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -130,28 +175,59 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     setShowNewMenu(false);
   };
 
-  // Chart data for service requests trend
-  const chartData = {
-    labels: ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj'],
-    datasets: [
-      {
-        label: 'Kërkesat për Servis',
-        data: [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
-        borderColor: 'rgb(59, 130, 246)',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-        tension: 0.4,
-        fill: true,
-      },
-      {
-        label: 'Servisi të Përfunduar',
-        data: [10, 15, 12, 20, 18, 25, 23, 30, 28, 35, 32, 40],
-        borderColor: 'rgb(34, 197, 94)',
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
-        tension: 0.4,
-        fill: true,
-      }
-    ],
+  // Chart data for service requests trend (using real data)
+  const generateChartData = (services: any[], tasks: any[]) => {
+    const months = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj'];
+    const currentMonth = new Date().getMonth();
+    
+    // Generate data for last 6 months
+    const serviceData = [];
+    const taskData = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const targetMonth = new Date();
+      targetMonth.setMonth(currentMonth - i);
+      const monthStart = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), 1);
+      const monthEnd = new Date(targetMonth.getFullYear(), targetMonth.getMonth() + 1, 0);
+      
+      const servicesInMonth = services.filter(s => {
+        const createdDate = new Date(s.createdAt);
+        return createdDate >= monthStart && createdDate <= monthEnd;
+      }).length;
+      
+      const tasksInMonth = tasks.filter(t => {
+        const createdDate = new Date(t.createdAt);
+        return createdDate >= monthStart && createdDate <= monthEnd;
+      }).length;
+      
+      serviceData.push(servicesInMonth);
+      taskData.push(tasksInMonth);
+    }
+    
+    return {
+      labels: months.slice(currentMonth - 5, currentMonth + 1),
+      datasets: [
+        {
+          label: 'Servisi të Krijuar',
+          data: serviceData,
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true,
+        },
+        {
+          label: 'Taskat e Krijuar',
+          data: taskData,
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          tension: 0.4,
+          fill: true,
+        }
+      ],
+    };
   };
+
+  const chartData = generateChartData(services, tasks);
 
   const chartOptions = {
     responsive: true,
