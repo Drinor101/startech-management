@@ -39,9 +39,34 @@ router.get('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Transform data to match frontend interface
+    const transformedData = data.map(task => ({
+      id: task.id,
+      type: task.type,
+      title: task.title,
+      description: task.description,
+      priority: task.priority,
+      assignedTo: task.assigned_to,
+      assignedBy: task.assigned_by,
+      createdBy: task.created_by,
+      visibleTo: task.visible_to || [],
+      category: task.category,
+      department: task.department,
+      status: task.status,
+      attachments: task.attachments || [],
+      createdAt: task.created_at,
+      updatedAt: task.updated_at,
+      completedAt: task.completed_at,
+      customerId: task.customer_id,
+      relatedOrderId: task.related_order_id,
+      source: task.source,
+      comments: task.comments || [],
+      history: task.history || []
+    }));
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -100,13 +125,29 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një task të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
-    // Generate a unique task ID
-    const taskId = `TASK-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID mungon'
+      });
+    }
+
+    // Get user info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single();
+
+    const userName = userData?.name || userData?.email || 'Unknown';
     
     const taskData = {
-      id: taskId,
       ...req.body,
+      type: req.body.type || 'task',
       status: req.body.status || 'todo',
+      created_by: userName,
+      assigned_by: req.body.assignedBy || userName,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -122,9 +163,42 @@ router.post('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Add to history
+    await supabase
+      .from('task_history')
+      .insert({
+        task_id: data.id,
+        action: 'Tasku u krijua',
+        user_id: userId,
+        user_name: userName,
+        details: `Tasku "${data.title}" u krijua me prioritet ${data.priority}`
+      });
+
     res.status(201).json({
       success: true,
-      data: data,
+      data: {
+        id: data.id,
+        type: data.type,
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        assignedTo: data.assigned_to,
+        assignedBy: data.assigned_by,
+        createdBy: data.created_by,
+        visibleTo: data.visible_to || [],
+        category: data.category,
+        department: data.department,
+        status: data.status,
+        attachments: data.attachments || [],
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        completedAt: data.completed_at,
+        customerId: data.customer_id,
+        relatedOrderId: data.related_order_id,
+        source: data.source,
+        comments: [],
+        history: []
+      },
       message: 'Tasku u krijua me sukses'
     });
   } catch (error) {

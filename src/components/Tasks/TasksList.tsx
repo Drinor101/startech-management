@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, Calendar } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, Calendar } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
@@ -285,7 +285,19 @@ const TasksList: React.FC = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    ID
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Titulli
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Caktuar për
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Caktuar nga
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Departamenti
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Prioriteti
@@ -294,13 +306,7 @@ const TasksList: React.FC = () => {
                     Statusi
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Përshkrues
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Departamenti
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Krijuar
+                    Data
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Veprimet
@@ -310,16 +316,33 @@ const TasksList: React.FC = () => {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredTasks.map((task) => (
                   <tr key={task.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                           Task
                         </span>
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{task.title}</div>
-                          <div className="text-sm text-gray-500">{task.id}</div>
-                        </div>
+                        <span className="text-sm font-medium text-gray-900">{task.id}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                      {task.description && (
+                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                          {task.description}
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">{task.assignedTo}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{task.assignedBy || 'N/A'}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{task.department}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1">
@@ -347,18 +370,9 @@ const TasksList: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">{task.assignedTo}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{task.department}</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900">
-                          {new Date(task.createdAt).toLocaleDateString()}
+                          {new Date(task.createdAt).toLocaleDateString('sq-AL')}
                         </span>
                       </div>
                     </td>
@@ -366,15 +380,23 @@ const TasksList: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleViewTask(task)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shih"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button 
                           onClick={() => handleEditTask(task)}
-                          className="text-gray-600 hover:text-gray-900"
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
                         >
                           <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </td>
