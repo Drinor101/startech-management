@@ -19,6 +19,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
   const [formData, setFormData] = useState({
     customer: order?.customer?.name || '',
     items: order?.products?.map(p => ({ productId: p.id, quantity: p.quantity })) || [{ productId: '', quantity: 1 }] as OrderItem[],
@@ -70,18 +79,23 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       if (response.success) {
         console.log('Order saved successfully:', response);
         setShowSuccess(true);
-        // Auto close after 3 seconds
-        setTimeout(() => {
-          setShowSuccess(false);
-          onSuccess?.();
-        }, 3000);
+        onSuccess?.();
+        onClose(); // Close modal immediately
       } else {
         console.error('Error saving order:', response.error);
-        alert(`Gabim në krijimin e porosisë: ${response.error}`);
+        setNotification({
+          type: 'error',
+          message: `Gabim në krijimin e porosisë: ${response.error}`,
+          isVisible: true
+        });
       }
     } catch (error) {
       console.error('Error saving order:', error);
-      alert(`Gabim në krijimin e porosisë: ${error.message}`);
+      setNotification({
+        type: 'error',
+        message: `Gabim në krijimin e porosisë: ${error.message}`,
+        isVisible: true
+      });
     }
   };
 
@@ -323,6 +337,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       message={order ? 'Porosia u përditësua me sukses!' : 'Porosia u shtua me sukses!'}
       isVisible={showSuccess}
       onClose={() => setShowSuccess(false)}
+    />
+
+    {/* Error Notification */}
+    <Notification
+      type={notification.type}
+      message={notification.message}
+      isVisible={notification.isVisible}
+      onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
     />
     </>
   );

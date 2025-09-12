@@ -6,6 +6,7 @@ import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 const OrdersList: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -24,6 +25,13 @@ const OrdersList: React.FC = () => {
     type: 'success',
     message: '',
     isVisible: false
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({
+    isOpen: false,
+    order: null
   });
 
   // Fetch orders from API
@@ -60,28 +68,40 @@ const OrdersList: React.FC = () => {
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
-  const handleDeleteOrder = async (order: Order) => {
-    if (window.confirm(`A jeni të sigurt që doni të fshini porosinë "${order.id}"?`)) {
-      try {
-        await apiCall(`${apiConfig.endpoints.orders}/${order.id}`, {
-          method: 'DELETE'
-        });
-        
-        // Refresh the orders list
-        await fetchOrders();
-        setNotification({
-          type: 'success',
-          message: 'Porosia u fshi me sukses',
-          isVisible: true
-        });
-      } catch (error) {
-        console.error('Error deleting order:', error);
-        setNotification({
-          type: 'error',
-          message: 'Gabim në fshirjen e porosisë',
-          isVisible: true
-        });
-      }
+  const handleDeleteOrder = (order: Order) => {
+    setConfirmationModal({
+      isOpen: true,
+      order: order
+    });
+  };
+
+  const confirmDeleteOrder = async () => {
+    if (!confirmationModal.order) return;
+    
+    try {
+      await apiCall(`${apiConfig.endpoints.orders}/${confirmationModal.order.id}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the orders list
+      await fetchOrders();
+      setNotification({
+        type: 'success',
+        message: 'Porosia u fshi me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e porosisë',
+        isVisible: true
+      });
+    } finally {
+      setConfirmationModal({
+        isOpen: false,
+        order: null
+      });
     }
   };
 
@@ -448,6 +468,17 @@ const OrdersList: React.FC = () => {
         message={notification.message}
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, order: null })}
+        onConfirm={confirmDeleteOrder}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini porosinë "${confirmationModal.order?.id}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
       />
     </div>
   );

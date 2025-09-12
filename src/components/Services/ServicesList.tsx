@@ -7,6 +7,7 @@ import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 const ServicesList: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -27,6 +28,13 @@ const ServicesList: React.FC = () => {
     type: 'success',
     message: '',
     isVisible: false
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    service: Service | null;
+  }>({
+    isOpen: false,
+    service: null
   });
 
   // Fetch services from API
@@ -94,28 +102,40 @@ const ServicesList: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteService = async (service: Service) => {
-    if (window.confirm(`A jeni të sigurt që doni të fshini shërbimin "${service.id}"?`)) {
-      try {
-        await apiCall(`${apiConfig.endpoints.services}/${service.id}`, {
-          method: 'DELETE'
-        });
-        
-        // Refresh the services list
-        await fetchServices();
-        setNotification({
-          type: 'success',
-          message: 'Shërbimi u fshi me sukses',
-          isVisible: true
-        });
-      } catch (error) {
-        console.error('Error deleting service:', error);
-        setNotification({
-          type: 'error',
-          message: 'Gabim në fshirjen e shërbimit',
-          isVisible: true
-        });
-      }
+  const handleDeleteService = (service: Service) => {
+    setConfirmationModal({
+      isOpen: true,
+      service: service
+    });
+  };
+
+  const confirmDeleteService = async () => {
+    if (!confirmationModal.service) return;
+    
+    try {
+      await apiCall(`${apiConfig.endpoints.services}/${confirmationModal.service.id}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the services list
+      await fetchServices();
+      setNotification({
+        type: 'success',
+        message: 'Shërbimi u fshi me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error deleting service:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e shërbimit',
+        isVisible: true
+      });
+    } finally {
+      setConfirmationModal({
+        isOpen: false,
+        service: null
+      });
     }
   };
 
@@ -567,6 +587,17 @@ const ServicesList: React.FC = () => {
         message={notification.message}
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, service: null })}
+        onConfirm={confirmDeleteService}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini shërbimin "${confirmationModal.service?.id}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
       />
     </div>
   );

@@ -7,6 +7,7 @@ import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 const TasksList: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
@@ -27,6 +28,13 @@ const TasksList: React.FC = () => {
     type: 'success',
     message: '',
     isVisible: false
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    task: Task | null;
+  }>({
+    isOpen: false,
+    task: null
   });
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
@@ -126,28 +134,40 @@ const TasksList: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const handleDeleteTask = async (task: Task) => {
-    if (window.confirm(`A jeni të sigurt që doni të fshini taskun "${task.title}"?`)) {
-      try {
-        await apiCall(`${apiConfig.endpoints.tasks}/${task.id}`, {
-          method: 'DELETE'
-        });
-        
-        // Refresh the tasks list
-        await fetchTasks();
-        setNotification({
-          type: 'success',
-          message: 'Tasku u fshi me sukses',
-          isVisible: true
-        });
-      } catch (error) {
-        console.error('Error deleting task:', error);
-        setNotification({
-          type: 'error',
-          message: 'Gabim në fshirjen e taskut',
-          isVisible: true
-        });
-      }
+  const handleDeleteTask = (task: Task) => {
+    setConfirmationModal({
+      isOpen: true,
+      task: task
+    });
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!confirmationModal.task) return;
+    
+    try {
+      await apiCall(`${apiConfig.endpoints.tasks}/${confirmationModal.task.id}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the tasks list
+      await fetchTasks();
+      setNotification({
+        type: 'success',
+        message: 'Tasku u fshi me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e taskut',
+        isVisible: true
+      });
+    } finally {
+      setConfirmationModal({
+        isOpen: false,
+        task: null
+      });
     }
   };
 
@@ -602,6 +622,17 @@ const TasksList: React.FC = () => {
         message={notification.message}
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, task: null })}
+        onConfirm={confirmDeleteTask}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini taskun "${confirmationModal.task?.title}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
       />
     </div>
   );

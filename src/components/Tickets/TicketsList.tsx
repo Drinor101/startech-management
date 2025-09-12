@@ -19,6 +19,7 @@ import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
 import KanbanBoard from '../Common/KanbanBoard';
 import Notification from '../Common/Notification';
+import ConfirmationModal from '../Common/ConfirmationModal';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -39,6 +40,13 @@ const TicketsList: React.FC = () => {
     type: 'success',
     message: '',
     isVisible: false
+  });
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    ticket: Ticket | null;
+  }>({
+    isOpen: false,
+    ticket: null
   });
 
   useEffect(() => {
@@ -251,28 +259,40 @@ const TicketsList: React.FC = () => {
     </div>
   );
 
-  const handleDeleteTicket = async (ticket: Ticket) => {
-    if (window.confirm(`A jeni të sigurt që doni të fshini tiketën "${ticket.id}"?`)) {
-      try {
-        await apiCall(`/api/tasks/${ticket.id}`, {
-          method: 'DELETE'
-        });
-        
-        // Refresh the tickets list
-        await fetchTickets();
-        setNotification({
-          type: 'success',
-          message: 'Tiketa u fshi me sukses',
-          isVisible: true
-        });
-      } catch (error) {
-        console.error('Error deleting ticket:', error);
-        setNotification({
-          type: 'error',
-          message: 'Gabim në fshirjen e tiketës',
-          isVisible: true
-        });
-      }
+  const handleDeleteTicket = (ticket: Ticket) => {
+    setConfirmationModal({
+      isOpen: true,
+      ticket: ticket
+    });
+  };
+
+  const confirmDeleteTicket = async () => {
+    if (!confirmationModal.ticket) return;
+    
+    try {
+      await apiCall(`/api/tasks/${confirmationModal.ticket.id}`, {
+        method: 'DELETE'
+      });
+      
+      // Refresh the tickets list
+      await fetchTickets();
+      setNotification({
+        type: 'success',
+        message: 'Tiketa u fshi me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error deleting ticket:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e tiketës',
+        isVisible: true
+      });
+    } finally {
+      setConfirmationModal({
+        isOpen: false,
+        ticket: null
+      });
     }
   };
 
@@ -598,6 +618,17 @@ const TicketsList: React.FC = () => {
         message={notification.message}
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, ticket: null })}
+        onConfirm={confirmDeleteTicket}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini tiketën "${confirmationModal.ticket?.id}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
       />
     </div>
   );
