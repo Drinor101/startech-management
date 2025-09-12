@@ -325,7 +325,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një task (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
 

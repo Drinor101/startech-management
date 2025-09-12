@@ -95,18 +95,23 @@ const TicketsList: React.FC = () => {
   };
 
   const handleDeleteTicket = async (ticket: Task) => {
+    console.log('handleDeleteTicket called for ticket:', ticket.id);
+    console.log('User permissions:', { canDelete: canDelete('tickets') });
+    
     if (window.confirm(`A jeni të sigurt që doni të fshini tiketën "${ticket.title}"?`)) {
       try {
-        await apiCall(`${apiConfig.endpoints.tasks}/${ticket.id}`, {
+        console.log('Attempting to delete ticket:', ticket.id);
+        const response = await apiCall(`${apiConfig.endpoints.tasks}/${ticket.id}`, {
           method: 'DELETE'
         });
+        console.log('Delete response:', response);
         
         // Refresh the tickets list
         await fetchTickets();
         alert('Tiketa u fshi me sukses');
       } catch (error) {
         console.error('Error deleting ticket:', error);
-        alert('Gabim në fshirjen e tiketës');
+        alert('Gabim në fshirjen e tiketës: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
     }
   };
