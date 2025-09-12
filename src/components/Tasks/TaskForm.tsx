@@ -36,6 +36,11 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       });
 
       onSuccess();
+      if (task) {
+        alert('Tasku u përditësua me sukses');
+      } else {
+        alert('Tasku u shtua me sukses');
+      }
       onClose();
     } catch (err) {
       console.error('Error saving task:', err);

@@ -35,6 +35,11 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
       });
 
       onSuccess();
+      if (service) {
+        alert('Shërbimi u përditësua me sukses');
+      } else {
+        alert('Shërbimi u shtua me sukses');
+      }
       onClose();
     } catch (err) {
       console.error('Error saving service:', err);

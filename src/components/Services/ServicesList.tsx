@@ -84,6 +84,23 @@ const ServicesList: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleDeleteService = async (service: Service) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini shërbimin "${service.id}"?`)) {
+      try {
+        await apiCall(`${apiConfig.endpoints.services}/${service.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the services list
+        await fetchServices();
+        alert('Shërbimi u fshi me sukses');
+      } catch (error) {
+        console.error('Error deleting service:', error);
+        alert('Gabim në fshirjen e shërbimit');
+      }
+    }
+  };
+
   const handleStatusChange = async (serviceId: string, newStatus: string) => {
     try {
       await apiCall(`${apiConfig.endpoints.services}/${serviceId}`, {
@@ -364,6 +381,7 @@ const ServicesList: React.FC = () => {
                       )}
                       {canDelete('services') && (
                         <button
+                          onClick={() => handleDeleteService(service)}
                           className="text-red-600 hover:text-red-900 p-1"
                           title="Fshij"
                         >

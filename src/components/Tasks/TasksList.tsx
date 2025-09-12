@@ -116,6 +116,23 @@ const TasksList: React.FC = () => {
     setIsFormOpen(true);
   };
 
+  const handleDeleteTask = async (task: Task) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini taskun "${task.title}"?`)) {
+      try {
+        await apiCall(`${apiConfig.endpoints.tasks}/${task.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the tasks list
+        await fetchTasks();
+        alert('Tasku u fshi me sukses');
+      } catch (error) {
+        console.error('Error deleting task:', error);
+        alert('Gabim në fshirjen e taskut');
+      }
+    }
+  };
+
   const handleStatusChange = async (taskId: string, newStatus: string) => {
     try {
       await apiCall(`${apiConfig.endpoints.tasks}/${taskId}`, {
@@ -396,12 +413,15 @@ const TasksList: React.FC = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button
-                          className="text-red-600 hover:text-red-900 p-1"
-                          title="Fshij"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDelete('tasks') && (
+                          <button
+                            onClick={() => handleDeleteTask(task)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Fshij"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

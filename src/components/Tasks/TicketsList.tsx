@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, AlertCircle, Clock, User, MessageCircle } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, MessageCircle } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const TicketsList: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [selectedTicket, setSelectedTicket] = useState<Task | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,6 +87,28 @@ const TicketsList: React.FC = () => {
   const handleViewTicket = (ticket: Task) => {
     setSelectedTicket(ticket);
     setIsModalOpen(true);
+  };
+
+  const handleEditTicket = (ticket: Task) => {
+    setSelectedTicket(ticket);
+    setIsFormOpen(true);
+  };
+
+  const handleDeleteTicket = async (ticket: Task) => {
+    if (window.confirm(`A jeni të sigurt që doni të fshini tiketën "${ticket.title}"?`)) {
+      try {
+        await apiCall(`${apiConfig.endpoints.tasks}/${ticket.id}`, {
+          method: 'DELETE'
+        });
+        
+        // Refresh the tickets list
+        await fetchTickets();
+        alert('Tiketa u fshi me sukses');
+      } catch (error) {
+        console.error('Error deleting ticket:', error);
+        alert('Gabim në fshirjen e tiketës');
+      }
+    }
   };
 
   // Kanban columns for tickets
@@ -312,13 +336,29 @@ const TicketsList: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleViewTicket(ticket)}
-                          className="text-blue-600 hover:text-blue-900"
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shih"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="text-gray-600 hover:text-gray-900">
-                          <Edit className="w-4 h-4" />
-                        </button>
+                        {canEdit('tickets') && (
+                          <button 
+                            onClick={() => handleEditTicket(ticket)}
+                            className="text-green-600 hover:text-green-900 p-1"
+                            title="Modifiko"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                        )}
+                        {canDelete('tickets') && (
+                          <button
+                            onClick={() => handleDeleteTicket(ticket)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Fshij"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

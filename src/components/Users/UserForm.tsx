@@ -50,6 +50,11 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
       }
       
       onSuccess?.();
+      if (user) {
+        alert('Përdoruesi u përditësua me sukses');
+      } else {
+        alert('Përdoruesi u shtua me sukses');
+      }
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gabim në ruajtjen e përdoruesit');
