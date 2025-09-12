@@ -249,29 +249,116 @@ router.post('/', authenticateUser, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.headers['x-user-id'];
+    
+    // Get user info
+    const { data: userData } = await supabase
+      .from('users')
+      .select('name, email')
+      .eq('id', userId)
+      .single();
+
+    const userName = userData?.name || userData?.email || 'Unknown';
+
+    // Handle customer - create if doesn't exist or use existing
+    let customerId = req.body.customer || req.body.customerId;
+    
+    // If customer is a string (name), try to find or create customer
+    if (customerId && typeof customerId === 'string' && !customerId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      // Check if customer exists by name
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('name', customerId)
+        .single();
+      
+      if (existingCustomer) {
+        customerId = existingCustomer.id;
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            name: customerId,
+            email: `${customerId.toLowerCase().replace(/\s+/g, '')}@example.com`,
+            phone: '+383 44 000 000'
+          })
+          .select('id')
+          .single();
+        
+        if (customerError) {
+          console.error('Error creating customer:', customerError);
+          return res.status(500).json({
+            success: false,
+            error: 'Gabim në krijimin e klientit'
+          });
+        }
+        
+        customerId = newCustomer.id;
+      }
+    }
+
+    // Map frontend fields to database fields
     const updates = {
-      ...req.body,
+      problem_description: req.body.problem || req.body.problemDescription,
+      status: req.body.status,
+      assigned_to: req.body.assignedTo,
+      warranty_info: req.body.warranty || req.body.warrantyInfo,
+      customer_id: customerId,
+      assigned_by: req.body.assignedTo || userName,
       updated_at: new Date().toISOString()
     };
 
-    // Heq fushët që nuk duhet të përditësohen
-    delete updates.id;
-    delete updates.created_at;
+    // Remove undefined values
+    Object.keys(updates).forEach(key => {
+      if (updates[key] === undefined) {
+        delete updates[key];
+      }
+    });
 
     const { data, error } = await supabase
       .from('services')
       .update(updates)
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        customer:customers(name, email, phone)
+      `)
       .single();
 
     if (error) {
       throw error;
     }
 
+    // Add to history
+    await supabase
+      .from('service_history')
+      .insert({
+        service_id: data.id,
+        action: 'Shërbimi u përditësua',
+        user_id: userId,
+        user_name: userName,
+        notes: `Shërbimi u përditësua nga ${userName}`
+      });
+
+    // Transform response data to camelCase
+    const transformedData = {
+      id: data.id,
+      createdBy: data.created_by,
+      assignedBy: data.assigned_by,
+      assignedTo: data.assigned_to,
+      customer: data.customer,
+      problemDescription: data.problem_description,
+      status: data.status,
+      warrantyInfo: data.warranty_info,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      completedAt: data.completed_at
+    };
+
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       message: 'Shërbimi u përditësua me sukses'
     });
   } catch (error) {
