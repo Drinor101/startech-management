@@ -225,7 +225,8 @@ router.post('/', authenticateUser, async (req, res) => {
     };
 
     // Fetch product details from WooCommerce
-    console.log('Fetching product details for items:', items);
+    console.log('=== STARTING WOOCOMMERCE API CALL ===');
+    console.log('Fetching product details for items:', JSON.stringify(items, null, 2));
     const productDetails = [];
     for (const item of items) {
       try {
@@ -265,6 +266,9 @@ router.post('/', authenticateUser, async (req, res) => {
         });
       }
     }
+    
+    console.log('=== WOOCOMMERCE API CALL COMPLETED ===');
+    console.log('Final product details:', JSON.stringify(productDetails, null, 2));
     
     const total = items.reduce((sum, item) => {
       const product = productDetails.find(p => p.id === item.productId);
