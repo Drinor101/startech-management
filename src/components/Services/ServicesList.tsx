@@ -71,6 +71,7 @@ const ServicesList: React.FC = () => {
   };
 
   const handleViewService = (service: Service) => {
+    console.log('Selected service data:', service);
     setSelectedService(service);
     setIsModalOpen(true);
   };
