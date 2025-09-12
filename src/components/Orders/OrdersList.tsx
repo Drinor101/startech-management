@@ -102,23 +102,6 @@ const OrdersList: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await apiCall(apiConfig.endpoints.orders);
-      console.log('Orders API response:', response);
-      
-      const data = response.success ? response.data : [];
-      setOrders(data || []);
-    } catch (err) {
-      console.error('Error fetching orders:', err);
-      setError('Gabim në ngarkimin e porosive');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="p-6">
