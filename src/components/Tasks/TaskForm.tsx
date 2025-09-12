@@ -17,7 +17,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     priority: task?.priority || 'medium',
     status: task?.status || 'todo',
     description: task?.description || '',
-    customerId: task?.customerId || task?.customer_id || '',
     relatedOrderId: task?.relatedOrderId || task?.related_order_id || ''
   });
   const [loading, setLoading] = useState(false);
@@ -177,18 +176,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
               </select>
             </div>
 
-            {/* ID e Klientit */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">ID e Klientit</label>
-              <input
-                type="text"
-                name="customerId"
-                value={formData.customerId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="ID e klientit (opsionale)"
-              />
-            </div>
           </div>
 
           {/* Përshkrimi */}

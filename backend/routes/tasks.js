@@ -175,7 +175,6 @@ router.post('/', authenticateUser, async (req, res) => {
       assigned_by: req.body.assignedBy || userName,
       created_by: userName,
       department: req.body.department,
-      customer_id: req.body.customerId,
       related_order_id: req.body.relatedOrderId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -219,7 +218,6 @@ router.post('/', authenticateUser, async (req, res) => {
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         completedAt: data.completed_at,
-        customerId: data.customer_id,
         relatedOrderId: data.related_order_id,
         comments: [],
         history: []
@@ -267,7 +265,6 @@ router.put('/:id', authenticateUser, async (req, res) => {
       assigned_to: req.body.assignedTo,
       assigned_by: req.body.assignedBy,
       department: req.body.department,
-      customer_id: req.body.customerId,
       related_order_id: req.body.relatedOrderId,
       updated_at: new Date().toISOString()
     };
@@ -314,7 +311,6 @@ router.put('/:id', authenticateUser, async (req, res) => {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       completedAt: data.completed_at,
-      customerId: data.customer_id,
       relatedOrderId: data.related_order_id
     };
 
