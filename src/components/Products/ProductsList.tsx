@@ -7,48 +7,67 @@ const ProductsList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [lastSync] = useState('2024-01-15T12:00:00Z');
+  const [lastSync, setLastSync] = useState<string>('');
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+
+  // Manual WooCommerce sync function
+  const handleWooCommerceSync = async () => {
+    try {
+      setSyncStatus('syncing');
+      console.log('Starting manual WooCommerce sync...');
+      
+      const response = await apiCall('/api/products/sync-woocommerce', {
+        method: 'POST'
+      });
+      
+      console.log('WooCommerce sync response:', response);
+      
+      if (response.success) {
+        setSyncStatus('success');
+        // Refresh products after successful sync
+        const productsResponse = await apiCall(apiConfig.endpoints.products);
+        const data = productsResponse.success ? productsResponse.data : productsResponse.data || [];
+        setProducts(data || []);
+        
+        // Reset status after 3 seconds
+        setTimeout(() => setSyncStatus('idle'), 3000);
+      } else {
+        setSyncStatus('error');
+        setTimeout(() => setSyncStatus('idle'), 3000);
+      }
+    } catch (error) {
+      console.error('WooCommerce sync error:', error);
+      setSyncStatus('error');
+      setTimeout(() => setSyncStatus('idle'), 3000);
+    }
+  };
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
-  // Fetch products from API and sync with WooCommerce
+  // Fetch products from API
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // First, try to sync with WooCommerce (with timeout)
-        console.log('Starting automatic WooCommerce sync...');
-        try {
-          console.log('Calling WooCommerce sync API...');
-          
-          // Add timeout to prevent hanging
-          const syncPromise = apiCall('/api/products/sync-woocommerce', {
-            method: 'POST'
-          });
-          
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('WooCommerce sync timeout')), 30000)
-          );
-          
-          const syncResponse = await Promise.race([syncPromise, timeoutPromise]);
-          console.log('WooCommerce sync response:', syncResponse);
-        } catch (syncError) {
-          console.error('WooCommerce sync failed, continuing with existing products:', syncError);
-          console.error('Sync error details:', syncError.message);
-        }
+        console.log('Fetching products from API...');
         
-        // Then fetch products from database
+        // Fetch products from database
         const response = await apiCall(apiConfig.endpoints.products);
         console.log('Products API response:', response);
         
         // Handle the correct API response structure
-        const data = response.success ? response.data : [];
+        const data = response.success ? response.data : response.data || [];
         setProducts(data || []);
+        
+        // Set last sync time
+        setLastSync(new Date().toISOString());
+        
+        console.log('Products loaded:', data?.length || 0);
       } catch (err) {
         console.error('Error fetching products:', err);
         setError('Gabim në ngarkimin e produkteve');
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -147,11 +166,13 @@ const ProductsList: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Produktet</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Sinkronizimi i fundit: {new Date(lastSync).toLocaleString()}
+            {lastSync ? `Sinkronizimi i fundit: ${new Date(lastSync).toLocaleString()}` : 'Nuk ka të dhëna për sinkronizimin'}
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-500">Sinkronizim automatik çdo 30 minuta</span>
+            <div className={`w-2 h-2 rounded-full ${syncStatus === 'syncing' ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`}></div>
+            <span className="text-xs text-gray-500">
+              {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 'Gati për sinkronizim'}
+            </span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -171,12 +192,15 @@ const ProductsList: React.FC = () => {
             </select>
           </div>
           <button 
-            onClick={handleSync}
+            onClick={handleWooCommerceSync}
             disabled={syncStatus === 'syncing'}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Sync className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
-            {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 'Sinkronizo me WooCommerce'}
+            {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 
+             syncStatus === 'success' ? 'Sinkronizimi u përfundua!' :
+             syncStatus === 'error' ? 'Gabim në sinkronizim' :
+             'Sinkronizo me WooCommerce'}
           </button>
         </div>
       </div>
