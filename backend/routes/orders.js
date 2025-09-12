@@ -305,17 +305,51 @@ router.post('/', authenticateUser, async (req, res) => {
 
     console.log('Order inserted successfully:', order);
 
-    // Insert order products - need to find product UUIDs from database
+    // Insert order products - sync products to database if not found
     const orderProducts = [];
     for (const item of items) {
       const product = productDetails.find(p => p.id === item.productId);
       
       // Find the product UUID in our database by WooCommerce ID
-      const { data: dbProduct } = await supabase
+      let { data: dbProduct } = await supabase
         .from('products')
         .select('id')
         .eq('woo_commerce_id', parseInt(item.productId))
         .single();
+      
+      // If product not found in database, create it
+      if (!dbProduct && product) {
+        console.log(`Product ${item.productId} not found in database, creating it...`);
+        
+        const productData = {
+          title: product.name || 'Unknown Product',
+          description: '',
+          image: '',
+          category: 'WooCommerce',
+          base_price: parseFloat(product.price || 0),
+          additional_cost: 0,
+          final_price: parseFloat(product.price || 0),
+          supplier: 'WooCommerce',
+          woo_commerce_status: 'active',
+          woo_commerce_category: '',
+          last_sync_date: new Date().toISOString(),
+          woo_commerce_id: parseInt(item.productId)
+        };
+        
+        const { data: newProduct, error: insertError } = await supabase
+          .from('products')
+          .insert(productData)
+          .select('id')
+          .single();
+        
+        if (insertError) {
+          console.error(`Error creating product ${item.productId}:`, insertError);
+          continue;
+        }
+        
+        dbProduct = newProduct;
+        console.log(`Product ${item.productId} created in database with UUID: ${dbProduct.id}`);
+      }
       
       if (dbProduct) {
         orderProducts.push({
@@ -325,14 +359,14 @@ router.post('/', authenticateUser, async (req, res) => {
           subtotal: product ? product.price * item.quantity : 0
         });
       } else {
-        console.warn(`Product ${item.productId} not found in database, skipping...`);
+        console.warn(`Product ${item.productId} could not be created, skipping...`);
       }
     }
 
     console.log('Order products to insert:', orderProducts);
 
     if (orderProducts.length === 0) {
-      throw new Error('No valid products found in database');
+      throw new Error('No valid products found or created in database');
     }
 
     const { error: productsError } = await supabase
