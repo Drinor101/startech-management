@@ -120,6 +120,8 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një shërbim të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
+    console.log('Service creation request body:', req.body);
+    
     const userId = req.headers['x-user-id'];
     if (!userId) {
       return res.status(401).json({
@@ -138,13 +140,13 @@ router.post('/', authenticateUser, async (req, res) => {
     const userName = userData?.name || userData?.email || 'Unknown';
 
     const serviceData = {
-      problem_description: req.body.problem,
+      problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status || 'received',
       category: req.body.category,
       assigned_to: req.body.assignedTo,
-      warranty_info: req.body.warranty,
+      warranty_info: req.body.warranty || req.body.warrantyInfo,
       reception_point: req.body.receptionPoint,
-      customer_id: req.body.customer,
+      customer_id: req.body.customer || req.body.customerId,
       created_by: userName,
       assigned_by: req.body.assignedTo || userName,
       created_at: new Date().toISOString(),
