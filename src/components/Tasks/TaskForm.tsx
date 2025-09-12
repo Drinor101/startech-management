@@ -16,8 +16,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     department: task?.department || '',
     priority: task?.priority || 'medium',
     status: task?.status || 'todo',
-    description: task?.description || '',
-    relatedOrderId: task?.relatedOrderId || task?.related_order_id || ''
+    description: task?.description || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
