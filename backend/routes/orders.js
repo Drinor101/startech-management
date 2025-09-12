@@ -205,15 +205,54 @@ router.post('/', authenticateUser, async (req, res) => {
       customerId = newCustomer.id;
     }
     
-    // Calculate total from items
-    const { data: products } = await supabase
-      .from('products')
-      .select('id, final_price')
-      .in('id', items.map(item => item.productId));
+    // Calculate total from WooCommerce products
+    const wooCommerceConfig = {
+      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+    };
+
+    // Fetch product details from WooCommerce
+    const productDetails = [];
+    for (const item of items) {
+      try {
+        const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const product = await response.json();
+          productDetails.push({
+            id: product.id.toString(),
+            price: parseFloat(product.price || 0),
+            name: product.name || 'Unknown Product'
+          });
+        } else {
+          console.error(`Failed to fetch product ${item.productId}: ${response.status}`);
+          // Use default price if product not found
+          productDetails.push({
+            id: item.productId,
+            price: 0,
+            name: 'Unknown Product'
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching product ${item.productId}:`, error);
+        productDetails.push({
+          id: item.productId,
+          price: 0,
+          name: 'Unknown Product'
+        });
+      }
+    }
     
     const total = items.reduce((sum, item) => {
-      const product = products?.find(p => p.id === item.productId);
-      return sum + (product ? product.final_price * item.quantity : 0);
+      const product = productDetails.find(p => p.id === item.productId);
+      return sum + (product ? product.price * item.quantity : 0);
     }, 0);
 
     const orderData = {
@@ -244,12 +283,15 @@ router.post('/', authenticateUser, async (req, res) => {
     }
 
     // Insert order products
-    const orderProducts = items.map(item => ({
-      order_id: orderId,
-      product_id: item.productId,
-      quantity: item.quantity,
-      subtotal: products?.find(p => p.id === item.productId)?.final_price * item.quantity || 0
-    }));
+    const orderProducts = items.map(item => {
+      const product = productDetails.find(p => p.id === item.productId);
+      return {
+        order_id: orderId,
+        product_id: item.productId,
+        quantity: item.quantity,
+        subtotal: product ? product.price * item.quantity : 0
+      };
+    });
 
     const { error: productsError } = await supabase
       .from('order_products')
