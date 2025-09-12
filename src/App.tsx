@@ -12,10 +12,119 @@ import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
 import UsersList from './components/Users/UsersList';
 import CustomersList from './components/Customers/CustomersList';
-import { mockUsers } from './data/mockData';
 
-// New component for "Të gjitha" (All Tasks)
+// New component for "Të gjitha" (All Tasks) - Uses real data like Dashboard
 const AllTasks: React.FC = () => {
+  const [stats, setStats] = useState({
+    services: { total: 0, inProgress: 0, completed: 0 },
+    tasks: { total: 0, inProgress: 0, completed: 0 },
+    tickets: { total: 0, open: 0, closed: 0 }
+  });
+  const [recentActivities, setRecentActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAllTasksData();
+  }, []);
+
+  const fetchAllTasksData = async () => {
+    try {
+      setLoading(true);
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      const headers = {
+        'Content-Type': 'application/json',
+        ...(user.id && { 'X-User-ID': user.id })
+      };
+
+      // Fetch all data in parallel
+      const [servicesRes, tasksRes, ticketsRes] = await Promise.all([
+        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management-production.up.railway.app'}/api/services`, { headers }),
+        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management-production.up.railway.app'}/api/tasks`, { headers }),
+        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management-production.up.railway.app'}/api/tickets`, { headers })
+      ]);
+
+      const [servicesData, tasksData, ticketsData] = await Promise.all([
+        servicesRes.json(),
+        tasksRes.json(),
+        ticketsRes.json()
+      ]);
+
+      const services = servicesData.success ? servicesData.data : [];
+      const tasks = tasksData.success ? tasksData.data : [];
+      const tickets = ticketsData.success ? ticketsData.data : [];
+
+      // Calculate statistics
+      const activeServices = services.filter((s: any) => s.status === 'in-progress');
+      const completedServices = services.filter((s: any) => s.status === 'completed');
+      
+      const inProgressTasks = tasks.filter((t: any) => t.status === 'in-progress');
+      const completedTasks = tasks.filter((t: any) => t.status === 'completed');
+      
+      const openTickets = tickets.filter((t: any) => t.status === 'open');
+      const closedTickets = tickets.filter((t: any) => t.status === 'closed');
+
+      setStats({
+        services: {
+          total: services.length,
+          inProgress: activeServices.length,
+          completed: completedServices.length
+        },
+        tasks: {
+          total: tasks.length,
+          inProgress: inProgressTasks.length,
+          completed: completedTasks.length
+        },
+        tickets: {
+          total: tickets.length,
+          open: openTickets.length,
+          closed: closedTickets.length
+        }
+      });
+
+      // Create recent activities
+      const allActivities = [
+        ...services.slice(0, 2).map((s: any) => ({
+          type: 'service',
+          message: 'Servis i ri u shtua',
+          details: s.problem_description || 'Servis i ri',
+          time: s.created_at || s.createdAt,
+          color: 'bg-blue-600'
+        })),
+        ...tasks.slice(0, 2).map((t: any) => ({
+          type: 'task',
+          message: 'Task i ri u shtua',
+          details: t.title || 'Task i ri',
+          time: t.created_at || t.createdAt,
+          color: 'bg-green-600'
+        })),
+        ...tickets.slice(0, 2).map((t: any) => ({
+          type: 'ticket',
+          message: 'Tiket i ri u shtua',
+          details: t.subject || 'Tiket i ri',
+          time: t.created_at || t.createdAt,
+          color: 'bg-yellow-600'
+        }))
+      ].sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()).slice(0, 6);
+
+      setRecentActivities(allActivities);
+
+    } catch (error) {
+      console.error('Error fetching all tasks data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -29,15 +138,15 @@ const AllTasks: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Total</span>
-              <span className="font-medium">47</span>
+              <span className="font-medium">{stats.services.total}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Në progres</span>
-              <span className="font-medium text-blue-600">12</span>
+              <span className="font-medium text-blue-600">{stats.services.inProgress}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Përfunduar</span>
-              <span className="font-medium text-green-600">32</span>
+              <span className="font-medium text-green-600">{stats.services.completed}</span>
             </div>
           </div>
         </div>
@@ -48,15 +157,15 @@ const AllTasks: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Total</span>
-              <span className="font-medium">156</span>
+              <span className="font-medium">{stats.tasks.total}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Në progres</span>
-              <span className="font-medium text-blue-600">45</span>
+              <span className="font-medium text-blue-600">{stats.tasks.inProgress}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Përfunduar</span>
-              <span className="font-medium text-green-600">89</span>
+              <span className="font-medium text-green-600">{stats.tasks.completed}</span>
             </div>
           </div>
         </div>
@@ -67,15 +176,15 @@ const AllTasks: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Total</span>
-              <span className="font-medium">89</span>
+              <span className="font-medium">{stats.tickets.total}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Hapur</span>
-              <span className="font-medium text-yellow-600">23</span>
+              <span className="font-medium text-yellow-600">{stats.tickets.open}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Mbyllur</span>
-              <span className="font-medium text-green-600">66</span>
+              <span className="font-medium text-green-600">{stats.tickets.closed}</span>
             </div>
           </div>
         </div>
@@ -85,30 +194,24 @@ const AllTasks: React.FC = () => {
       <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Aktiviteti i fundit</h3>
         <div className="space-y-4">
-          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-            <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Servis i ri u shtua</p>
-              <p className="text-xs text-gray-500">Repair laptop - Alice Johnson</p>
+          {recentActivities.length > 0 ? (
+            recentActivities.map((activity, index) => (
+              <div key={index} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                <div className={`w-2 h-2 ${activity.color} rounded-full`}></div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium">{activity.message}</p>
+                  <p className="text-xs text-gray-500">{activity.details}</p>
+                </div>
+                <span className="text-xs text-gray-400">
+                  {activity.time ? new Date(activity.time).toLocaleString('sq-AL') : 'Së fundmi'}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-center text-gray-500 py-8">
+              Nuk ka aktivitet të fundit
             </div>
-            <span className="text-xs text-gray-400">2 min më parë</span>
-          </div>
-          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-            <div className="w-2 h-2 bg-green-600 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Task u përfundua</p>
-              <p className="text-xs text-gray-500">Update product catalog</p>
-            </div>
-            <span className="text-xs text-gray-400">15 min më parë</span>
-          </div>
-          <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-            <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
-            <div className="flex-1">
-              <p className="text-sm font-medium">Tiket i ri</p>
-              <p className="text-xs text-gray-500">Customer complaint - Bob Smith</p>
-            </div>
-            <span className="text-xs text-gray-400">1 orë më parë</span>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -231,7 +334,15 @@ const AppContent: React.FC = () => {
     isActive: true,
     credits: 0, // Default credits for new users
     lastLogin: new Date().toISOString()
-  } : mockUsers[0];
+  } : {
+    id: '',
+    name: 'Guest',
+    email: '',
+    role: 'guest',
+    isActive: false,
+    credits: 0,
+    lastLogin: new Date().toISOString()
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { mockCustomers } from '../../data/mockData';
 import { apiCall } from '../../config/api';
 import { Product } from '../../types';
 
