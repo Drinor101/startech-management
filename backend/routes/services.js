@@ -37,7 +37,6 @@ router.get('/', authenticateUser, async (req, res) => {
     }
 
     // Transform data to match frontend interface
-    console.log('Raw service data:', data[0]); // Debug log
     const transformedData = data.map(service => ({
       id: service.id,
       createdBy: service.created_by,
@@ -59,8 +58,6 @@ router.get('/', authenticateUser, async (req, res) => {
       completedAt: service.completed_at,
       emailNotificationsSent: service.email_notifications_sent
     }));
-    
-    console.log('Transformed service data:', transformedData[0]); // Debug log
 
     res.json({
       success: true,
@@ -204,11 +201,11 @@ router.post('/', authenticateUser, async (req, res) => {
       id: serviceId,
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status || 'received',
-      assigned_to: req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo,
       warranty_info: req.body.warranty || req.body.warrantyInfo,
       customer_id: customerId,
       created_by: userName,
-      assigned_by: req.body.assignedTo || userName,
+      assigned_by: req.body.assignedToName || req.body.assignedTo || userName,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -326,10 +323,10 @@ router.put('/:id', authenticateUser, async (req, res) => {
     const updates = {
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status,
-      assigned_to: req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo,
       warranty_info: req.body.warranty || req.body.warrantyInfo,
       customer_id: customerId,
-      assigned_by: req.body.assignedTo || userName,
+      assigned_by: req.body.assignedToName || req.body.assignedTo || userName,
       updated_at: new Date().toISOString()
     };
 

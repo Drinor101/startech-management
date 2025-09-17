@@ -171,7 +171,7 @@ router.post('/', authenticateUser, async (req, res) => {
       description: req.body.description,
       priority: req.body.priority || 'medium',
       status: req.body.status || 'todo',
-      assigned_to: req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo,
       assigned_by: req.body.assignedBy || userName,
       created_by: userName,
       department: req.body.department,
@@ -260,7 +260,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       description: req.body.description,
       priority: req.body.priority,
       status: req.body.status,
-      assigned_to: req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo,
       assigned_by: req.body.assignedBy,
       department: req.body.department,
       updated_at: new Date().toISOString()
