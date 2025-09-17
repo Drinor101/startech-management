@@ -8,7 +8,6 @@ import TaskForm from './TaskForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
-import UserDropdown from '../Common/UserDropdown';
 
 const TasksList: React.FC = () => {
   const [allTasks, setAllTasks] = useState<Task[]>([]);
@@ -38,7 +37,6 @@ const TasksList: React.FC = () => {
     task: null
   });
   const [departmentFilter, setDepartmentFilter] = useState<string>('all');
-  const [editingAssignedTo, setEditingAssignedTo] = useState<{ taskId: string; assignedToId: string; assignedToName: string } | null>(null);
 
   // Fetch tasks from API
   const fetchTasks = async () => {
@@ -143,38 +141,6 @@ const TasksList: React.FC = () => {
     });
   };
 
-  const handleAssignedToChange = async (taskId: string, userId: string, userName: string) => {
-    try {
-      await apiCall(`${apiConfig.endpoints.tasks}/${taskId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          assignedTo: userName,
-          assigned_to: userName
-        })
-      });
-      
-      // Update local state
-      setAllTasks(prev => prev.map(task => 
-        task.id === taskId 
-          ? { ...task, assignedTo: userName, assigned_to: userName }
-          : task
-      ));
-      
-      setEditingAssignedTo(null);
-      setNotification({
-        type: 'success',
-        message: 'Përdoruesi u përditësua me sukses',
-        isVisible: true
-      });
-    } catch (error) {
-      console.error('Error updating assigned to:', error);
-      setNotification({
-        type: 'error',
-        message: 'Gabim në përditësimin e përdoruesit',
-        isVisible: true
-      });
-    }
-  };
 
   const confirmDeleteTask = async () => {
     if (!confirmationModal.task) return;
@@ -429,24 +395,9 @@ const TasksList: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        {editingAssignedTo?.taskId === task.id ? (
-                          <UserDropdown
-                            value={editingAssignedTo.assignedToId}
-                            onChange={(userId, userName) => handleAssignedToChange(task.id, userId, userName)}
-                            placeholder="Zgjidhni përdoruesin"
-                          />
-                        ) : (
-                          <span 
-                            className="text-sm text-gray-900 cursor-pointer hover:text-blue-600"
-                            onClick={() => setEditingAssignedTo({ 
-                              taskId: task.id, 
-                              assignedToId: '', 
-                              assignedToName: task.assignedTo || '' 
-                            })}
-                          >
-                            {task.assignedTo || 'N/A'}
-                          </span>
-                        )}
+                        <span className="text-sm text-gray-900">
+                          {task.assignedTo || 'N/A'}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

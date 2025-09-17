@@ -201,6 +201,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 onChange={handleAssignedToChange}
                 placeholder="Zgjidhni përdoruesin"
                 required
+                excludeCurrentUser={true}
               />
             </div>
 

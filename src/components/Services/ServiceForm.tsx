@@ -131,12 +131,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
           {/* Përcaktuar për */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Përcaktuar për *</label>
-            <UserDropdown
-              value={formData.assignedToId}
-              onChange={handleAssignedToChange}
-              placeholder="Zgjidhni përdoruesin"
-              required
-            />
+        <UserDropdown
+          value={formData.assignedToId}
+          onChange={handleAssignedToChange}
+          placeholder="Zgjidhni përdoruesin"
+          required
+          excludeCurrentUser={true}
+        />
           </div>
 
           {/* Klienti */}

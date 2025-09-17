@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Search, User } from 'lucide-react';
-import { apiCall, apiConfig } from '../../config/api';
+import { apiCall, apiConfig, getCurrentUser } from '../../config/api';
 
 interface User {
   id: string;
@@ -16,6 +16,7 @@ interface UserDropdownProps {
   required?: boolean;
   className?: string;
   filterRole?: string; // Optional role filter
+  excludeCurrentUser?: boolean; // Exclude current logged-in user from options
 }
 
 const UserDropdown: React.FC<UserDropdownProps> = ({
@@ -24,7 +25,8 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
   placeholder = "Zgjidhni përdoruesin",
   required = false,
   className = "",
-  filterRole
+  filterRole,
+  excludeCurrentUser = false
 }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -45,6 +47,18 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
           usersData = usersData.filter((user: User) => user.role === filterRole);
         }
         
+        // Exclude current user if specified
+        if (excludeCurrentUser) {
+          const currentUser = getCurrentUser();
+          if (currentUser) {
+            usersData = usersData.filter((user: User) => 
+              user.id !== currentUser.id && 
+              user.email !== currentUser.email &&
+              user.name !== currentUser.name
+            );
+          }
+        }
+        
         setUsers(usersData);
       } catch (error) {
         console.error('Error fetching users:', error);
@@ -54,7 +68,7 @@ const UserDropdown: React.FC<UserDropdownProps> = ({
     };
 
     fetchUsers();
-  }, [filterRole]);
+  }, [filterRole, excludeCurrentUser]);
 
   // Find selected user when value changes
   useEffect(() => {
