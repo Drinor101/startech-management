@@ -20,7 +20,12 @@ router.get('/', authenticateUser, async (req, res) => {
     console.log('Tickets - Current user role:', currentUser.role);
     console.log('Tickets - Current user name:', currentUser.name);
     
-    if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
+    // Kontrollo rolin (case insensitive)
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
       // Të tjerët shohin vetëm tiketat e përcaktuar për ta
       console.log('Tickets - Applying filter for user:', currentUser.name);
       query = query.eq('assigned_to', currentUser.name);

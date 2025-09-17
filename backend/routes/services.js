@@ -26,7 +26,12 @@ router.get('/', authenticateUser, async (req, res) => {
     console.log('Services - Current user role:', currentUser.role);
     console.log('Services - Current user name:', currentUser.name);
     
-    if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
+    // Kontrollo rolin (case insensitive)
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
       // Të tjerët shohin vetëm serviset e përcaktuar për ta
       console.log('Services - Applying filter for user:', currentUser.name);
       query = query.eq('assigned_to', currentUser.name);
