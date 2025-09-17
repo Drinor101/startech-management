@@ -14,8 +14,8 @@ router.get('/', authenticateUser, async (req, res) => {
     // WooCommerce API configuration
     const wooCommerceConfig = {
       url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
-      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
     };
 
     // Fetch products directly from WooCommerce
@@ -254,8 +254,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
     // WooCommerce API configuration
     const wooCommerceConfig = {
       url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
-      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
     };
 
     if (!wooCommerceConfig.consumerKey || !wooCommerceConfig.consumerSecret) {
