@@ -37,6 +37,7 @@ router.get('/', authenticateUser, async (req, res) => {
     }
 
     // Transform data to match frontend interface
+    console.log('Raw service data:', data[0]); // Debug log
     const transformedData = data.map(service => ({
       id: service.id,
       createdBy: service.created_by,
@@ -47,7 +48,7 @@ router.get('/', authenticateUser, async (req, res) => {
       problemDescription: service.problem_description,
       status: service.status,
       category: service.category,
-      assignedTo: service.assigned_to,
+      assignedTo: service.assigned_to || null,
       warrantyInfo: service.warranty_info,
       serviceHistory: service.service_history || [],
       receptionPoint: service.reception_point,
@@ -58,6 +59,8 @@ router.get('/', authenticateUser, async (req, res) => {
       completedAt: service.completed_at,
       emailNotificationsSent: service.email_notifications_sent
     }));
+    
+    console.log('Transformed service data:', transformedData[0]); // Debug log
 
     res.json({
       success: true,
