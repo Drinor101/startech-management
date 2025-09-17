@@ -3,6 +3,9 @@ import { Plus, Edit, Trash2, Mail, Phone, MapPin, Users, Activity, AlertCircle }
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import CustomerForm from './CustomerForm';
+import ConfirmationModal from '../Common/ConfirmationModal';
+import { usePermissions } from '../../hooks/usePermissions';
+import Notification from '../Common/Notification';
 
 const CustomersList: React.FC = () => {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -12,23 +15,41 @@ const CustomersList: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    customer: any | null;
+  }>({
+    isOpen: false,
+    customer: null
+  });
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
+  const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Fetch customers from API
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await apiCall(apiConfig.endpoints.customers);
-        setCustomers(response.data || []);
-      } catch (err) {
-        console.error('Error fetching customers:', err);
-        setError('Gabim në ngarkimin e klientëve');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchCustomers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiCall(apiConfig.endpoints.customers);
+      setCustomers(response.data || []);
+    } catch (err) {
+      console.error('Error fetching customers:', err);
+      setError('Gabim në ngarkimin e klientëve');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchCustomers();
   }, []);
 
@@ -48,21 +69,44 @@ const CustomersList: React.FC = () => {
     setIsCustomerModalOpen(true);
   };
 
-  const handleDeleteCustomer = async (customerId: string) => {
-    if (!confirm('A jeni të sigurt që dëshironi të fshini këtë klient?')) {
-      return;
-    }
+  const handleEditCustomer = (customer: any) => {
+    setSelectedCustomer(customer);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+  };
 
+  const handleDeleteCustomer = (customer: any) => {
+    setConfirmationModal({
+      isOpen: true,
+      customer: customer
+    });
+  };
+
+  const confirmDeleteCustomer = async () => {
+    if (!confirmationModal.customer) return;
+    
     try {
-      await apiCall(`${apiConfig.endpoints.customers}/${customerId}`, {
+      await apiCall(`${apiConfig.endpoints.customers}/${confirmationModal.customer.id}`, {
         method: 'DELETE'
       });
       
-      // Refresh the list
-      window.location.reload();
+      // Refresh the customers list
+      await fetchCustomers();
+      
+      setNotification({
+        type: 'success',
+        message: 'Klienti u fshi me sukses',
+        isVisible: true
+      });
+      
+      setConfirmationModal({ isOpen: false, customer: null });
     } catch (err) {
       console.error('Error deleting customer:', err);
-      alert('Gabim në fshirjen e klientit');
+      setNotification({
+        type: 'error',
+        message: 'Gabim në fshirjen e klientit',
+        isVisible: true
+      });
     }
   };
 
@@ -107,13 +151,19 @@ const CustomersList: React.FC = () => {
             <Activity className="w-4 h-4" />
             Statistikat
           </button>
-          <button 
-            onClick={() => setIsFormOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Shto Klient
-          </button>
+          {canCreate('customers') && (
+            <button 
+              onClick={() => {
+                setSelectedCustomer(null);
+                setIsEditMode(false);
+                setIsFormOpen(true);
+              }}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              Shto Klient
+            </button>
+          )}
         </div>
       </div>
 
@@ -226,15 +276,24 @@ const CustomersList: React.FC = () => {
                       >
                         <Users className="w-4 h-4" />
                       </button>
-                      <button className="text-gray-600 hover:text-gray-900">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteCustomer(customer.id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canEdit('customers') && (
+                        <button 
+                          onClick={() => handleEditCustomer(customer)}
+                          className="text-green-600 hover:text-green-900 p-1"
+                          title="Modifiko"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      )}
+                      {canDelete('customers') && (
+                        <button
+                          onClick={() => handleDeleteCustomer(customer)}
+                          className="text-red-600 hover:text-red-900 p-1"
+                          title="Fshij"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -301,19 +360,48 @@ const CustomersList: React.FC = () => {
       {/* Customer Form Modal */}
       <Modal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title="Shto Klient të Ri"
+        onClose={() => {
+          setIsFormOpen(false);
+          setIsEditMode(false);
+          setSelectedCustomer(null);
+        }}
+        title={isEditMode ? "Modifiko Klientin" : "Shto Klient të Ri"}
         size="md"
       >
         <CustomerForm 
-          onClose={() => setIsFormOpen(false)}
+          customer={isEditMode ? selectedCustomer : undefined}
+          onClose={() => {
+            setIsFormOpen(false);
+            setIsEditMode(false);
+            setSelectedCustomer(null);
+          }}
           onSuccess={() => {
             setIsFormOpen(false);
-            // Refresh the customers list
-            window.location.reload();
+            setIsEditMode(false);
+            setSelectedCustomer(null);
+            fetchCustomers();
           }}
         />
       </Modal>
+
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal({ isOpen: false, customer: null })}
+        onConfirm={confirmDeleteCustomer}
+        title="Konfirmo Fshirjen"
+        message={`A jeni të sigurt që doni të fshini klientin "${confirmationModal.customer?.name}"?`}
+        confirmText="Po, fshij"
+        cancelText="Anulo"
+      />
     </div>
   );
 };
