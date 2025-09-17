@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart3, Download, Filter, Calendar, FileText, TrendingUp, Users, Euro, Activity, Shield } from 'lucide-react';
+import { apiCall, apiConfig } from '../../config/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -25,6 +26,9 @@ ChartJS.register(
 const Reports: React.FC = () => {
   const [activeTab, setActiveTab] = useState('services');
   const [dateRange, setDateRange] = useState('this-month');
+  const [reportData, setReportData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const tabs = [
     { id: 'services', label: 'Servisi' },
@@ -33,6 +37,32 @@ const Reports: React.FC = () => {
     { id: 'products', label: 'Produktet' },
     { id: 'users', label: 'Përdoruesit' },
   ];
+
+  // Fetch real report data
+  useEffect(() => {
+    const fetchReportData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await apiCall(`${apiConfig.endpoints.reports}/dashboard`);
+        console.log('Reports API response:', response);
+        
+        if (response.success) {
+          setReportData(response.data);
+        } else {
+          setError('Gabim në ngarkimin e raporteve');
+        }
+      } catch (err) {
+        console.error('Error fetching reports:', err);
+        setError('Gabim në ngarkimin e raporteve');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReportData();
+  }, [dateRange]);
 
   const mockReportData = {
     services: {
@@ -104,7 +134,64 @@ const Reports: React.FC = () => {
     }
   };
 
-  const currentData = mockReportData[activeTab as keyof typeof mockReportData];
+  // Transform real data to match expected structure
+  const getCurrentData = () => {
+    if (!reportData) return mockReportData[activeTab as keyof typeof mockReportData];
+    
+    const realData = reportData[activeTab];
+    if (!realData) return mockReportData[activeTab as keyof typeof mockReportData];
+    
+    // Transform real data to match frontend expectations
+    switch (activeTab) {
+      case 'services':
+        return {
+          total: realData.total || 0,
+          completed: realData.completed || 0,
+          inProgress: realData.inProgress || 0,
+          pending: realData.received || 0,
+          categories: mockReportData.services.categories // Keep mock categories for now
+        };
+      case 'tasks':
+        return {
+          total: realData.total || 0,
+          completed: realData.done || 0,
+          inProgress: realData.inProgress || 0,
+          pending: realData.todo || 0,
+          byPriority: mockReportData.tasks.byPriority // Keep mock priority for now
+        };
+      case 'orders':
+        return {
+          total: realData.total || 0,
+          delivered: realData.delivered || 0,
+          processing: realData.processing || 0,
+          pending: realData.pending || 0,
+          totalValue: realData.totalRevenue || 0,
+          averageValue: realData.total > 0 ? (realData.totalRevenue / realData.total) : 0
+        };
+      case 'products':
+        return {
+          total: realData.total || 0,
+          active: realData.active || 0,
+          inactive: realData.inactive || 0,
+          bySupplier: mockReportData.products.bySupplier // Keep mock supplier for now
+        };
+      case 'users':
+        return {
+          total: 7, // Mock for now
+          active: 7,
+          inactive: 0,
+          totalCredits: 907.00,
+          averageCredits: 129.57,
+          byRole: mockReportData.users.byRole,
+          creditDistribution: mockReportData.users.creditDistribution,
+          recentActivity: mockReportData.users.recentActivity
+        };
+      default:
+        return realData;
+    }
+  };
+
+  const currentData = getCurrentData();
 
   // Function to translate date range values to Albanian
   const translateDateRange = (range: string) => {
@@ -320,10 +407,40 @@ const Reports: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Duke ngarkuar raportet...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-800">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Raportet</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Raportet</h2>
+          {reportData ? (
+            <p className="text-sm text-green-600 mt-1">📊 Të dhëna reale nga database</p>
+          ) : (
+            <p className="text-sm text-yellow-600 mt-1">⚠️ Të dhëna demo (API nuk është i disponueshëm)</p>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
@@ -600,44 +717,280 @@ const Reports: React.FC = () => {
 
         {/* Additional User Reports */}
         {activeTab === 'users' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Credit Distribution */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Shpërndarja e Kredive</h3>
-              <div className="space-y-4">
-                {currentData.creditDistribution.map((credit, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{credit.range}</span>
-                    <div className="flex items-center gap-3">
-                      <div className="w-32 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full ${credit.color}`}
-                          style={{ width: `${credit.percentage}%` }}
-                        />
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Credit Distribution */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Shpërndarja e Kredive</h3>
+                <div className="space-y-4">
+                  {currentData.creditDistribution.map((credit, index) => (
+                    <div key={index} className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">{credit.range}</span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-32 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${credit.color}`}
+                            style={{ width: `${credit.percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900 w-12 text-right">
+                          {credit.count}
+                        </span>
                       </div>
-                      <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                        {credit.count}
-                      </span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+
+              {/* Recent Activity */}
+              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Aktiviteti i Fundit i Përdoruesve</h3>
+                <div className="space-y-3">
+                  {currentData.recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <Activity className="w-4 h-4 text-gray-400" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">{activity.user}</p>
+                        <p className="text-xs text-gray-600">{activity.action}</p>
+                      </div>
+                      <span className="text-xs text-gray-500">{activity.time}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Individual User Actions & Logs */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Aktiviteti i Fundit i Përdoruesve</h3>
-              <div className="space-y-3">
-                {currentData.recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                    <Activity className="w-4 h-4 text-gray-400" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">{activity.user}</p>
-                      <p className="text-xs text-gray-600">{activity.action}</p>
-                    </div>
-                    <span className="text-xs text-gray-500">{activity.time}</span>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-medium text-gray-900">Aksione Individuale të Përdoruesve</h3>
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <select className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
+                    <option value="all">Të gjithë përdoruesit</option>
+                    <option value="admin">Administratorët</option>
+                    <option value="manager">Menaxherët</option>
+                    <option value="technician">Teknikët</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Përdoruesi
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Moduli
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Aksioni
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Objekti
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Koha
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Statusi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {/* Sample user actions - replace with real data */}
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-blue-600">A</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Admin User</div>
+                            <div className="text-sm text-gray-500">admin@startech.com</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                          Servisi
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Krijoi servis të ri
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Servis #SRV-001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        15 min më parë
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          Sukses
+                        </span>
+                      </td>
+                    </tr>
+                    
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-green-600">M</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Manager User</div>
+                            <div className="text-sm text-gray-500">manager@startech.com</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          Porositë
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Modifiko porosi
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Porosi #PRS-2024-001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        1 orë më parë
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          Sukses
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-purple-600">T</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Tech User</div>
+                            <div className="text-sm text-gray-500">tech@startech.com</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+                          Taskat
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Përfundoi task
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Task #TSK-001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        2 orë më parë
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          Sukses
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-orange-600">S</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Sales User</div>
+                            <div className="text-sm text-gray-500">sales@startech.com</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
+                          Produktet
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Shtoi produkt manual
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Produkt Manual #PRD-001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        3 orë më parë
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                          Sukses
+                        </span>
+                      </td>
+                    </tr>
+
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                            <span className="text-sm font-medium text-red-600">C</span>
+                          </div>
+                          <div className="ml-3">
+                            <div className="text-sm font-medium text-gray-900">Customer User</div>
+                            <div className="text-sm text-gray-500">customer@startech.com</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                          Klientët
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        Modifiko klient
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        Klient #CST-001
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        5 orë më parë
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                          Paralajmërim
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-500">
+                  Shfaqen 5 nga 25 rezultatet
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Mëparshëm
+                  </button>
+                  <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg">
+                    1
+                  </button>
+                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                    2
+                  </button>
+                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                    3
+                  </button>
+                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Tjetër
+                  </button>
+                </div>
               </div>
             </div>
           </div>
