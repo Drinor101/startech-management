@@ -230,8 +230,8 @@ const ProductsList: React.FC = () => {
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="all">Të gjitha produktet</option>
-              <option value="WooCommerce">Produktet WooCommerce</option>
-              <option value="Manual">Produktet Manuale</option>
+              <option value="WooCommerce">Vetëm WooCommerce</option>
+              <option value="Manual">Vetëm Manuale</option>
             </select>
           </div>
 

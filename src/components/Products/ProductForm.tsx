@@ -106,9 +106,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
             <h2 className="text-xl font-semibold text-gray-900">
               {product ? 'Modifiko Produktin' : 'Shto Produkt të Ri'}
             </h2>
-            <p className="text-sm text-gray-500">
-              {product ? 'Modifiko të dhënat e produktit' : 'Krijo një produkt të ri manual'}
-            </p>
           </div>
         </div>
         <button
