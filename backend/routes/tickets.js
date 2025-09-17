@@ -17,9 +17,15 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Filtri për tiketat e përcaktuar për atë përdorues
     // Administrator dhe Menaxher shohin të gjitha tiketat
+    console.log('Tickets - Current user role:', currentUser.role);
+    console.log('Tickets - Current user name:', currentUser.name);
+    
     if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
       // Të tjerët shohin vetëm tiketat e përcaktuar për ta
+      console.log('Tickets - Applying filter for user:', currentUser.name);
       query = query.eq('assigned_to', currentUser.name);
+    } else {
+      console.log('Tickets - No filter applied - user is Admin or Manager');
     }
     
     const { data, error } = await query;

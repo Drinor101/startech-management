@@ -22,9 +22,15 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Filtri për taskat e përcaktuar për atë përdorues
     // Administrator dhe Menaxher shohin të gjitha taskat
+    console.log('Current user role:', currentUser.role);
+    console.log('Current user name:', currentUser.name);
+    
     if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
       // Të tjerët shohin vetëm taskat e përcaktuar për ta
+      console.log('Applying filter for user:', currentUser.name);
       query = query.eq('assigned_to', currentUser.name);
+    } else {
+      console.log('No filter applied - user is Admin or Manager');
     }
 
     // Filtra
