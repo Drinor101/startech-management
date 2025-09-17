@@ -12,6 +12,13 @@ import {
   Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
+import Modal from '../Common/Modal';
+import ServiceForm from '../Services/ServiceForm';
+import TaskForm from '../Tasks/TaskForm';
+import TicketForm from '../Tickets/TicketForm';
+import OrderForm from '../Orders/OrderForm';
+import UserForm from '../Users/UserForm';
+import CustomerForm from '../Customers/CustomerForm';
 
 ChartJS.register(
   CategoryScale,
@@ -43,6 +50,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [tickets, setTickets] = useState([]);
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
+  
+  // Modal states for forms
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [formType, setFormType] = useState<string>('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -268,14 +281,33 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   };
 
   const newItemOptions = [
-    { label: 'Servis i ri', icon: Settings, color: 'text-blue-600', action: () => onNavigate?.('services') },
-    { label: 'Task i ri', icon: CheckSquare, color: 'text-green-600', action: () => onNavigate?.('tasks') },
-    { label: 'Tiket i ri', icon: CheckSquare, color: 'text-purple-600', action: () => onNavigate?.('tickets') },
-    { label: 'Porosi e re', icon: Package, color: 'text-purple-600', action: () => onNavigate?.('orders') },
-    { label: 'Produkt i ri', icon: Package, color: 'text-orange-600', action: () => onNavigate?.('products') },
-    { label: 'Përdorues i ri', icon: Users, color: 'text-orange-600', action: () => onNavigate?.('users') },
-    { label: 'Klient i ri', icon: Users, color: 'text-blue-600', action: () => onNavigate?.('customers') },
+    { label: 'Servis i ri', icon: Settings, color: 'text-blue-600', action: () => openForm('service') },
+    { label: 'Task i ri', icon: CheckSquare, color: 'text-green-600', action: () => openForm('task') },
+    { label: 'Tiket i ri', icon: CheckSquare, color: 'text-purple-600', action: () => openForm('ticket') },
+    { label: 'Porosi e re', icon: Package, color: 'text-purple-600', action: () => openForm('order') },
+    { label: 'Përdorues i ri', icon: Users, color: 'text-orange-600', action: () => openForm('user') },
+    { label: 'Klient i ri', icon: Users, color: 'text-blue-600', action: () => openForm('customer') },
   ];
+
+  const openForm = (type: string) => {
+    setFormType(type);
+    setSelectedItem(null);
+    setIsEditMode(false);
+    setIsFormOpen(true);
+    setShowNewMenu(false);
+  };
+
+  const getFormTitle = (type: string) => {
+    const titles = {
+      service: 'Servis',
+      task: 'Task',
+      ticket: 'Tiket',
+      order: 'Porosi',
+      user: 'Përdorues',
+      customer: 'Klient'
+    };
+    return titles[type as keyof typeof titles] || 'Item';
+  };
 
   const handleNewItem = (action: () => void) => {
     action();
@@ -523,6 +555,75 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           onClick={() => setShowNewMenu(false)}
         />
       )}
+
+      {/* Modal Forms */}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title={`${isEditMode ? 'Modifiko' : 'Shto'} ${getFormTitle(formType)}`}
+        size="lg"
+      >
+        {formType === 'service' && (
+          <ServiceForm
+            service={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+        {formType === 'task' && (
+          <TaskForm
+            task={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+        {formType === 'ticket' && (
+          <TicketForm
+            ticket={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+        {formType === 'order' && (
+          <OrderForm
+            order={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+        {formType === 'user' && (
+          <UserForm
+            user={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+        {formType === 'customer' && (
+          <CustomerForm
+            customer={selectedItem}
+            onClose={() => setIsFormOpen(false)}
+            onSuccess={() => {
+              setIsFormOpen(false);
+              fetchDashboardData(); // Refresh data
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };
