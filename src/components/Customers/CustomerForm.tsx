@@ -12,7 +12,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
     name: customer?.name || '',
     email: customer?.email || '',
     phone: customer?.phone || '',
-    address: customer?.address || '',
     source: customer?.source || 'Internal'
   });
   const [loading, setLoading] = useState(false);
@@ -99,17 +98,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
-        <textarea
-          name="address"
-          value={formData.address}
-          onChange={handleChange}
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Rr. Nëna Terezë 15, Prishtinë, Kosovë"
-        />
-      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>

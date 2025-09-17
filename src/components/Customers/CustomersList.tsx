@@ -165,9 +165,6 @@ const CustomersList: React.FC = () => {
                   Kontakt
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Adresa
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Burimi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -206,14 +203,6 @@ const CustomersList: React.FC = () => {
                           {customer.phone}
                         </div>
                       )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
-                        {customer.address || 'N/A'}
-                      </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -286,12 +275,6 @@ const CustomersList: React.FC = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Telefoni</label>
                 <p className="text-sm text-gray-900">
                   {selectedCustomer.phone || 'N/A'}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
-                <p className="text-sm text-gray-900">
-                  {selectedCustomer.address || 'N/A'}
                 </p>
               </div>
             </div>
