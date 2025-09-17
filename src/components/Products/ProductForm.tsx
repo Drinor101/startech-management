@@ -251,10 +251,10 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
             />
           </div>
 
-          {/* WooCommerce Status */}
+          {/* Product Status */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Statusi WooCommerce
+              Statusi i Produktit
             </label>
             <select
               name="wooCommerceStatus"
@@ -262,9 +262,9 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="draft">Draft</option>
+              <option value="active">Aktiv - Gati për shitje</option>
+              <option value="inactive">Joaktiv - Në magazinë</option>
+              <option value="draft">Draft - Në zhvillim</option>
             </select>
           </div>
         </div>
