@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Save, AlertCircle } from 'lucide-react';
-import { apiCall } from '../../config/api';
+import { apiCall, getCurrentUser } from '../../config/api';
 import Notification from '../Common/Notification';
+import UserDropdown from '../Common/UserDropdown';
 
 interface TicketFormProps {
   onClose: () => void;
@@ -10,14 +11,16 @@ interface TicketFormProps {
 }
 
 const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) => {
+  const currentUser = getCurrentUser();
   const [formData, setFormData] = useState({
     title: ticket?.title || '',
     source: ticket?.source || 'Email',
-    createdBy: ticket?.createdBy || ticket?.created_by || '',
+    createdBy: ticket?.createdBy || ticket?.created_by || currentUser?.name || currentUser?.email || '',
     priority: ticket?.priority || 'medium',
     status: ticket?.status || 'open',
     description: ticket?.description || '',
-    assignedTo: ticket?.assignedTo || ticket?.assigned_to || ''
+    assignedToId: ticket?.assignedTo?.id || ticket?.assignedToId || '',
+    assignedToName: ticket?.assignedTo?.name || ticket?.assignedTo || ticket?.assigned_to || ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +43,20 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
       const endpoint = ticket ? `/api/tickets/${ticket.id}` : '/api/tickets';
       const method = ticket ? 'PUT' : 'POST';
 
+      // Transform data for backend
+      const ticketData = {
+        ...formData,
+        assignedTo: formData.assignedToName, // Send name to backend
+        assigned_to: formData.assignedToName // Alternative field name
+      };
+      
+      // Remove frontend-only fields
+      delete ticketData.assignedToId;
+      delete ticketData.assignedToName;
+
       await apiCall(endpoint, {
         method,
-        body: JSON.stringify(formData)
+        body: JSON.stringify(ticketData)
       });
 
       onSuccess();
@@ -69,6 +83,14 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleAssignedToChange = (userId: string, userName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      assignedToId: userId,
+      assignedToName: userName
     }));
   };
 
@@ -174,13 +196,11 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Caktuar për
               </label>
-              <input
-                type="text"
-                name="assignedTo"
-                value={formData.assignedTo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Emri i përdoruesit"
+              <UserDropdown
+                value={formData.assignedToId}
+                onChange={handleAssignedToChange}
+                placeholder="Zgjidhni përdoruesin"
+                required
               />
             </div>
 

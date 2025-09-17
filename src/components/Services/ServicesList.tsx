@@ -8,6 +8,7 @@ import ServiceForm from './ServiceForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import UserDropdown from '../Common/UserDropdown';
 
 const ServicesList: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
@@ -36,6 +37,7 @@ const ServicesList: React.FC = () => {
     isOpen: false,
     service: null
   });
+  const [editingAssignedTo, setEditingAssignedTo] = useState<{ serviceId: string; assignedToId: string; assignedToName: string } | null>(null);
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -107,6 +109,39 @@ const ServicesList: React.FC = () => {
       isOpen: true,
       service: service
     });
+  };
+
+  const handleAssignedToChange = async (serviceId: string, userId: string, userName: string) => {
+    try {
+      await apiCall(`${apiConfig.endpoints.services}/${serviceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          assignedTo: userName,
+          assigned_to: userName
+        })
+      });
+      
+      // Update local state
+      setServices(prev => prev.map(service => 
+        service.id === serviceId 
+          ? { ...service, assignedTo: userName, assigned_to: userName }
+          : service
+      ));
+      
+      setEditingAssignedTo(null);
+      setNotification({
+        type: 'success',
+        message: 'Përdoruesi u përditësua me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error updating assigned to:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në përditësimin e përdoruesit',
+        isVisible: true
+      });
+    }
   };
 
   const confirmDeleteService = async () => {
@@ -353,7 +388,24 @@ const ServicesList: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">{service.assignedTo || 'N/A'}</span>
+                      {editingAssignedTo?.serviceId === service.id ? (
+                        <UserDropdown
+                          value={editingAssignedTo.assignedToId}
+                          onChange={(userId, userName) => handleAssignedToChange(service.id, userId, userName)}
+                          placeholder="Zgjidhni përdoruesin"
+                        />
+                      ) : (
+                        <span 
+                          className="text-sm text-gray-900 cursor-pointer hover:text-blue-600"
+                          onClick={() => setEditingAssignedTo({ 
+                            serviceId: service.id, 
+                            assignedToId: '', 
+                            assignedToName: service.assignedTo || '' 
+                          })}
+                        >
+                          {service.assignedTo || 'N/A'}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

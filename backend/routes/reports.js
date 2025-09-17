@@ -32,6 +32,11 @@ router.get('/dashboard', authenticateUser, async (req, res) => {
       .from('products')
       .select('woo_commerce_status, created_at');
 
+    // Merr statistikat e përdoruesve
+    const { data: users } = await supabase
+      .from('users')
+      .select('role, created_at');
+
     const dashboardStats = {
       orders: {
         total: orders.length,
@@ -65,6 +70,21 @@ router.get('/dashboard', authenticateUser, async (req, res) => {
         active: products.filter(p => p.woo_commerce_status === 'active').length,
         inactive: products.filter(p => p.woo_commerce_status === 'inactive').length,
         draft: products.filter(p => p.woo_commerce_status === 'draft').length
+      },
+      users: {
+        total: users.length,
+        active: users.length, // All users are considered active
+        inactive: 0,
+        byRole: users.reduce((acc, user) => {
+          const role = user.role || 'Unknown';
+          const existing = acc.find(r => r.name === role);
+          if (existing) {
+            existing.count++;
+          } else {
+            acc.push({ name: role, count: 1 });
+          }
+          return acc;
+        }, [])
       }
     };
 
@@ -303,6 +323,264 @@ router.get('/products', authenticateUser, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Gabim në marrjen e raportit të produkteve'
+    });
+  }
+});
+
+// Merr aktivitetin e përdoruesve
+router.get('/users/activity', authenticateUser, async (req, res) => {
+  try {
+    const { userId } = req.query;
+    
+    if (userId) {
+      // Merr aktivitetin për një përdorues specifik
+      const activities = [];
+      
+      // Merr porositë e krijuara nga përdoruesi
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id, status, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (orders) {
+        orders.forEach(order => {
+          activities.push({
+            id: `order-${order.id}`,
+            type: 'order',
+            action: `Krijoi porosinë #${order.id}`,
+            status: order.status,
+            timestamp: order.created_at,
+            module: 'orders'
+          });
+        });
+      }
+      
+      // Merr shërbimet e krijuara nga përdoruesi
+      const { data: services } = await supabase
+        .from('services')
+        .select('id, status, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (services) {
+        services.forEach(service => {
+          activities.push({
+            id: `service-${service.id}`,
+            type: 'service',
+            action: `Krijoi shërbimin #${service.id}`,
+            status: service.status,
+            timestamp: service.created_at,
+            module: 'services'
+          });
+        });
+      }
+      
+      // Merr taskat e krijuara nga përdoruesi
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id, status, type, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (tasks) {
+        tasks.forEach(task => {
+          activities.push({
+            id: `task-${task.id}`,
+            type: 'task',
+            action: `Krijoi ${task.type === 'ticket' ? 'tiket' : 'task'} #${task.id}`,
+            status: task.status,
+            timestamp: task.created_at,
+            module: 'tasks'
+          });
+        });
+      }
+      
+      // Merr klientët e krijuar nga përdoruesi
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('id, name, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (customers) {
+        customers.forEach(customer => {
+          activities.push({
+            id: `customer-${customer.id}`,
+            type: 'customer',
+            action: `Krijoi klientin "${customer.name}"`,
+            status: 'active',
+            timestamp: customer.created_at,
+            module: 'customers'
+          });
+        });
+      }
+      
+      // Merr produktet e krijuar nga përdoruesi
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, title, created_at')
+        .eq('created_by', userId)
+        .order('created_at', { ascending: false })
+        .limit(10);
+      
+      if (products) {
+        products.forEach(product => {
+          activities.push({
+            id: `product-${product.id}`,
+            type: 'product',
+            action: `Krijoi produktin "${product.title}"`,
+            status: 'active',
+            timestamp: product.created_at,
+            module: 'products'
+          });
+        });
+      }
+      
+      // Sorto aktivitetin sipas kohës
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      res.json({
+        success: true,
+        data: activities.slice(0, 20) // Merr vetëm 20 aktivitetet e fundit
+      });
+    } else {
+      // Merr aktivitetin e të gjithë përdoruesve
+      const activities = [];
+      
+      // Merr të gjitha aktivitetet nga të gjitha modulet
+      const { data: orders } = await supabase
+        .from('orders')
+        .select('id, status, created_at, created_by')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      const { data: services } = await supabase
+        .from('services')
+        .select('id, status, created_at, created_by')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('id, status, type, created_at, created_by')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      const { data: customers } = await supabase
+        .from('customers')
+        .select('id, name, created_at, created_by')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, title, created_at, created_by')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      // Merr emrat e përdoruesve
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, name, email');
+      
+      const userMap = users?.reduce((acc, user) => {
+        acc[user.id] = user.name || user.email;
+        return acc;
+      }, {}) || {};
+      
+      // Shto aktivitetet e porosive
+      if (orders) {
+        orders.forEach(order => {
+          activities.push({
+            id: `order-${order.id}`,
+            type: 'order',
+            action: `Krijoi porosinë #${order.id}`,
+            status: order.status,
+            timestamp: order.created_at,
+            module: 'orders',
+            user: userMap[order.created_by] || 'Unknown User'
+          });
+        });
+      }
+      
+      // Shto aktivitetet e shërbimeve
+      if (services) {
+        services.forEach(service => {
+          activities.push({
+            id: `service-${service.id}`,
+            type: 'service',
+            action: `Krijoi shërbimin #${service.id}`,
+            status: service.status,
+            timestamp: service.created_at,
+            module: 'services',
+            user: userMap[service.created_by] || 'Unknown User'
+          });
+        });
+      }
+      
+      // Shto aktivitetet e taskave
+      if (tasks) {
+        tasks.forEach(task => {
+          activities.push({
+            id: `task-${task.id}`,
+            type: 'task',
+            action: `Krijoi ${task.type === 'ticket' ? 'tiket' : 'task'} #${task.id}`,
+            status: task.status,
+            timestamp: task.created_at,
+            module: 'tasks',
+            user: userMap[task.created_by] || 'Unknown User'
+          });
+        });
+      }
+      
+      // Shto aktivitetet e klientëve
+      if (customers) {
+        customers.forEach(customer => {
+          activities.push({
+            id: `customer-${customer.id}`,
+            type: 'customer',
+            action: `Krijoi klientin "${customer.name}"`,
+            status: 'active',
+            timestamp: customer.created_at,
+            module: 'customers',
+            user: userMap[customer.created_by] || 'Unknown User'
+          });
+        });
+      }
+      
+      // Shto aktivitetet e produkteve
+      if (products) {
+        products.forEach(product => {
+          activities.push({
+            id: `product-${product.id}`,
+            type: 'product',
+            action: `Krijoi produktin "${product.title}"`,
+            status: 'active',
+            timestamp: product.created_at,
+            module: 'products',
+            user: userMap[product.created_by] || 'Unknown User'
+          });
+        });
+      }
+      
+      // Sorto aktivitetin sipas kohës
+      activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      
+      res.json({
+        success: true,
+        data: activities.slice(0, 50) // Merr vetëm 50 aktivitetet e fundit
+      });
+    }
+  } catch (error) {
+    console.error('Gabim në marrjen e aktivitetit të përdoruesve:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e aktivitetit të përdoruesve'
     });
   }
 });

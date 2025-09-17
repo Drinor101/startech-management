@@ -29,6 +29,8 @@ const Reports: React.FC = () => {
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userActivity, setUserActivity] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
 
   const tabs = [
     { id: 'services', label: 'Servisi' },
@@ -63,6 +65,28 @@ const Reports: React.FC = () => {
 
     fetchReportData();
   }, [dateRange]);
+
+  // Fetch user activity
+  useEffect(() => {
+    const fetchUserActivity = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedUser) {
+          params.append('userId', selectedUser);
+        }
+        const response = await apiCall(`/api/reports/users/activity?${params.toString()}`);
+        if (response.success) {
+          setUserActivity(response.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching user activity:', err);
+      }
+    };
+
+    if (activeTab === 'users') {
+      fetchUserActivity();
+    }
+  }, [activeTab, selectedUser]);
 
   const mockReportData = {
     services: {
@@ -105,33 +129,6 @@ const Reports: React.FC = () => {
         { name: 'OfficeSupply', count: 33, percentage: 22.8 }
       ]
     },
-    users: {
-      total: 7,
-      active: 7,
-      inactive: 0,
-      totalCredits: 907.00,
-      averageCredits: 129.57,
-      byRole: [
-        { name: 'Administrator', count: 1, percentage: 14.3, totalCredits: 150.00 },
-        { name: 'Manager', count: 1, percentage: 14.3, totalCredits: 85.50 },
-        { name: 'Technician', count: 1, percentage: 14.3, totalCredits: 200.00 },
-        { name: 'Support Agent', count: 1, percentage: 14.3, totalCredits: 75.25 },
-        { name: 'Design', count: 1, percentage: 14.3, totalCredits: 120.75 },
-        { name: 'Marketing', count: 1, percentage: 14.3, totalCredits: 95.00 },
-        { name: 'E-commerce', count: 1, percentage: 14.3, totalCredits: 180.50 }
-      ],
-      creditDistribution: [
-        { range: '€150+', count: 2, percentage: 28.6, color: 'bg-green-500' },
-        { range: '€100-149', count: 3, percentage: 42.9, color: 'bg-yellow-500' },
-        { range: '€50-99', count: 2, percentage: 28.6, color: 'bg-red-500' }
-      ],
-      recentActivity: [
-        { user: 'John Admin', action: 'Updated service status', time: '2 min ago' },
-        { user: 'Mike Tech', action: 'Completed repair task', time: '15 min ago' },
-        { user: 'Lisa Support', action: 'Created new ticket', time: '1 hour ago' },
-        { user: 'Alex Ecommerce', action: 'Synced products', time: '2 hours ago' }
-      ]
-    }
   };
 
   // Transform real data to match expected structure
@@ -177,14 +174,10 @@ const Reports: React.FC = () => {
         };
       case 'users':
         return {
-          total: 7, // Mock for now
-          active: 7,
-          inactive: 0,
-          totalCredits: 907.00,
-          averageCredits: 129.57,
-          byRole: mockReportData.users.byRole,
-          creditDistribution: mockReportData.users.creditDistribution,
-          recentActivity: mockReportData.users.recentActivity
+          total: realData.total || 0,
+          active: realData.active || 0,
+          inactive: realData.inactive || 0,
+          byRole: realData.byRole || []
         };
       default:
         return realData;
@@ -389,10 +382,14 @@ const Reports: React.FC = () => {
       csvContent += '1,Wireless Headphones Pro,Electronics,TechCorp,$99.99,$109.99,active,2024-01-15\n';
       csvContent += '2,Premium Smartphone Case,Accessories,AccessoryPlus,$24.99,$29.99,active,2024-01-15\n';
     } else if (activeTab === 'users') {
-      csvContent = 'User ID,Name,Email,Role,Status,Credits,Last Login,Total Actions\n';
-      csvContent += '1,John Admin,admin@company.com,Administrator,Active,€150.00,2024-01-15,45\n';
-      csvContent += '2,Sarah Manager,manager@company.com,Manager,Active,€85.50,2024-01-15,32\n';
-      csvContent += '3,Mike Tech,tech@company.com,Technician,Active,€200.00,2024-01-15,67\n';
+      csvContent = 'User ID,Name,Email,Role,Status,Total Actions\n';
+      if (currentData.byRole && currentData.byRole.length > 0) {
+        currentData.byRole.forEach((role, index) => {
+          csvContent += `${index + 1},User ${index + 1},user${index + 1}@company.com,${role.name},Active,${role.count}\n`;
+        });
+      } else {
+        csvContent += '1,Sample User,sample@company.com,User,Active,0\n';
+      }
     }
     
     // Create and download file
@@ -606,13 +603,6 @@ const Reports: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2">
-                  <Euro className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-sm font-medium text-gray-500">Kreditë Totale</h3>
-                </div>
-                <p className="text-2xl font-bold text-green-600 mt-1">€{currentData.totalCredits.toFixed(2)}</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="flex items-center gap-2">
                   <Shield className="w-5 h-5 text-gray-400" />
                   <h3 className="text-sm font-medium text-gray-500">Përdoruesit Aktivë</h3>
                 </div>
@@ -620,10 +610,10 @@ const Reports: React.FC = () => {
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex items-center gap-2">
-                  <Euro className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-sm font-medium text-gray-500">Kreditë Mesatare</h3>
+                  <UserX className="w-5 h-5 text-gray-400" />
+                  <h3 className="text-sm font-medium text-gray-500">Përdoruesit Joaktivë</h3>
                 </div>
-                <p className="text-2xl font-bold text-purple-600 mt-1">€{currentData.averageCredits.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-red-600 mt-1">{currentData.inactive}</p>
               </div>
             </>
           )}
@@ -694,15 +684,12 @@ const Reports: React.FC = () => {
 
               {activeTab === 'users' && currentData.byRole.map((role, index) => (
                 <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">{role.name}</span>
-                    <span className="text-xs text-gray-400">€{role.totalCredits.toFixed(2)}</span>
-                  </div>
+                  <span className="text-sm text-gray-600">{role.name}</span>
                   <div className="flex items-center gap-3">
                     <div className="w-32 bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${role.percentage}%` }}
+                        style={{ width: `${(role.count / currentData.total) * 100}%` }}
                       />
                     </div>
                     <span className="text-sm font-medium text-gray-900 w-12 text-right">
@@ -715,284 +702,63 @@ const Reports: React.FC = () => {
           </div>
         </div>
 
-        {/* Additional User Reports */}
+        {/* User Activity Reports */}
         {activeTab === 'users' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Credit Distribution */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Shpërndarja e Kredive</h3>
-                <div className="space-y-4">
-                  {currentData.creditDistribution.map((credit, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">{credit.range}</span>
-                      <div className="flex items-center gap-3">
-                        <div className="w-32 bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full ${credit.color}`}
-                            style={{ width: `${credit.percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                          {credit.count}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Aktiviteti i Fundit i Përdoruesve</h3>
-                <div className="space-y-3">
-                  {currentData.recentActivity.map((activity, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                      <Activity className="w-4 h-4 text-gray-400" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{activity.user}</p>
-                        <p className="text-xs text-gray-600">{activity.action}</p>
-                      </div>
-                      <span className="text-xs text-gray-500">{activity.time}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Individual User Actions & Logs */}
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-medium text-gray-900">Aksione Individuale të Përdoruesve</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Aktiviteti i Përdoruesve</h3>
                 <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <select className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm">
-                    <option value="all">Të gjithë përdoruesit</option>
-                    <option value="admin">Administratorët</option>
-                    <option value="manager">Menaxherët</option>
-                    <option value="technician">Teknikët</option>
+                  <label className="text-sm text-gray-600">Filtro sipas përdoruesit:</label>
+                  <select
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                  >
+                    <option value="">Të gjithë përdoruesit</option>
+                    {/* Add user options here if needed */}
                   </select>
                 </div>
               </div>
               
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Përdoruesi
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Moduli
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Aksioni
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Objekti
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Koha
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Statusi
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {/* Sample user actions - replace with real data */}
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">A</span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">Admin User</div>
-                            <div className="text-sm text-gray-500">admin@startech.com</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                          Servisi
+              <div className="space-y-3">
+                {userActivity.length > 0 ? (
+                  userActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                      <div className={`w-2 h-2 rounded-full ${
+                        activity.type === 'order' ? 'bg-blue-500' :
+                        activity.type === 'service' ? 'bg-green-500' :
+                        activity.type === 'task' ? 'bg-purple-500' :
+                        activity.type === 'customer' ? 'bg-orange-500' :
+                        activity.type === 'product' ? 'bg-red-500' :
+                        'bg-gray-500'
+                      }`}></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {activity.user || 'Unknown User'}
+                        </p>
+                        <p className="text-xs text-gray-500">{activity.action}</p>
+                        <p className="text-xs text-gray-400">Moduli: {activity.module}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-gray-400">
+                          {new Date(activity.timestamp).toLocaleDateString('sq-AL')}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Krijoi servis të ri
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Servis #SRV-001
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        15 min më parë
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Sukses
+                        <br />
+                        <span className="text-xs text-gray-400">
+                          {new Date(activity.timestamp).toLocaleTimeString('sq-AL')}
                         </span>
-                      </td>
-                    </tr>
-                    
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-green-600">M</span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">Manager User</div>
-                            <div className="text-sm text-gray-500">manager@startech.com</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Porositë
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Modifiko porosi
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Porosi #PRS-2024-001
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        1 orë më parë
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Sukses
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-purple-600">T</span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">Tech User</div>
-                            <div className="text-sm text-gray-500">tech@startech.com</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-                          Taskat
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Përfundoi task
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Task #TSK-001
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        2 orë më parë
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Sukses
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-orange-600">S</span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">Sales User</div>
-                            <div className="text-sm text-gray-500">sales@startech.com</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full">
-                          Produktet
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Shtoi produkt manual
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Produkt Manual #PRD-001
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        3 orë më parë
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                          Sukses
-                        </span>
-                      </td>
-                    </tr>
-
-                    <tr className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-red-600">C</span>
-                          </div>
-                          <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">Customer User</div>
-                            <div className="text-sm text-gray-500">customer@startech.com</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">
-                          Klientët
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        Modifiko klient
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        Klient #CST-001
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        5 orë më parë
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                          Paralajmërim
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between mt-6">
-                <div className="text-sm text-gray-500">
-                  Shfaqen 5 nga 25 rezultatet
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Mëparshëm
-                  </button>
-                  <button className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg">
-                    1
-                  </button>
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                    2
-                  </button>
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                    3
-                  </button>
-                  <button className="px-3 py-1 text-sm border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Tjetër
-                  </button>
-                </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>Nuk ka aktivitet të regjistruar</p>
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
         )}
       </div>
