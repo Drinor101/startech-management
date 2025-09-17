@@ -158,7 +158,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 router.post('/', authenticateUser, async (req, res) => {
   try {
     console.log('Creating new order with data:', req.body);
-    const { customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
+    const { customerId, customerName, customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
     
     console.log('Order data parsed:', {
       customer,
@@ -189,81 +189,113 @@ router.post('/', authenticateUser, async (req, res) => {
     
     const orderId = `PRS-${currentYear}-${orderNumber.toString().padStart(3, '0')}`;
     
-    // Create or find customer
-    let customerId;
-    const { data: existingCustomer } = await supabase
-      .from('customers')
-      .select('id')
-      .eq('name', customer)
-      .single();
+    // Use customerId if provided, otherwise create or find customer by name
+    let finalCustomerId;
     
-    if (existingCustomer) {
-      customerId = existingCustomer.id;
+    if (customerId) {
+      // Use provided customerId
+      finalCustomerId = customerId;
+      console.log(`Using provided customerId: ${finalCustomerId}`);
     } else {
-      // Create new customer
-      const { data: newCustomer, error: customerError } = await supabase
+      // Fallback to old logic for backward compatibility
+      const customerName = customerName || customer;
+      const { data: existingCustomer } = await supabase
         .from('customers')
-        .insert({
-          name: customer,
-          email: `${customer.toLowerCase().replace(/\s+/g, '.')}@example.com`,
-          source: 'Internal'
-        })
         .select('id')
+        .eq('name', customerName)
         .single();
       
-      if (customerError) {
-        throw customerError;
+      if (existingCustomer) {
+        finalCustomerId = existingCustomer.id;
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            name: customerName,
+            email: `${customerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            source: 'Internal'
+          })
+          .select('id')
+          .single();
+        
+        if (customerError) {
+          throw customerError;
+        }
+        finalCustomerId = newCustomer.id;
       }
-      customerId = newCustomer.id;
     }
     
-    // Calculate total from WooCommerce products
-    const wooCommerceConfig = {
-      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_0856cd7f00ed0c6faef27c9a64256bcf7430d414',
-      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_7c882c8e16979743e2dd63fb113759254d47d0aa'
-    };
-
-    // Fetch product details from WooCommerce
-    console.log('=== STARTING WOOCOMMERCE API CALL ===');
+    // Fetch product details (from Database or WooCommerce)
+    console.log('=== FETCHING PRODUCT DETAILS ===');
     console.log('Fetching product details for items:', JSON.stringify(items, null, 2));
     const productDetails = [];
+    
     for (const item of items) {
       try {
-        console.log(`Fetching product ${item.productId} from WooCommerce...`);
-        const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64')}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        console.log(`Fetching product ${item.productId}...`);
         
-        console.log(`WooCommerce response for product ${item.productId}:`, response.status, response.statusText);
+        // First, try to get from database (for manual products)
+        const { data: manualProduct, error: manualError } = await supabase
+          .from('products')
+          .select('*')
+          .eq('id', item.productId)
+          .single();
         
-        if (response.ok) {
-          const product = await response.json();
+        if (manualProduct && !manualError) {
+          console.log(`Product ${item.productId} found in database (Manual):`, {
+            id: manualProduct.id,
+            title: manualProduct.title,
+            final_price: manualProduct.final_price,
+            source: manualProduct.source
+          });
+          
           productDetails.push({
-            id: product.id.toString(),
-            price: parseFloat(product.price || 0),
-            name: product.name || 'Unknown Product'
+            id: manualProduct.id,
+            price: parseFloat(manualProduct.final_price || 0),
+            name: manualProduct.title || 'Unknown Product'
           });
         } else {
-          console.error(`Failed to fetch product ${item.productId}: ${response.status}`);
-          // Use default price if product not found
-          productDetails.push({
-            id: item.productId,
-            price: 100, // Default price instead of 0
-            name: `Product ${item.productId}`
+          // If not found in database, try WooCommerce API
+          console.log(`Product ${item.productId} not found in database, trying WooCommerce API...`);
+          
+          const wooCommerceConfig = {
+            url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+            consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+            consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+          };
+          
+          const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Basic ${Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64')}`,
+              'Content-Type': 'application/json'
+            }
           });
+          
+          console.log(`WooCommerce response for product ${item.productId}:`, response.status, response.statusText);
+          
+          if (response.ok) {
+            const product = await response.json();
+            console.log(`Product ${item.productId} fetched from WooCommerce:`, {
+              id: product.id,
+              name: product.name,
+              price: product.price
+            });
+            
+            productDetails.push({
+              id: product.id.toString(),
+              price: parseFloat(product.price || 0),
+              name: product.name || 'Unknown Product'
+            });
+          } else {
+            console.error(`Failed to fetch product ${item.productId} from WooCommerce: ${response.status}`);
+            throw new Error(`Product ${item.productId} not found in database or WooCommerce`);
+          }
         }
       } catch (error) {
         console.error(`Error fetching product ${item.productId}:`, error);
-        productDetails.push({
-          id: item.productId,
-          price: 100, // Default price instead of 0
-          name: `Product ${item.productId}`
-        });
+        throw new Error(`Failed to fetch product details for ${item.productId}: ${error.message}`);
       }
     }
     
@@ -277,7 +309,7 @@ router.post('/', authenticateUser, async (req, res) => {
 
     const orderData = {
       id: orderId,
-      customer_id: customerId,
+      customer_id: finalCustomerId,
       status: 'pending',
       source: 'Manual',
       shipping_address: shippingAddress,
