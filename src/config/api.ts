@@ -8,7 +8,7 @@ export const apiConfig = {
     orders: '/api/orders',
     services: '/api/services',
     tasks: '/api/tasks',
-    tickets: '/api/tasks', // Tickets use the same endpoint as tasks
+    tickets: '/api/tickets', // Tickets have their own endpoint
     customers: '/api/customers',
     reports: '/api/reports',
     health: '/api/health'

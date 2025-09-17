@@ -14,17 +14,19 @@ import {
   List
 } from 'lucide-react';
 import { Ticket, ViewMode } from '../../types';
-import { apiCall } from '../../config/api';
+import { apiCall, apiConfig } from '../../config/api';
 import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
 import KanbanBoard from '../Common/KanbanBoard';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const TicketsList: React.FC = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { canDelete } = usePermissions();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -57,7 +59,7 @@ const TicketsList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiCall('/api/tickets');
+      const response = await apiCall(apiConfig.endpoints.tickets);
       console.log('Tickets API response:', response);
       
       const data = response.success ? response.data : [];
@@ -248,13 +250,15 @@ const TicketsList: React.FC = () => {
         >
           <Edit className="w-3 h-3" />
         </button>
-        <button
-          onClick={() => handleDeleteTicket(ticket)}
-          className="text-red-600 hover:text-red-900 p-1"
-          title="Fshij"
-        >
-          <Trash2 className="w-3 h-3" />
-        </button>
+        {canDelete('tickets') && (
+          <button
+            onClick={() => handleDeleteTicket(ticket)}
+            className="text-red-600 hover:text-red-900 p-1"
+            title="Fshij"
+          >
+            <Trash2 className="w-3 h-3" />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -270,7 +274,7 @@ const TicketsList: React.FC = () => {
     if (!confirmationModal.ticket) return;
     
     try {
-      await apiCall(`/api/tasks/${confirmationModal.ticket.id}`, {
+      await apiCall(`${apiConfig.endpoints.tickets}/${confirmationModal.ticket.id}`, {
         method: 'DELETE'
       });
       
@@ -298,7 +302,7 @@ const TicketsList: React.FC = () => {
 
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
     try {
-      await apiCall(`/api/tickets/${ticketId}`, {
+      await apiCall(`${apiConfig.endpoints.tickets}/${ticketId}`, {
         method: 'PUT',
         body: JSON.stringify({ status: newStatus })
       });
@@ -483,13 +487,15 @@ const TicketsList: React.FC = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button
-                          onClick={() => handleDeleteTicket(ticket)}
-                          className="text-red-600 hover:text-red-900 p-1"
-                          title="Fshij"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {canDelete('tickets') && (
+                          <button
+                            onClick={() => handleDeleteTicket(ticket)}
+                            className="text-red-600 hover:text-red-900 p-1"
+                            title="Fshij"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
