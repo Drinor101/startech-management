@@ -402,7 +402,7 @@ const TicketsList: React.FC = () => {
         />
       ) : (
         <CalendarView
-          items={allTasks.map(ticket => ({
+          items={tickets.map(ticket => ({
             id: ticket.id,
             title: ticket.title,
             status: ticket.status,
