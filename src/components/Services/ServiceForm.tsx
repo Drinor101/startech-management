@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
-import { apiCall } from '../../config/api';
+import { apiCall, getCurrentUser } from '../../config/api';
 import Notification from '../Common/Notification';
 import CustomerDropdown from '../Common/CustomerDropdown';
+import UserDropdown from '../Common/UserDropdown';
 
 interface ServiceFormProps {
   onClose: () => void;
@@ -11,9 +12,12 @@ interface ServiceFormProps {
 }
 
 const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }) => {
+  const currentUser = getCurrentUser();
+  
   const [formData, setFormData] = useState({
-    createdBy: service?.createdBy || '',
-    assignedTo: service?.assignedTo || '',
+    createdBy: service?.createdBy || currentUser?.name || currentUser?.email || '',
+    assignedToId: service?.assignedTo?.id || service?.assignedToId || '',
+    assignedToName: service?.assignedTo?.name || service?.assignedTo || '',
     customerId: service?.customer?.id || service?.customerId || '',
     customerName: service?.customer?.name || service?.customer || '',
     problem: service?.problemDescription || service?.problem || '',
@@ -77,6 +81,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
     }));
   };
 
+  const handleAssignedToChange = (userId: string, userName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      assignedToId: userId,
+      assignedToName: userName
+    }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -119,13 +131,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
           {/* Përcaktuar për */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Përcaktuar për *</label>
-            <input
-              type="text"
-              name="assignedTo"
-              value={formData.assignedTo}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Emri i përdoruesit që do të merret me shërbimin"
+            <UserDropdown
+              value={formData.assignedToId}
+              onChange={handleAssignedToChange}
+              placeholder="Zgjidhni përdoruesin"
               required
             />
           </div>

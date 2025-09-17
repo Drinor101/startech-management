@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
-import { apiCall } from '../../config/api';
+import { apiCall, getCurrentUser } from '../../config/api';
 import Notification from '../Common/Notification';
+import UserDropdown from '../Common/UserDropdown';
 
 interface TaskFormProps {
   onClose: () => void;
@@ -10,10 +11,13 @@ interface TaskFormProps {
 }
 
 const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
+  const currentUser = getCurrentUser();
+  
   const [formData, setFormData] = useState({
     title: task?.title || '',
-    assignedTo: task?.assignedTo || task?.assigned_to || '',
-    assignedBy: task?.assignedBy || task?.assigned_by || '',
+    assignedToId: task?.assignedTo?.id || task?.assignedToId || '',
+    assignedToName: task?.assignedTo?.name || task?.assignedTo || task?.assigned_to || '',
+    assignedBy: task?.assignedBy || task?.assigned_by || currentUser?.name || currentUser?.email || '',
     department: task?.department || '',
     priority: task?.priority || 'medium',
     status: task?.status || 'todo',
@@ -68,6 +72,14 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     }));
   };
 
+  const handleAssignedToChange = (userId: string, userName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      assignedToId: userId,
+      assignedToName: userName
+    }));
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
@@ -111,13 +123,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             {/* Caktuar për */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Caktuar për *</label>
-              <input
-                type="text"
-                name="assignedTo"
-                value={formData.assignedTo}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Emri i përdoruesit"
+              <UserDropdown
+                value={formData.assignedToId}
+                onChange={handleAssignedToChange}
+                placeholder="Zgjidhni përdoruesin"
                 required
               />
             </div>
