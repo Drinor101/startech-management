@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Save, AlertCircle } from 'lucide-react';
 import { apiCall } from '../../config/api';
 import Notification from '../Common/Notification';
+import CustomerDropdown from '../Common/CustomerDropdown';
 
 interface ServiceFormProps {
   onClose: () => void;
@@ -13,7 +14,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   const [formData, setFormData] = useState({
     createdBy: service?.createdBy || '',
     assignedTo: service?.assignedTo || '',
-    customer: service?.customer?.name || service?.customer || '',
+    customerId: service?.customer?.id || service?.customerId || '',
+    customerName: service?.customer?.name || service?.customer || '',
     problem: service?.problemDescription || service?.problem || '',
     status: service?.status || 'received',
     warranty: service?.warrantyInfo || service?.warranty || ''
@@ -64,6 +66,14 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }));
+  };
+
+  const handleCustomerChange = (customerId: string, customerName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      customerId,
+      customerName
     }));
   };
 
@@ -123,13 +133,10 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
           {/* Klienti */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Klienti *</label>
-            <input
-              type="text"
-              name="customer"
-              value={formData.customer}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Emri i klientit"
+            <CustomerDropdown
+              value={formData.customerId}
+              onChange={handleCustomerChange}
+              placeholder="Zgjidhni klientin"
               required
             />
           </div>

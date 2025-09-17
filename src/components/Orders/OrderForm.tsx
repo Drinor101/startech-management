@@ -3,6 +3,7 @@ import { Plus, Trash2, X } from 'lucide-react';
 import { apiCall } from '../../config/api';
 import { Product } from '../../types';
 import Notification from '../Common/Notification';
+import CustomerDropdown from '../Common/CustomerDropdown';
 
 interface OrderFormProps {
   order?: any;
@@ -29,7 +30,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     isVisible: false
   });
   const [formData, setFormData] = useState({
-    customer: order?.customer?.name || '',
+    customerId: order?.customer?.id || order?.customerId || '',
+    customerName: order?.customer?.name || '',
     items: order?.products?.map(p => ({ productId: p.id, quantity: p.quantity })) || [{ productId: '', quantity: 1 }] as OrderItem[],
     shippingAddress: order?.shippingInfo?.address || '',
     shippingCity: order?.shippingInfo?.city || '',
@@ -107,6 +109,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     }));
   };
 
+  const handleCustomerChange = (customerId: string, customerName: string) => {
+    setFormData(prev => ({
+      ...prev,
+      customerId,
+      customerName
+    }));
+  };
+
   const handleItemChange = (index: number, field: keyof OrderItem, value: string | number) => {
     setFormData(prev => ({
       ...prev,
@@ -142,13 +152,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
-        <input
-          type="text"
-          name="customer"
-          value={formData.customer || ''}
-          onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Emri i klientit"
+        <CustomerDropdown
+          value={formData.customerId}
+          onChange={handleCustomerChange}
+          placeholder="Zgjidhni klientin"
           required
         />
       </div>
