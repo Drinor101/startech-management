@@ -8,11 +8,21 @@ const router = express.Router();
 router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching tickets...');
+    const currentUser = req.user; // Përdoruesi i loguar
     
-    const { data, error } = await supabase
+    let query = supabase
       .from('tickets')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Filtri për tiketat e përcaktuar për atë përdorues
+    // Administrator dhe Menaxher shohin të gjitha tiketat
+    if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
+      // Të tjerët shohin vetëm tiketat e përcaktuar për ta
+      query = query.eq('assigned_to', currentUser.name);
+    }
+    
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching tickets:', error);

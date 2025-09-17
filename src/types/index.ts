@@ -203,13 +203,13 @@ export const ROLE_PERMISSIONS = {
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },
   'Menaxher': {
-    // Menaxher - Çasje e plotë përveç Users (vetëm view)
+    // Menaxher - Çasje e plotë përveç Users (vetëm view) dhe Reports (tash për tash)
     tasks: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     tickets: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     services: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     orders: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    reports: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // Tash për tash
+    users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // View only
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },

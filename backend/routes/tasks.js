@@ -9,6 +9,7 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     const { page = 1, limit = 10, type, status, priority } = req.query;
     const offset = (page - 1) * limit;
+    const currentUser = req.user; // Përdoruesi i loguar
 
     let query = supabase
       .from('tasks')
@@ -18,6 +19,13 @@ router.get('/', authenticateUser, async (req, res) => {
         history:task_history(*)
       `)
       .order('created_at', { ascending: false });
+
+    // Filtri për taskat e përcaktuar për atë përdorues
+    // Administrator dhe Menaxher shohin të gjitha taskat
+    if (currentUser.role !== 'Administrator' && currentUser.role !== 'Menaxher') {
+      // Të tjerët shohin vetëm taskat e përcaktuar për ta
+      query = query.eq('assigned_to', currentUser.name);
+    }
 
     // Filtra
     if (type) {
