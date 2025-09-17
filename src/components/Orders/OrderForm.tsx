@@ -20,6 +20,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [productTypeFilter, setProductTypeFilter] = useState<string>('all');
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
@@ -46,7 +47,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const response = await apiCall('/api/products');
+        const params = new URLSearchParams();
+        if (productTypeFilter !== 'all') {
+          params.append('source', productTypeFilter);
+        }
+        const response = await apiCall(`/api/products?${params.toString()}`);
         console.log('OrderForm Products API response:', response);
         
         // Handle the correct API response structure
@@ -60,7 +65,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     };
 
     fetchProducts();
-  }, []);
+  }, [productTypeFilter]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,14 +168,26 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       <div>
         <div className="flex items-center justify-between mb-3">
           <label className="block text-sm font-medium text-gray-700">Produktet</label>
-          <button
-            type="button"
-            onClick={addItem}
-            className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-          >
-            <Plus className="w-4 h-4" />
-            Shto Produkt
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Product Type Filter */}
+            <select
+              value={productTypeFilter}
+              onChange={(e) => setProductTypeFilter(e.target.value)}
+              className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            >
+              <option value="all">Të gjitha produktet</option>
+              <option value="WooCommerce">Produktet WooCommerce</option>
+              <option value="Manual">Produktet Manuale</option>
+            </select>
+            <button
+              type="button"
+              onClick={addItem}
+              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+            >
+              <Plus className="w-4 h-4" />
+              Shto Produkt
+            </button>
+          </div>
         </div>
         
         <div className="space-y-3">
@@ -189,7 +206,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                   ) : (
                     products.map(product => (
                       <option key={product.id} value={product.id}>
-                        {product.title} - ${(product.finalPrice || 0).toFixed(2)}
+                        {product.title} - ${(product.finalPrice || 0).toFixed(2)} ({product.source})
                       </option>
                     ))
                   )}

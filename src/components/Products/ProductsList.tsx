@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter } from 'lucide-react';
+import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus } from 'lucide-react';
 import { Product } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
+import Modal from '../Common/Modal';
+import ProductForm from './ProductForm';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const ProductsList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -13,6 +16,11 @@ const ProductsList: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const [pageSize] = useState(25);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<string>('all');
+  const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Manual WooCommerce sync function
   const handleWooCommerceSync = async () => {
@@ -45,6 +53,19 @@ const ProductsList: React.FC = () => {
       setTimeout(() => setSyncStatus('idle'), 3000);
     }
   };
+
+  const handleAddProduct = () => {
+    setSelectedProduct(null);
+    setIsEditMode(false);
+    setIsFormOpen(true);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsEditMode(true);
+    setIsFormOpen(true);
+  };
+
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
 
   // Fetch products from API with pagination
@@ -55,8 +76,22 @@ const ProductsList: React.FC = () => {
       
       console.log(`Fetching products page ${page}...`);
       
-      // Fetch products with pagination
-      const response = await apiCall(`${apiConfig.endpoints.products}?page=${page}&limit=${pageSize}`);
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pageSize.toString()
+      });
+      
+      if (selectedCategory !== 'all') {
+        params.append('category', selectedCategory);
+      }
+      
+      if (selectedSource !== 'all') {
+        params.append('source', selectedSource);
+      }
+      
+      // Fetch products with pagination and filters
+      const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
       console.log('Products API response:', response);
       
       // Handle the correct API response structure
@@ -84,7 +119,7 @@ const ProductsList: React.FC = () => {
 
   useEffect(() => {
     fetchProducts(currentPage);
-  }, [currentPage]);
+  }, [currentPage, selectedCategory, selectedSource]);
 
   // Get unique categories from products
   const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
@@ -186,6 +221,20 @@ const ProductsList: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {/* Source Filter */}
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-400" />
+            <select
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            >
+              <option value="all">Të gjitha produktet</option>
+              <option value="WooCommerce">Produktet WooCommerce</option>
+              <option value="Manual">Produktet Manuale</option>
+            </select>
+          </div>
+
           {/* Category Filter */}
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-400" />
@@ -201,6 +250,17 @@ const ProductsList: React.FC = () => {
               ))}
             </select>
           </div>
+
+          {/* Add Product Button */}
+          {canCreate('products') && (
+            <button
+              onClick={handleAddProduct}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Shto Produkt
+            </button>
+          )}
           <button 
             onClick={handleWooCommerceSync}
             disabled={syncStatus === 'syncing'}
@@ -296,7 +356,16 @@ const ProductsList: React.FC = () => {
                             className="w-12 h-12 object-cover rounded-lg"
                           />
                           <div>
-                            <div className="text-sm font-medium text-gray-900">{product.title}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm font-medium text-gray-900">{product.title}</div>
+                              <span className={`px-2 py-1 text-xs rounded-full ${
+                                product.source === 'WooCommerce' 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {product.source}
+                              </span>
+                            </div>
                             <div className="text-sm text-gray-500">ID: {product.id}</div>
                           </div>
                         </div>
@@ -431,6 +500,23 @@ const ProductsList: React.FC = () => {
           </p>
         </div>
       )}
+
+      {/* Product Form Modal */}
+      <Modal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        title={isEditMode ? 'Modifiko Produktin' : 'Shto Produkt të Ri'}
+        size="lg"
+      >
+        <ProductForm
+          product={selectedProduct}
+          onClose={() => setIsFormOpen(false)}
+          onSuccess={() => {
+            setIsFormOpen(false);
+            fetchProducts(currentPage); // Refresh products
+          }}
+        />
+      </Modal>
     </div>
   );
 };

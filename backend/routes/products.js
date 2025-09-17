@@ -4,95 +4,125 @@ import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Merr të gjithë produktet direkt nga WooCommerce
+// Merr të gjithë produktet (WooCommerce + Manual)
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    console.log('Fetching products directly from WooCommerce...');
+    console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit = 100, category, status } = req.query;
+    const { page = 1, limit = 25, category, source } = req.query;
 
-    // WooCommerce API configuration
-    const wooCommerceConfig = {
-      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
-      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
-    };
+    let allProducts = [];
 
-    // Fetch products directly from WooCommerce
-    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
-    
-    if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
-      return res.json({
-        success: true,
-        data: [],
-        pagination: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: 0,
-          pages: 0
-        },
-        message: 'No products found in WooCommerce store'
-      });
+    // 1. Fetch WooCommerce products if source is 'all' or 'WooCommerce'
+    if (!source || source === 'all' || source === 'WooCommerce') {
+      try {
+        const wooCommerceConfig = {
+          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+        };
+
+        const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+        
+        if (wooCommerceProducts && wooCommerceProducts.length > 0) {
+          const transformedWooProducts = wooCommerceProducts.map(product => ({
+            id: product.id.toString(),
+            image: product.images && product.images.length > 0 ? product.images[0].src : '',
+            title: product.name || 'Untitled Product',
+            category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
+            basePrice: parseFloat(product.price || 0),
+            additionalCost: 0,
+            finalPrice: parseFloat(product.price || 0),
+            supplier: 'WooCommerce',
+            wooCommerceStatus: product.status || 'draft',
+            wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
+            lastSyncDate: new Date().toISOString(),
+            source: 'WooCommerce'
+          }));
+          
+          allProducts = [...allProducts, ...transformedWooProducts];
+          console.log(`Added ${transformedWooProducts.length} WooCommerce products`);
+        }
+      } catch (wooError) {
+        console.error('Error fetching WooCommerce products:', wooError);
+        // Continue with manual products even if WooCommerce fails
+      }
     }
 
-    console.log(`Found ${wooCommerceProducts.length} products from WooCommerce`);
+    // 2. Fetch Manual products if source is 'all' or 'Manual'
+    if (!source || source === 'all' || source === 'Manual') {
+      try {
+        let query = supabase.from('products').select('*');
+        
+        // Apply category filter for manual products
+        if (category && category !== 'all') {
+          query = query.eq('category', category);
+        }
 
-    // Apply filters
-    let filteredProducts = wooCommerceProducts;
-    
-    if (category) {
-      filteredProducts = filteredProducts.filter(product => 
-        product.categories && product.categories.some(cat => cat.name === category)
-      );
+        const { data: manualProducts, error } = await query;
+
+        if (error) {
+          throw error;
+        }
+
+        if (manualProducts && manualProducts.length > 0) {
+          const transformedManualProducts = manualProducts.map(product => ({
+            id: product.id,
+            image: product.image || '',
+            title: product.title || 'Untitled Product',
+            category: product.category || 'Uncategorized',
+            basePrice: parseFloat(product.base_price || 0),
+            additionalCost: parseFloat(product.additional_cost || 0),
+            finalPrice: parseFloat(product.final_price || 0),
+            supplier: product.supplier || 'Unknown',
+            wooCommerceStatus: product.woo_commerce_status || 'draft',
+            wooCommerceCategory: product.woo_commerce_category || '',
+            lastSyncDate: product.last_sync_date || new Date().toISOString(),
+            source: 'Manual'
+          }));
+          
+          allProducts = [...allProducts, ...transformedManualProducts];
+          console.log(`Added ${transformedManualProducts.length} Manual products`);
+        }
+      } catch (manualError) {
+        console.error('Error fetching Manual products:', manualError);
+      }
     }
-    
-    if (status) {
-      filteredProducts = filteredProducts.filter(product => product.status === status);
+
+    // 3. Apply source filter to combined results
+    if (source && source !== 'all') {
+      allProducts = allProducts.filter(product => product.source === source);
     }
 
-    // Apply pagination
-    const offset = (page - 1) * limit;
-    const paginatedProducts = filteredProducts.slice(offset, offset + parseInt(limit));
+    // 4. Apply category filter to combined results
+    if (category && category !== 'all') {
+      allProducts = allProducts.filter(product => product.category === category);
+    }
 
-    // Transform WooCommerce products to match frontend expectations
-    const transformedData = paginatedProducts.map(product => ({
-      id: product.id.toString(),
-      image: product.images && product.images.length > 0 ? product.images[0].src : '',
-      title: product.name || 'Untitled Product',
-      category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
-      basePrice: parseFloat(product.price || 0),
-      additionalCost: 0,
-      finalPrice: parseFloat(product.price || 0),
-      supplier: 'WooCommerce',
-      wooCommerceStatus: product.status || 'draft',
-      wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
-      lastSyncDate: new Date().toISOString(),
-      description: product.description || '',
-      shortDescription: product.short_description || '',
-      sku: product.sku || '',
-      stockStatus: product.stock_status || 'instock',
-      stockQuantity: product.stock_quantity || 0,
-      weight: product.weight || '',
-      dimensions: product.dimensions || {}
-    }));
+    // 5. Apply pagination
+    const startIndex = (parseInt(page) - 1) * parseInt(limit);
+    const endIndex = startIndex + parseInt(limit);
+    const paginatedProducts = allProducts.slice(startIndex, endIndex);
+
+    console.log(`Total products found: ${allProducts.length}, returning: ${paginatedProducts.length}`);
 
     res.json({
       success: true,
-      data: transformedData,
+      data: paginatedProducts,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
-        total: filteredProducts.length,
-        pages: Math.ceil(filteredProducts.length / limit)
+        total: allProducts.length,
+        pages: Math.ceil(allProducts.length / parseInt(limit))
       },
-      message: 'Products fetched directly from WooCommerce'
+      message: `Found ${paginatedProducts.length} products (${allProducts.length} total)`
     });
 
   } catch (error) {
-    console.error('Gabim në marrjen e produkteve nga WooCommerce:', error);
+    console.error('Error fetching products:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në marrjen e produkteve nga WooCommerce',
+      error: 'Gabim në ngarkimin e produkteve',
       details: error.message
     });
   }
@@ -152,7 +182,17 @@ router.get('/:id', authenticateUser, async (req, res) => {
 router.post('/', authenticateUser, requireAdmin, async (req, res) => {
   try {
     const productData = {
-      ...req.body,
+      title: req.body.title,
+      category: req.body.category,
+      base_price: req.body.basePrice,
+      additional_cost: req.body.additionalCost,
+      final_price: req.body.finalPrice,
+      supplier: req.body.supplier,
+      image: req.body.image,
+      woo_commerce_category: req.body.wooCommerceCategory,
+      woo_commerce_status: req.body.wooCommerceStatus || 'active',
+      source: req.body.source || 'Manual',
+      last_sync_date: req.body.lastSyncDate || new Date().toISOString(),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -176,7 +216,8 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
     console.error('Gabim në krijimin e produktit:', error);
     res.status(500).json({
       success: false,
-      error: 'Gabim në krijimin e produktit'
+      error: 'Gabim në krijimin e produktit',
+      details: error.message
     });
   }
 });

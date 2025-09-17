@@ -34,6 +34,7 @@ export interface Product {
   wooCommerceStatus: 'active' | 'inactive' | 'draft';
   wooCommerceCategory: string;
   lastSyncDate: string;
+  source: 'WooCommerce' | 'Manual'; // Product source - WooCommerce or Manual
 }
 
 export interface Order {
