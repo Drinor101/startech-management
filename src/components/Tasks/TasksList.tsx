@@ -396,7 +396,7 @@ const TasksList: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900">
-                          {task.assignedTo || 'N/A'}
+                          {task.assignedTo || task.assigned_to || 'N/A'}
                         </span>
                       </div>
                     </td>
@@ -535,7 +535,7 @@ const TasksList: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
-                <p className="text-sm text-gray-900">{selectedTask.assignedTo || 'N/A'}</p>
+                <p className="text-sm text-gray-900">{selectedTask.assignedTo || selectedTask.assigned_to || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>

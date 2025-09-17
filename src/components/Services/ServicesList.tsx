@@ -355,7 +355,7 @@ const ServicesList: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-900">
-                        {service.assignedTo || 'N/A'}
+                        {service.assignedTo || service.assigned_to || 'N/A'}
                       </span>
                     </div>
                   </td>

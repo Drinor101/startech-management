@@ -738,7 +738,14 @@ const Reports: React.FC = () => {
                           {activity.user || 'Unknown User'}
                         </p>
                         <p className="text-xs text-gray-500">{activity.action}</p>
-                        <p className="text-xs text-gray-400">Moduli: {activity.module}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs text-gray-400">Moduli: {activity.module}</p>
+                          {activity.userRole && (
+                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                              {activity.userRole}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right">
                         <span className="text-xs text-gray-400">

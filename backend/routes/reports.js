@@ -486,16 +486,27 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
       // Merr emrat e përdoruesve
       const { data: users } = await supabase
         .from('users')
-        .select('id, name, email');
+        .select('id, name, email, role');
       
       const userMap = users?.reduce((acc, user) => {
-        acc[user.id] = user.name || user.email;
+        const userName = user.name || user.email;
+        acc[user.id] = userName;
+        acc[user.name] = userName;
+        acc[user.email] = userName;
+        return acc;
+      }, {}) || {};
+      
+      // Create role map for additional info
+      const roleMap = users?.reduce((acc, user) => {
+        const userName = user.name || user.email;
+        acc[userName] = user.role || 'User';
         return acc;
       }, {}) || {};
       
       // Shto aktivitetet e porosive
       if (orders) {
         orders.forEach(order => {
+          const userName = userMap[order.created_by] || 'Unknown User';
           activities.push({
             id: `order-${order.id}`,
             type: 'order',
@@ -503,7 +514,8 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
             status: order.status,
             timestamp: order.created_at,
             module: 'orders',
-            user: userMap[order.created_by] || 'Unknown User'
+            user: userName,
+            userRole: roleMap[userName] || 'User'
           });
         });
       }
@@ -511,6 +523,7 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
       // Shto aktivitetet e shërbimeve
       if (services) {
         services.forEach(service => {
+          const userName = userMap[service.created_by] || 'Unknown User';
           activities.push({
             id: `service-${service.id}`,
             type: 'service',
@@ -518,7 +531,8 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
             status: service.status,
             timestamp: service.created_at,
             module: 'services',
-            user: userMap[service.created_by] || 'Unknown User'
+            user: userName,
+            userRole: roleMap[userName] || 'User'
           });
         });
       }
@@ -526,6 +540,7 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
       // Shto aktivitetet e taskave
       if (tasks) {
         tasks.forEach(task => {
+          const userName = userMap[task.created_by] || 'Unknown User';
           activities.push({
             id: `task-${task.id}`,
             type: 'task',
@@ -533,7 +548,8 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
             status: task.status,
             timestamp: task.created_at,
             module: 'tasks',
-            user: userMap[task.created_by] || 'Unknown User'
+            user: userName,
+            userRole: roleMap[userName] || 'User'
           });
         });
       }
@@ -541,6 +557,7 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
       // Shto aktivitetet e klientëve
       if (customers) {
         customers.forEach(customer => {
+          const userName = userMap[customer.created_by] || 'Unknown User';
           activities.push({
             id: `customer-${customer.id}`,
             type: 'customer',
@@ -548,7 +565,8 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
             status: 'active',
             timestamp: customer.created_at,
             module: 'customers',
-            user: userMap[customer.created_by] || 'Unknown User'
+            user: userName,
+            userRole: roleMap[userName] || 'User'
           });
         });
       }
@@ -556,6 +574,7 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
       // Shto aktivitetet e produkteve
       if (products) {
         products.forEach(product => {
+          const userName = userMap[product.created_by] || 'Unknown User';
           activities.push({
             id: `product-${product.id}`,
             type: 'product',
@@ -563,7 +582,8 @@ router.get('/users/activity', authenticateUser, async (req, res) => {
             status: 'active',
             timestamp: product.created_at,
             module: 'products',
-            user: userMap[product.created_by] || 'Unknown User'
+            user: userName,
+            userRole: roleMap[userName] || 'User'
           });
         });
       }
