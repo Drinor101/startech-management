@@ -13,10 +13,12 @@ import {
   Grid3X3,
   Wrench,
   MessageSquare,
-  List
+  List,
+  LogOut
 } from 'lucide-react';
 import { User } from '../../types';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useAuth } from '../../context/AuthContext';
 
 interface SidebarProps {
   currentUser: User;
@@ -50,6 +52,15 @@ const menuItems = [
 const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleChange, collapsed }) => {
   const [expandedItems, setExpandedItems] = useState<string[]>(['detyra']);
   const { canView } = usePermissions();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const availableItems = menuItems.filter(item => {
     if (item.id === 'dashboard') return true; // Dashboard is always available
@@ -159,7 +170,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleCh
       </div>
 
       <div className="p-4 border-t border-gray-700">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 mb-3">
           <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
             <span className="text-sm font-medium">{currentUser.name.charAt(0)}</span>
           </div>
@@ -170,6 +181,17 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleCh
             </div>
           )}
         </div>
+        
+        <button
+          onClick={handleLogout}
+          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-gray-300 hover:bg-gray-800 hover:text-white ${
+            collapsed ? 'justify-center' : ''
+          }`}
+          title={collapsed ? 'Dil' : undefined}
+        >
+          <LogOut className="w-5 h-5 flex-shrink-0" />
+          {!collapsed && <span className="font-medium">Dil</span>}
+        </button>
       </div>
     </div>
   );
