@@ -36,7 +36,16 @@ router.get('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Debug: Check if data exists and log first service
+    console.log('Services count:', data?.length);
+    if (data && data.length > 0) {
+      console.log('First service raw data:', JSON.stringify(data[0], null, 2));
+      console.log('assigned_to value:', data[0].assigned_to);
+      console.log('assigned_to type:', typeof data[0].assigned_to);
+    }
+
     // Transform data to match frontend interface
+    console.log('Raw service data from DB:', data[0]); // Debug log
     const transformedData = data.map(service => ({
       id: service.id,
       createdBy: service.created_by,
@@ -58,6 +67,8 @@ router.get('/', authenticateUser, async (req, res) => {
       completedAt: service.completed_at,
       emailNotificationsSent: service.email_notifications_sent
     }));
+    
+    console.log('Transformed service data:', transformedData[0]); // Debug log
 
     res.json({
       success: true,

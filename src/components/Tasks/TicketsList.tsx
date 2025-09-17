@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, MessageCircle } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, MessageCircle, Calendar } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
+import CalendarView from '../Common/CalendarView';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -113,6 +114,18 @@ const TicketsList: React.FC = () => {
         console.error('Error deleting ticket:', error);
         alert('Gabim në fshirjen e tiketës: ' + (error instanceof Error ? error.message : 'Unknown error'));
       }
+    }
+  };
+
+  const handleStatusChange = async (ticketId: string, newStatus: string) => {
+    try {
+      await apiCall(`${apiConfig.endpoints.tasks}/${ticketId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus })
+      });
+      await fetchTickets();
+    } catch (error) {
+      console.error('Error updating ticket status:', error);
     }
   };
 
@@ -250,6 +263,15 @@ const TicketsList: React.FC = () => {
               <Grid3X3 className="w-4 h-4" />
               Kanban
             </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'calendar' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Kalendar
+            </button>
           </div>
           <button 
             onClick={() => setIsFormOpen(true)}
@@ -372,11 +394,28 @@ const TicketsList: React.FC = () => {
             </table>
           </div>
         </div>
-      ) : (
+      ) : viewMode === 'kanban' ? (
         <KanbanBoard
           columns={kanbanColumns}
           renderCard={renderTicketCard}
           onAddItem={(columnId) => console.log('Add item to', columnId)}
+        />
+      ) : (
+        <CalendarView
+          items={allTasks.map(ticket => ({
+            id: ticket.id,
+            title: ticket.title,
+            status: ticket.status,
+            priority: ticket.priority,
+            type: 'task' as const,
+            assignedTo: ticket.assignedTo,
+            createdAt: ticket.createdAt,
+            dueDate: ticket.dueDate,
+            completedAt: ticket.completedAt
+          }))}
+          onItemClick={handleViewTicket}
+          onStatusChange={handleStatusChange}
+          type="tasks"
         />
       )}
 

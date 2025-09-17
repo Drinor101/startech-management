@@ -3,6 +3,7 @@ import { Grid3X3, List, Eye, Edit, Trash2, AlertCircle, Clock, User, QrCode, Mai
 import { Service, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
+import CalendarView from '../Common/CalendarView';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -290,6 +291,15 @@ const ServicesList: React.FC = () => {
               <Grid3X3 className="w-4 h-4" />
               Kanban
             </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'calendar' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Kalendar
+            </button>
           </div>
           {canCreate('services') && (
             <button 
@@ -437,12 +447,27 @@ const ServicesList: React.FC = () => {
           </table>
         </div>
       </div>
-      ) : (
+      ) : viewMode === 'kanban' ? (
         <KanbanBoard
           columns={kanbanColumns}
           renderCard={renderServiceCard}
           onAddItem={(columnId) => console.log('Add item to', columnId)}
           onStatusChange={handleStatusChange}
+        />
+      ) : (
+        <CalendarView
+          items={services.map(service => ({
+            id: service.id,
+            title: service.problemDescription || 'Servis',
+            status: service.status,
+            type: 'service' as const,
+            assignedTo: service.assignedTo,
+            createdAt: service.createdAt,
+            completedAt: service.completedAt
+          }))}
+          onItemClick={handleViewService}
+          onStatusChange={handleStatusChange}
+          type="services"
         />
       )}
 

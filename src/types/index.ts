@@ -169,7 +169,7 @@ export interface UserAction {
   ipAddress?: string;
 }
 
-export type ViewMode = 'list' | 'kanban';
+export type ViewMode = 'list' | 'kanban' | 'calendar';
 
 export interface RolePermissions {
   [key: string]: {
