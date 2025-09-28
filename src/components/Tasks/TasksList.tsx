@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, Calendar } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, Calendar, Filter, ChevronDown } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
@@ -327,20 +327,24 @@ const TasksList: React.FC = () => {
               Kalendar
             </button>
           </div>
-          <select
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            {departments.map((dept) => (
-              <option key={dept} value={dept}>
-                {dept === 'all' ? 'Të gjitha departamentet' : dept}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              value={departmentFilter}
+              onChange={(e) => setDepartmentFilter(e.target.value)}
+              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
+            >
+              {departments.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept === 'all' ? 'Të gjitha departamentet' : dept}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
           <button 
             onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md font-medium"
           >
             <Plus className="w-4 h-4" />
             Task i Ri

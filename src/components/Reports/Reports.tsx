@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Download, Filter, Calendar, FileText, TrendingUp, Users, Euro, Activity, Shield, UserX } from 'lucide-react';
+import { BarChart3, Download, Filter, Calendar, FileText, TrendingUp, Users, Euro, Activity, Shield, UserX, ChevronDown } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
 import {
   Chart as ChartJS,
@@ -444,7 +444,7 @@ const Reports: React.FC = () => {
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             >
               <option value="today">Sot</option>
               <option value="this-week">Këtë Javë</option>

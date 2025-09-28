@@ -12,7 +12,9 @@ import {
   Play,
   Grid3X3,
   List,
-  Calendar
+  Calendar,
+  Filter,
+  ChevronDown
 } from 'lucide-react';
 import { Ticket, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
@@ -335,11 +337,13 @@ const TicketsList: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Tiketat ({tickets.length})</h2>
         <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                viewMode === 'list' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                viewMode === 'list' 
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <List className="w-4 h-4" />
@@ -347,8 +351,10 @@ const TicketsList: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                viewMode === 'kanban' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                viewMode === 'kanban' 
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <Grid3X3 className="w-4 h-4" />
@@ -356,44 +362,56 @@ const TicketsList: React.FC = () => {
             </button>
             <button
               onClick={() => setViewMode('calendar')}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                viewMode === 'calendar' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                viewMode === 'calendar' 
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <Calendar className="w-4 h-4" />
               Kalendar
             </button>
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">Të gjitha statuset</option>
-            <option value="open">Hapur</option>
-            <option value="in-progress">Në progres</option>
-            <option value="waiting-customer">Në pritje të klientit</option>
-            <option value="resolved">Zgjidhur</option>
-            <option value="closed">Mbyllur</option>
-          </select>
-          <select
-            value={priorityFilter}
-            onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">Të gjitha prioritetet</option>
-            <option value="urgent">Urgjent</option>
-            <option value="high">I lartë</option>
-            <option value="medium">Mesatar</option>
-            <option value="low">I ulët</option>
-          </select>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
+              >
+                <option value="all">Të gjitha statuset</option>
+                <option value="open">Hapur</option>
+                <option value="in-progress">Në progres</option>
+                <option value="waiting-customer">Në pritje të klientit</option>
+                <option value="resolved">Zgjidhur</option>
+                <option value="closed">Mbyllur</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+            <div className="relative">
+              <AlertCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
+              >
+                <option value="all">Të gjitha prioritetet</option>
+                <option value="urgent">Urgjent</option>
+                <option value="high">I lartë</option>
+                <option value="medium">Mesatar</option>
+                <option value="low">I ulët</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
           <button 
             onClick={() => {
               setSelectedTicket(null);
               setIsEditMode(false);
               setIsFormOpen(true);
             }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md font-medium"
           >
             <Plus className="w-4 h-4" />
             Tiketë e Re

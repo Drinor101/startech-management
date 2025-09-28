@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus } from 'lucide-react';
+import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -222,26 +222,27 @@ const ProductsList: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           {/* Source Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select
               value={selectedSource}
               onChange={(e) => setSelectedSource(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
               <option value="all">Të gjitha produktet</option>
               <option value="WooCommerce">Vetëm WooCommerce</option>
               <option value="Manual">Vetëm Manuale</option>
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
 
           {/* Category Filter */}
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-gray-400" />
+          <div className="relative">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -249,13 +250,14 @@ const ProductsList: React.FC = () => {
                 </option>
               ))}
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
 
           {/* Add Product Button */}
           {canCreate('products') && (
             <button
               onClick={handleAddProduct}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white hover:bg-blue-700 rounded-lg transition-colors text-sm"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md font-medium"
             >
               <Plus className="w-4 h-4" />
               Shto Produkt

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Upload, X } from 'lucide-react';
+import { Upload, X, ChevronDown } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
 
 interface TaskFormProps {
@@ -158,7 +158,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="type"
             value={formData.type}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
           >
             <option value="task">Task</option>
             <option value="ticket">Tiket</option>
@@ -171,7 +171,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="priority"
             value={formData.priority}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
           >
             <option value="low">Ulët</option>
             <option value="medium">Mesatar</option>
@@ -213,7 +213,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="assigned_to"
             value={formData.assigned_to}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             required
           >
             <option value="">Zgjidh Përdoruesin</option>
@@ -229,7 +229,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="category"
             value={formData.category}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             required
           >
             <option value="">Zgjidh Kategorinë</option>
@@ -253,7 +253,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                   name="customer_id"
                   value={formData.customer_id}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 >
                   <option value="">Zgjidh Klientin</option>
                   {customers.map(customer => (
@@ -324,7 +324,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="related_order_id"
                 value={formData.related_order_id}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               >
                 <option value="">Zgjidh Porosinë</option>
                 {orders.map(order => (
@@ -340,7 +340,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
               name="source"
               value={formData.source}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             >
               <option value="">Zgjidh Burimin</option>
               <option value="Email">Email</option>
@@ -360,7 +360,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="department"
             value={formData.department}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             required
           >
             <option value="">Zgjidh Departamentin</option>
@@ -379,7 +379,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             name="due_date"
             value={formData.due_date}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
           />
         </div>
         */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { apiCall } from '../../config/api';
 
 interface TaskFormProps {
@@ -103,7 +103,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="assignedTo"
                 value={formData.assignedTo}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Emri i përdoruesit"
                 required
               />
@@ -117,7 +117,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="assignedBy"
                 value={formData.assignedBy}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Emri i përdoruesit që caktoi"
                 required
               />
@@ -130,7 +130,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="department"
                 value={formData.department}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 required
               >
                 <option value="">Zgjidh Departamentin</option>
@@ -150,7 +150,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 required
               >
                 <option value="low">I Ulët</option>
@@ -167,7 +167,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 required
               >
                 <option value="pending">Në Pritje</option>
@@ -185,7 +185,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="customerId"
                 value={formData.customerId}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="ID e klientit (opsionale)"
               />
             </div>

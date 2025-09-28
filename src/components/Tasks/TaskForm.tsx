@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, AlertCircle } from 'lucide-react';
+import { X, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { apiCall, getCurrentUser } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
@@ -140,7 +140,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="assignedBy"
                 value={formData.assignedBy}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Emri i përdoruesit që caktoi"
                 required
               />
@@ -149,21 +149,24 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             {/* Departamenti */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Departamenti *</label>
-              <select
-                name="department"
-                value={formData.department}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                required
-              >
-                <option value="">Zgjidh Departamentin</option>
-                <option value="IT">IT</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Sales">Shitje</option>
-                <option value="Support">Mbështetje</option>
-                <option value="Design">Dizajn</option>
-                <option value="Management">Menaxhment</option>
-              </select>
+              <div className="relative">
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                  required
+                >
+                  <option value="">Zgjidh Departamentin</option>
+                  <option value="IT">IT</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Sales">Shitje</option>
+                  <option value="Support">Mbështetje</option>
+                  <option value="Design">Dizajn</option>
+                  <option value="Management">Menaxhment</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </div>
 
             {/* Prioriteti */}
@@ -173,7 +176,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 required
               >
                 <option value="low">I Ulët</option>
@@ -190,7 +193,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 required
               >
                 <option value="todo">Për të bërë</option>

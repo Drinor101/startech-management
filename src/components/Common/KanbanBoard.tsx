@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronDown } from 'lucide-react';
 
 interface KanbanColumn {
   id: string;
@@ -48,7 +48,7 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ columns, renderCard, onAddIte
                       <select
                         value={item.status || column.id}
                         onChange={(e) => onStatusChange(item.id, e.target.value)}
-                        className="w-full text-xs border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                       >
                         {item.type === 'task' ? (
                           // Task status options

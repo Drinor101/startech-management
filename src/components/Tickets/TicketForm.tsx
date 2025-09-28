@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, AlertCircle } from 'lucide-react';
+import { Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { apiCall, getCurrentUser } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
@@ -117,7 +117,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Shkruani titullin e tiketës"
               />
             </div>
@@ -131,7 +131,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.source}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               >
                 <option value="Email">Email</option>
                 <option value="Phone">Telefon</option>
@@ -152,7 +152,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.createdBy}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Emri i përdoruesit që krijoi"
               />
             </div>
@@ -165,7 +165,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               >
                 <option value="low">I Ulët</option>
                 <option value="medium">Mesatar</option>
@@ -182,7 +182,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               >
                 <option value="open">Hapur</option>
                 <option value="in-progress">Në Progres</option>
@@ -216,7 +216,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 onChange={handleChange}
                 required
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
                 placeholder="Përshkruani problemin ose kërkesën..."
               />
             </div>

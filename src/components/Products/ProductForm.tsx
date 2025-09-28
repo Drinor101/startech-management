@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, Package } from 'lucide-react';
+import { X, Save, Package, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 
@@ -134,7 +134,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="Shkruani titullin e produktit"
               required
             />
@@ -150,7 +150,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="P.sh. Laptops, Printers, etc."
               required
             />
@@ -166,7 +166,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="supplier"
               value={formData.supplier}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="P.sh. Dell, HP, etc."
             />
           </div>
@@ -183,7 +183,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               onChange={handleInputChange}
               min="0"
               step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="0.00"
               required
             />
@@ -201,7 +201,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               onChange={handleInputChange}
               min="0"
               step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="0.00"
             />
           </div>
@@ -231,7 +231,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="image"
               value={formData.image}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="https://example.com/image.jpg"
             />
           </div>
@@ -246,7 +246,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="wooCommerceCategory"
               value={formData.wooCommerceCategory}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
               placeholder="P.sh. Computers, Electronics"
             />
           </div>
@@ -260,7 +260,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="wooCommerceStatus"
               value={formData.wooCommerceStatus}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
             >
               <option value="active">Aktiv - Gati për shitje</option>
               <option value="inactive">Joaktiv - Në magazinë</option>
