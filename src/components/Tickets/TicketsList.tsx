@@ -11,13 +11,15 @@ import {
   Pause,
   Play,
   Grid3X3,
-  List
+  List,
+  Calendar
 } from 'lucide-react';
 import { Ticket, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
 import KanbanBoard from '../Common/KanbanBoard';
+import CalendarView from '../Common/CalendarView';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -352,6 +354,15 @@ const TicketsList: React.FC = () => {
               <Grid3X3 className="w-4 h-4" />
               Kanban
             </button>
+            <button
+              onClick={() => setViewMode('calendar')}
+              className={`flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                viewMode === 'calendar' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              Kalendar
+            </button>
           </div>
           <select
             value={statusFilter}
@@ -504,11 +515,28 @@ const TicketsList: React.FC = () => {
             </table>
           </div>
         </div>
-      ) : (
+      ) : viewMode === 'kanban' ? (
         <KanbanBoard
           columns={getKanbanColumns()}
           renderCard={renderTicketCard}
           onStatusChange={handleStatusChange}
+        />
+      ) : (
+        <CalendarView
+          items={filteredTickets.map(ticket => ({
+            id: ticket.id,
+            title: ticket.title,
+            status: ticket.status,
+            priority: ticket.priority,
+            type: 'ticket' as const,
+            assignedTo: ticket.assignedTo || ticket.assigned_to,
+            createdAt: ticket.createdAt,
+            dueDate: ticket.dueDate,
+            completedAt: ticket.resolvedAt
+          }))}
+          onItemClick={handleViewTicket}
+          onStatusChange={handleStatusChange}
+          type="tickets"
         />
       )}
 
