@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Columns, ChevronDown } from 'lucide-react';
+import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3 } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -207,26 +207,28 @@ const OrdersList: React.FC = () => {
         <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
         <div className="flex items-center gap-4">
           {/* View Mode Buttons */}
-          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 rounded-lg p-1 shadow-sm">
             <button
               onClick={() => setViewMode('list')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                viewMode === 'list'
-                  ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                viewMode === 'list' 
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               <List className="w-4 h-4" />
+              Lista
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
-                viewMode === 'kanban'
-                  ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
-                  : 'text-gray-600 hover:text-gray-900'
+              className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                viewMode === 'kanban' 
+                  ? 'bg-white text-gray-900 shadow-sm border border-gray-200' 
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <Columns className="w-4 h-4" />
+              <Grid3X3 className="w-4 h-4" />
+              Kanban
             </button>
           </div>
           
@@ -325,21 +327,9 @@ const OrdersList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="relative">
-                        <select
-                          value={order.status}
-                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                          className={`w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors ${getStatusColor(order.status)}`}
-                        >
-                          <option value="pending">Në Pritje</option>
-                          <option value="accepted">Pranuar</option>
-                          <option value="processing">Në Procesim</option>
-                          <option value="shipped">Dërguar</option>
-                          <option value="delivered">Dorëzuar</option>
-                          <option value="cancelled">Anuluar</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                      </div>
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
+                        {translateStatus(order.status)}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 max-w-xs truncate">
