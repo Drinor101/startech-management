@@ -45,31 +45,43 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({ columns, renderCard, onAddIte
                   {renderCard(item)}
                   {onStatusChange && (
                     <div className="mt-3 pt-3 border-t border-gray-100">
-                      <select
-                        value={item.status || column.id}
-                        onChange={(e) => onStatusChange(item.id, e.target.value)}
-                        className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-                      >
-                        {item.type === 'task' ? (
-                          // Task status options
-                          <>
-                            <option value="todo">Për të bërë</option>
-                            <option value="in-progress">Në Progres</option>
-                            <option value="review">Rishikim</option>
-                            <option value="done">Përfunduar</option>
-                          </>
-                        ) : (
-                          // Service status options
-                          <>
-                            <option value="received">Marrë</option>
-                            <option value="in-progress">Në Progres</option>
-                            <option value="waiting-parts">Duke Pritur Pjesët</option>
-                            <option value="completed">Përfunduar</option>
-                            <option value="delivered">Dërguar</option>
-                          </>
-                        )}
-                      </select>
-                      <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      <div className="relative">
+                        <select
+                          value={item.status || column.id}
+                          onChange={(e) => onStatusChange(item.id, e.target.value)}
+                          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                        >
+                          {item.type === 'task' ? (
+                            // Task status options
+                            <>
+                              <option value="todo">Për të bërë</option>
+                              <option value="in-progress">Në Progres</option>
+                              <option value="review">Rishikim</option>
+                              <option value="done">Përfunduar</option>
+                            </>
+                          ) : item.type === 'order' ? (
+                            // Order status options
+                            <>
+                              <option value="pending">Në Pritje</option>
+                              <option value="accepted">Pranuar</option>
+                              <option value="processing">Në Procesim</option>
+                              <option value="shipped">Dërguar</option>
+                              <option value="delivered">Dorëzuar</option>
+                              <option value="cancelled">Anuluar</option>
+                            </>
+                          ) : (
+                            // Service status options
+                            <>
+                              <option value="received">Marrë</option>
+                              <option value="in-progress">Në Progres</option>
+                              <option value="waiting-parts">Duke Pritur Pjesët</option>
+                              <option value="completed">Përfunduar</option>
+                              <option value="delivered">Dërguar</option>
+                            </>
+                          )}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
                     </div>
                   )}
                 </div>

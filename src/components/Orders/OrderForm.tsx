@@ -327,9 +327,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="pending">Në Pritje</option>
+            <option value="accepted">Pranuar</option>
             <option value="processing">Në Procesim</option>
             <option value="shipped">Dërguar</option>
-            <option value="delivered">Dërguar</option>
+            <option value="delivered">Dorëzuar</option>
             <option value="cancelled">Anuluar</option>
           </select>
           <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -340,7 +341,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       <div className="bg-gray-50 p-4 rounded-lg">
         <div className="flex justify-between items-center">
           <span className="text-lg font-medium text-gray-900">Totali</span>
-          <span className="text-lg font-bold text-gray-900">${calculateTotal().toFixed(2)}</span>
+          <span className="text-lg font-bold text-gray-900">{calculateTotal().toFixed(2)} €</span>
         </div>
       </div>
 

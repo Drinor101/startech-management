@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, Package, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Columns, ChevronDown } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
+import KanbanBoard from '../Common/KanbanBoard';
 import ConfirmationModal from '../Common/ConfirmationModal';
 
 const OrdersList: React.FC = () => {
@@ -16,6 +17,7 @@ const OrdersList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
@@ -63,7 +65,8 @@ const OrdersList: React.FC = () => {
       'processing': 'bg-blue-100 text-blue-800',
       'shipped': 'bg-purple-100 text-purple-800',
       'delivered': 'bg-green-100 text-green-800',
-      'cancelled': 'bg-red-100 text-red-800'
+      'cancelled': 'bg-red-100 text-red-800',
+      'accepted': 'bg-indigo-100 text-indigo-800'
     };
     return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -111,8 +114,9 @@ const OrdersList: React.FC = () => {
       'pending': 'Në Pritje',
       'processing': 'Në Procesim',
       'shipped': 'Dërguar',
-      'delivered': 'Dërguar',
-      'cancelled': 'Anuluar'
+      'delivered': 'Dorëzuar',
+      'cancelled': 'Anuluar',
+      'accepted': 'Pranuar'
     };
     return translations[status] || status;
   };
@@ -138,6 +142,37 @@ const OrdersList: React.FC = () => {
     setSelectedOrder(order);
     setIsEditMode(true);
     setIsFormOpen(true);
+  };
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    try {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+
+      await apiCall(`${apiConfig.endpoints.orders}/${orderId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...order,
+          status: newStatus
+        })
+      });
+
+      // Refresh orders
+      await fetchOrders();
+      
+      setNotification({
+        type: 'success',
+        message: 'Statusi i porosisë u përditësua me sukses',
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në përditësimin e statusit',
+        isVisible: true
+      });
+    }
   };
 
   if (loading) {
@@ -170,22 +205,49 @@ const OrdersList: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
-        <button 
-          onClick={() => {
-            setSelectedOrder(null);
-            setIsEditMode(false);
-            setIsFormOpen(true);
-          }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          Porosi e Re
-        </button>
+        <div className="flex items-center gap-4">
+          {/* View Mode Buttons */}
+          <div className="flex items-center bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                viewMode === 'list'
+                  ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
+                viewMode === 'kanban'
+                  ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              <Columns className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => {
+              setSelectedOrder(null);
+              setIsEditMode(false);
+              setIsFormOpen(true);
+            }}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md font-medium"
+          >
+            <Plus className="w-4 h-4" />
+            Porosi e Re
+          </button>
+        </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
+      {viewMode === 'list' ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
@@ -263,9 +325,21 @@ const OrdersList: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
-                        {translateStatus(order.status)}
-                      </span>
+                      <div className="relative">
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleStatusChange(order.id, e.target.value)}
+                          className={`w-full pl-4 pr-10 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors ${getStatusColor(order.status)}`}
+                        >
+                          <option value="pending">Në Pritje</option>
+                          <option value="accepted">Pranuar</option>
+                          <option value="processing">Në Procesim</option>
+                          <option value="shipped">Dërguar</option>
+                          <option value="delivered">Dorëzuar</option>
+                          <option value="cancelled">Anuluar</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 max-w-xs truncate">
@@ -320,6 +394,30 @@ const OrdersList: React.FC = () => {
           </table>
         </div>
       </div>
+      ) : (
+        <KanbanBoard
+          items={orders.map(order => ({
+            id: order.id,
+            title: order.id,
+            description: `${order.customer?.name || 'Klient i panjohur'} - ${order.products?.length || 0} produkte`,
+            status: order.status,
+            priority: 'medium',
+            assignedTo: order.customer?.name || 'N/A',
+            createdAt: order.createdAt || new Date().toISOString(),
+            updatedAt: order.updatedAt || new Date().toISOString(),
+            type: 'order'
+          }))}
+          onStatusChange={handleStatusChange}
+          statusConfig={{
+            'pending': { label: 'Në Pritje', color: 'yellow' },
+            'accepted': { label: 'Pranuar', color: 'indigo' },
+            'processing': { label: 'Në Procesim', color: 'blue' },
+            'shipped': { label: 'Dërguar', color: 'purple' },
+            'delivered': { label: 'Dorëzuar', color: 'green' },
+            'cancelled': { label: 'Anuluar', color: 'red' }
+          }}
+        />
+      )}
 
       {/* Order Details Modal */}
       <Modal
