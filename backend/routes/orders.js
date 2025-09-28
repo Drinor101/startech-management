@@ -7,7 +7,7 @@ const router = express.Router();
 // Merr të gjithë porositë
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, source } = req.query;
+    const { page = 1, limit = 10, status, source, search } = req.query;
     const offset = (page - 1) * limit;
 
     let query = supabase
@@ -21,6 +21,11 @@ router.get('/', authenticateUser, async (req, res) => {
         )
       `)
       .order('created_at', { ascending: false });
+
+    // Search functionality
+    if (search) {
+      query = query.or(`id.ilike.%${search}%,notes.ilike.%${search}%,shipping_address.ilike.%${search}%`);
+    }
 
     // Filtra
     if (status) {

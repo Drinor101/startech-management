@@ -7,7 +7,7 @@ const router = express.Router();
 // Merr të gjithë taskat
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, type, status, priority } = req.query;
+    const { page = 1, limit = 10, type, status, priority, search } = req.query;
     const offset = (page - 1) * limit;
     const currentUser = req.user; // Përdoruesi i loguar
 
@@ -19,6 +19,11 @@ router.get('/', authenticateUser, async (req, res) => {
         history:task_history(*)
       `)
       .order('created_at', { ascending: false });
+
+    // Search functionality
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,id.ilike.%${search}%`);
+    }
 
     // Filtri për taskat e përcaktuar për atë përdorues
     // Administrator dhe Menaxher shohin të gjitha taskat

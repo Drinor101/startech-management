@@ -9,7 +9,7 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit = 25, category, source } = req.query;
+    const { page = 1, limit = 25, category, source, search } = req.query;
 
     let allProducts = [];
 
@@ -97,6 +97,16 @@ router.get('/', authenticateUser, async (req, res) => {
     // 4. Apply category filter to combined results
     if (category && category !== 'all') {
       allProducts = allProducts.filter(product => product.category === category);
+    }
+
+    // 5. Apply search filter to combined results
+    if (search) {
+      const searchLower = search.toLowerCase();
+      allProducts = allProducts.filter(product => 
+        product.title.toLowerCase().includes(searchLower) ||
+        product.id.toLowerCase().includes(searchLower) ||
+        (product.category && product.category.toLowerCase().includes(searchLower))
+      );
     }
 
     // 5. Apply pagination

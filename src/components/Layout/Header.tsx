@@ -5,6 +5,7 @@ import { apiCall, apiConfig } from '../../config/api';
 interface HeaderProps {
   onToggleSidebar: () => void;
   title: string;
+  onModuleChange?: (module: string) => void;
 }
 
 interface SearchResult {
@@ -15,7 +16,7 @@ interface SearchResult {
   priority?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
+const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -114,6 +115,37 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
 
+  const handleItemClick = (result: SearchResult) => {
+    setShowResults(false);
+    setSearchQuery('');
+    
+    // Navigate to the appropriate module based on type
+    if (onModuleChange) {
+      switch (result.type) {
+        case 'task':
+          onModuleChange('tasks');
+          break;
+        case 'ticket':
+          onModuleChange('tickets');
+          break;
+        case 'service':
+          onModuleChange('services');
+          break;
+        case 'order':
+          onModuleChange('orders');
+          break;
+        case 'product':
+          onModuleChange('products');
+          break;
+        case 'customer':
+          onModuleChange('customers');
+          break;
+        default:
+          console.log('Unknown type:', result.type);
+      }
+    }
+  };
+
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -134,11 +166,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Kërko..."
+              placeholder="Kërko taska, tiketat, shërbimet, porositë, produktet, klientët..."
               value={searchQuery}
               onChange={handleInputChange}
               onFocus={() => setShowResults(searchResults.length > 0)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm hover:border-gray-400 transition-colors min-w-[200px]"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm hover:border-gray-400 transition-colors min-w-[300px]"
             />
             
             {/* Search Results Dropdown */}
@@ -155,12 +187,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
                       <div
                         key={`${result.type}-${result.id}`}
                         className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                        onClick={() => {
-                          setShowResults(false);
-                          setSearchQuery('');
-                          // Navigate to the specific item (you can implement navigation logic here)
-                          console.log('Navigate to:', result);
-                        }}
+                        onClick={() => handleItemClick(result)}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
@@ -187,7 +214,10 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title }) => {
                   </div>
                 ) : (
                   <div className="p-4 text-center text-gray-500">
-                    Nuk u gjet asgjë për "{searchQuery}"
+                    <div className="text-sm mb-2">Nuk u gjet asgjë për "{searchQuery}"</div>
+                    <div className="text-xs text-gray-400">
+                      Provo të kërkosh me: titull, ID, përshkrim, emër, email, telefon
+                    </div>
                   </div>
                 )}
               </div>

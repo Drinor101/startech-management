@@ -8,12 +8,18 @@ const router = express.Router();
 router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching tickets...');
+    const { search } = req.query;
     const currentUser = req.user; // Përdoruesi i loguar
     
     let query = supabase
       .from('tickets')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Search functionality
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,subject.ilike.%${search}%,description.ilike.%${search}%,id.ilike.%${search}%`);
+    }
 
     // Filtri për tiketat e përcaktuar për atë përdorues
     // Administrator dhe Menaxher shohin të gjitha tiketat

@@ -357,6 +357,7 @@ const AppContent: React.FC = () => {
         <Header
           onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
           title={getModuleTitle(activeModule)}
+          onModuleChange={setActiveModule}
         />
         
         <main className="flex-1 overflow-y-auto">

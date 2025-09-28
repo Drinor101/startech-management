@@ -7,13 +7,18 @@ const router = express.Router();
 // Merr të gjithë klientët
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, source } = req.query;
+    const { page = 1, limit = 10, source, search } = req.query;
     const offset = (page - 1) * limit;
 
     let query = supabase
       .from('customers')
       .select('*')
       .order('created_at', { ascending: false });
+
+    // Search functionality
+    if (search) {
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,id.ilike.%${search}%`);
+    }
 
     // Filtra
     if (source) {

@@ -7,7 +7,7 @@ const router = express.Router();
 // Merr të gjithë shërbimet
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, status, category } = req.query;
+    const { page = 1, limit = 10, status, category, search } = req.query;
     const offset = (page - 1) * limit;
 
     const currentUser = req.user; // Përdoruesi i loguar
@@ -20,6 +20,11 @@ router.get('/', authenticateUser, async (req, res) => {
         service_history:service_history(*)
       `)
       .order('created_at', { ascending: false });
+
+    // Search functionality
+    if (search) {
+      query = query.or(`problem_description.ilike.%${search}%,solution.ilike.%${search}%,id.ilike.%${search}%`);
+    }
 
     // Filtri për serviset e përcaktuar për atë përdorues
     // Administrator dhe Menaxher shohin të gjitha serviset
