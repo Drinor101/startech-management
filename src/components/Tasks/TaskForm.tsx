@@ -170,7 +170,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             </div>
 
             {/* Prioriteti */}
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">Prioriteti *</label>
               <select
                 name="priority"
@@ -188,7 +188,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             </div>
 
             {/* Statusi */}
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">Statusi *</label>
               <select
                 name="status"

@@ -158,7 +158,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Prioriteti
               </label>
@@ -176,7 +176,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Statusi
               </label>
