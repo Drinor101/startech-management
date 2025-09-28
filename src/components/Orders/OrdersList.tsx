@@ -146,15 +146,9 @@ const OrdersList: React.FC = () => {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      const order = orders.find(o => o.id === orderId);
-      if (!order) return;
-
       await apiCall(`${apiConfig.endpoints.orders}/${orderId}`, {
         method: 'PUT',
-        body: JSON.stringify({
-          ...order,
-          status: newStatus
-        })
+        body: JSON.stringify({ status: newStatus })
       });
 
       // Refresh orders
