@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight } from 'lucide-react';
 import { Order } from '../../types';
-import { apiCall, apiConfig } from '../../config/api';
+import { apiCall, apiConfig, getCurrentUser } from '../../config/api';
 import Modal from '../Common/Modal';
 import OrderForm from './OrderForm';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -90,6 +90,70 @@ const OrdersList: React.FC = () => {
       isOpen: true,
       order: order
     });
+  };
+
+  const delegateToService = async (order: Order) => {
+    try {
+      const serviceData = {
+        customerId: order.customerId,
+        customerName: order.customer?.name || 'Klient i panjohur',
+        problem: `Servis për porosinë ${order.id}`,
+        status: 'received',
+        assignedToName: '', // Mund të vendoset manualisht
+        warranty: ''
+      };
+
+      await apiCall('/api/services', {
+        method: 'POST',
+        body: JSON.stringify(serviceData)
+      });
+
+      setNotification({
+        type: 'success',
+        message: `Porosia ${order.id} u delegua në servis me sukses`,
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error delegating to service:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në delegimin e porosisë në servis',
+        isVisible: true
+      });
+    }
+  };
+
+  const delegateToTask = async (order: Order) => {
+    try {
+      const taskData = {
+        title: `Task për porosinë ${order.id}`,
+        description: `Menaxhimi i porosisë ${order.id} - ${order.customer?.name || 'Klient i panjohur'}`,
+        priority: 'medium',
+        status: 'todo',
+        assignedToName: '', // Mund të vendoset manualisht
+        assignedBy: getCurrentUser()?.name || getCurrentUser()?.email || 'Sistemi',
+        department: '',
+        type: 'task'
+      };
+
+      await apiCall('/api/tasks', {
+        method: 'POST',
+        body: JSON.stringify(taskData)
+      });
+
+      setNotification({
+        type: 'success',
+        message: `Porosia ${order.id} u delegua në task me sukses`,
+        isVisible: true
+      });
+    } catch (error) {
+      console.error('Error delegating to task:', error);
+      setNotification({
+        type: 'error',
+        message: 'Gabim në delegimin e porosisë në task',
+        isVisible: true
+      });
+    }
   };
 
   const confirmDeleteOrder = async () => {
@@ -589,14 +653,10 @@ const OrdersList: React.FC = () => {
             <div className="space-y-3">
               <button
                 onClick={() => {
-                  // TODO: Implement service delegation
-                  console.log('Delegating to service:', delegateModal.order?.id);
-                  setDelegateModal({ isOpen: false, order: null });
-                  setNotification({
-                    type: 'success',
-                    message: 'Porosia u delegua në servis me sukses',
-                    isVisible: true
-                  });
+                  if (delegateModal.order) {
+                    delegateToService(delegateModal.order);
+                    setDelegateModal({ isOpen: false, order: null });
+                  }
                 }}
                 className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
@@ -611,14 +671,10 @@ const OrdersList: React.FC = () => {
 
               <button
                 onClick={() => {
-                  // TODO: Implement task delegation
-                  console.log('Delegating to task:', delegateModal.order?.id);
-                  setDelegateModal({ isOpen: false, order: null });
-                  setNotification({
-                    type: 'success',
-                    message: 'Porosia u delegua në task me sukses',
-                    isVisible: true
-                  });
+                  if (delegateModal.order) {
+                    delegateToTask(delegateModal.order);
+                    setDelegateModal({ isOpen: false, order: null });
+                  }
                 }}
                 className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
