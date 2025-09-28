@@ -597,6 +597,133 @@ router.patch('/:id', authenticateUser, async (req, res) => {
   }
 });
 
+// Përditëson një porosi (PUT - alias për PATCH)
+router.put('/:id', authenticateUser, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { 
+      customer, 
+      status, 
+      shippingAddress, 
+      shippingCity, 
+      shippingZipCode, 
+      shippingMethod, 
+      notes, 
+      teamNotes,
+      items 
+    } = req.body;
+
+    let updateData = {
+      status: status,
+      shipping_address: shippingAddress,
+      shipping_city: shippingCity,
+      shipping_zip_code: shippingZipCode,
+      shipping_method: shippingMethod,
+      notes: notes,
+      team_notes: teamNotes,
+      updated_at: new Date().toISOString()
+    };
+
+    // Handle customer update if provided
+    if (customer) {
+      // Create or find customer
+      const { data: existingCustomer } = await supabase
+        .from('customers')
+        .select('id')
+        .eq('name', customer)
+        .single();
+      
+      if (existingCustomer) {
+        updateData.customer_id = existingCustomer.id;
+      } else {
+        // Create new customer
+        const { data: newCustomer, error: customerError } = await supabase
+          .from('customers')
+          .insert({
+            name: customer,
+            email: `${customer.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            source: 'Internal'
+          })
+          .select('id')
+          .single();
+        
+        if (customerError) {
+          throw customerError;
+        }
+        updateData.customer_id = newCustomer.id;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update(updateData)
+      .eq('id', id)
+      .select(`
+        *,
+        customer:customers(*),
+        order_products:order_products(
+          *,
+          product:products(*)
+        )
+      `)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    // Update order products if items are provided
+    if (items && items.length > 0) {
+      // Delete existing order products
+      await supabase
+        .from('order_products')
+        .delete()
+        .eq('order_id', id);
+
+      // Get product prices
+      const { data: products } = await supabase
+        .from('products')
+        .select('id, final_price')
+        .in('id', items.map(item => item.productId));
+
+      // Insert new order products
+      const orderProducts = items.map(item => ({
+        order_id: id,
+        product_id: item.productId,
+        quantity: item.quantity,
+        subtotal: products?.find(p => p.id === item.productId)?.final_price * item.quantity || 0
+      }));
+
+      await supabase
+        .from('order_products')
+        .insert(orderProducts);
+
+      // Recalculate total
+      const total = items.reduce((sum, item) => {
+        const product = products?.find(p => p.id === item.productId);
+        return sum + (product ? product.final_price * item.quantity : 0);
+      }, 0);
+
+      await supabase
+        .from('orders')
+        .update({ total: total })
+        .eq('id', id);
+    }
+
+    res.json({
+      success: true,
+      data: data,
+      message: 'Porosia u përditësua me sukses'
+    });
+  } catch (error) {
+    console.error('Gabim në përditësimin e porosisë:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në përditësimin e porosisë'
+    });
+  }
+});
+
 // Fshin një porosi
 router.delete('/:id', authenticateUser, async (req, res) => {
   try {
