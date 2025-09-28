@@ -432,11 +432,6 @@ const Reports: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Raportet</h2>
-          {reportData ? (
-            <p className="text-sm text-green-600 mt-1">📊 Të dhëna reale nga database</p>
-          ) : (
-            <p className="text-sm text-yellow-600 mt-1">⚠️ Të dhëna demo (API nuk është i disponueshëm)</p>
-          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
