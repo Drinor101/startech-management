@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, DollarSign, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
+import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -321,28 +321,28 @@ const ProductsList: React.FC = () => {
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                       Produkti
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Kategoria
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Çmimi Bazë
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Kostoja Shtesë
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Çmimi Final
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                       Statusi WC
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Kategoria WC
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                       Sinkronizimi i Fundit
                     </th>
                   </tr>
@@ -350,16 +350,16 @@ const ProductsList: React.FC = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {supplierProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <img 
                             src={product.image} 
                             alt={product.title}
-                            className="w-12 h-12 object-cover rounded-lg"
+                            className="w-10 h-10 object-cover rounded-lg"
                           />
-                          <div>
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-gray-900">{product.title}</div>
+                              <div className="text-sm font-medium text-gray-900 truncate">{product.title}</div>
                               <span className={`px-2 py-1 text-xs rounded-full ${
                                 product.source === 'WooCommerce' 
                                   ? 'bg-green-100 text-green-800' 
@@ -368,35 +368,35 @@ const ProductsList: React.FC = () => {
                                 {product.source}
                               </span>
                             </div>
-                            <div className="text-sm text-gray-500">ID: {product.id}</div>
+                            <div className="text-xs text-gray-500">ID: {product.id}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <Tag className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-900">{product.category}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">${product.basePrice.toFixed(2)}</span>
+                          <Euro className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-900">{product.basePrice.toFixed(2)} €</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">${product.additionalCost.toFixed(2)}</span>
+                          <Euro className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-900">{product.additionalCost.toFixed(2)} €</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-900">${product.finalPrice.toFixed(2)}</span>
+                          <Euro className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm font-bold text-gray-900">{product.finalPrice.toFixed(2)} €</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           {getStatusIcon(product.wooCommerceStatus)}
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -410,10 +410,10 @@ const ProductsList: React.FC = () => {
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <span className="text-sm text-gray-900">{product.wooCommerceCategory}</span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-600">

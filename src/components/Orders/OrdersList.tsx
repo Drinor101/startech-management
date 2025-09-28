@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, Package, User, Calendar, DollarSign, Globe, ShoppingCart, AlertCircle, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, Package, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -186,43 +186,43 @@ const OrdersList: React.FC = () => {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Klienti
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produktet
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Adresa e dërgimit
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Totali
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Statusi
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Shënim shtesë
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Data
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Veprimet
-                </th>
-              </tr>
-            </thead>
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    ID
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Klienti
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Produktet
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                    Adresa e dërgimit
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Totali
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Statusi
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Shënim shtesë
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Data
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                    Veprimet
+                  </th>
+                </tr>
+              </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {orders.map((order) => {
                 const SourceIcon = getSourceIcon(order.source);
                 return (
                   <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
                           PRS
@@ -230,7 +230,7 @@ const OrdersList: React.FC = () => {
                         <span className="text-sm font-medium text-gray-900">{order.id}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
                         <div>
@@ -239,7 +239,7 @@ const OrdersList: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900">
                         {order.products?.length || 0} item{(order.products?.length || 0) > 1 ? 's' : ''}
                       </div>
@@ -248,7 +248,7 @@ const OrdersList: React.FC = () => {
                         {(order.products?.map(p => p?.title || 'Produkt i panjohur').join(', ').length || 0) > 50 ? '...' : ''}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900">
                         {order.shippingInfo.address || 'N/A'}
                       </div>
@@ -256,23 +256,23 @@ const OrdersList: React.FC = () => {
                         {order.shippingInfo.city}, {order.shippingInfo.zipCode}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        <DollarSign className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm font-medium text-gray-900">${(order.total || 0).toFixed(2)}</span>
+                        <Euro className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm font-medium text-gray-900">{(order.total || 0).toFixed(2)} €</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(order.status)}`}>
                         {translateStatus(order.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 max-w-xs truncate">
                         {order.teamNotes || 'N/A'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-900">
@@ -280,7 +280,7 @@ const OrdersList: React.FC = () => {
                         </span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
                         <button
                           onClick={(e) => {
