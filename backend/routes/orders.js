@@ -716,10 +716,17 @@ router.put('/:id', authenticateUser, async (req, res) => {
       message: 'Porosia u përditësua me sukses'
     });
   } catch (error) {
-    console.error('Gabim në përditësimin e porosisë:', error);
+    console.error('PUT route - Gabim në përditësimin e porosisë:', error);
+    console.error('PUT route - Error details:', {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
+    });
     res.status(500).json({
       success: false,
-      error: 'Gabim në përditësimin e porosisë'
+      error: 'Gabim në përditësimin e porosisë',
+      details: error.message
     });
   }
 });
@@ -766,6 +773,7 @@ router.get('/stats/overview', authenticateUser, async (req, res) => {
     const stats = {
       total: orders.length,
       pending: orders.filter(o => o.status === 'pending').length,
+      accepted: orders.filter(o => o.status === 'accepted').length,
       processing: orders.filter(o => o.status === 'processing').length,
       shipped: orders.filter(o => o.status === 'shipped').length,
       delivered: orders.filter(o => o.status === 'delivered').length,
