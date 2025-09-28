@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3 } from 'lucide-react';
+import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -29,6 +29,13 @@ const OrdersList: React.FC = () => {
     isVisible: false
   });
   const [confirmationModal, setConfirmationModal] = useState<{
+    isOpen: boolean;
+    order: Order | null;
+  }>({
+    isOpen: false,
+    order: null
+  });
+  const [delegateModal, setDelegateModal] = useState<{
     isOpen: boolean;
     order: Order | null;
   }>({
@@ -73,6 +80,13 @@ const OrdersList: React.FC = () => {
 
   const handleDeleteOrder = (order: Order) => {
     setConfirmationModal({
+      isOpen: true,
+      order: order
+    });
+  };
+
+  const handleDelegateOrder = (order: Order) => {
+    setDelegateModal({
       isOpen: true,
       order: order
     });
@@ -360,6 +374,13 @@ const OrdersList: React.FC = () => {
                             <Edit className="w-4 h-4" />
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDelegateOrder(order)}
+                          className="text-purple-600 hover:text-purple-900 p-1"
+                          title="Delego në Servis/Task"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
                         {canDelete('orders') && (
                           <button
                             onClick={() => handleDeleteOrder(order)}
@@ -551,6 +572,68 @@ const OrdersList: React.FC = () => {
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
+
+      {/* Delegate Modal */}
+      <Modal
+        isOpen={delegateModal.isOpen}
+        onClose={() => setDelegateModal({ isOpen: false, order: null })}
+        title="Delego Porosinë"
+        size="md"
+      >
+        {delegateModal.order && (
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              Porosia <span className="font-medium">{delegateModal.order.id}</span> do të deleguhet në:
+            </div>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  // TODO: Implement service delegation
+                  console.log('Delegating to service:', delegateModal.order?.id);
+                  setDelegateModal({ isOpen: false, order: null });
+                  setNotification({
+                    type: 'success',
+                    message: 'Porosia u delegua në servis me sukses',
+                    isVisible: true
+                  });
+                }}
+                className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <ShoppingCart className="w-5 h-5 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-900">Servis</div>
+                  <div className="text-sm text-gray-500">Krijo një servis të ri për këtë porosi</div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => {
+                  // TODO: Implement task delegation
+                  console.log('Delegating to task:', delegateModal.order?.id);
+                  setDelegateModal({ isOpen: false, order: null });
+                  setNotification({
+                    type: 'success',
+                    message: 'Porosia u delegua në task me sukses',
+                    isVisible: true
+                  });
+                }}
+                className="w-full flex items-center justify-center gap-3 p-4 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-900">Task</div>
+                  <div className="text-sm text-gray-500">Krijo një task të ri për këtë porosi</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Confirmation Modal */}
       <ConfirmationModal
