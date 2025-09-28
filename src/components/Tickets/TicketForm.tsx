@@ -96,19 +96,19 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
                 <span className="text-sm text-red-700">{error}</span>
               </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Titulli *
               </label>
               <input
@@ -117,34 +117,36 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.title}
                 onChange={handleChange}
                 required
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 placeholder="Shkruani titullin e tiketës"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Burimi *
               </label>
-              <select
-                name="source"
-                value={formData.source}
-                onChange={handleChange}
-                required
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-              >
-                <option value="Email">Email</option>
-                <option value="Phone">Telefon</option>
-                <option value="Website">Website</option>
-                <option value="Social Media">Social Media</option>
-                <option value="In Person">Në Person</option>
-                <option value="Internal">I Brendshëm</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <div className="relative">
+                <select
+                  name="source"
+                  value={formData.source}
+                  onChange={handleChange}
+                  required
+                  className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
+                >
+                  <option value="Email">Email</option>
+                  <option value="Phone">Telefon</option>
+                  <option value="Website">Website</option>
+                  <option value="Social Media">Social Media</option>
+                  <option value="In Person">Në Person</option>
+                  <option value="Internal">I Brendshëm</option>
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Krijuar nga *
               </label>
               <input
@@ -153,38 +155,38 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.createdBy}
                 onChange={handleChange}
                 required
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 placeholder="Emri i përdoruesit që krijoi"
               />
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Prioriteti
               </label>
               <select
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
               >
                 <option value="low">I Ulët</option>
                 <option value="medium">Mesatar</option>
                 <option value="high">I Lartë</option>
                 <option value="urgent">Urgjent</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Statusi
               </label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
               >
                 <option value="open">Hapur</option>
                 <option value="in-progress">Në Progres</option>
@@ -192,11 +194,11 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 <option value="resolved">Zgjidhur</option>
                 <option value="closed">Mbyllur</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Caktuar për
               </label>
               <UserDropdown
@@ -210,7 +212,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
 
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Përshkrimi *
               </label>
               <textarea
@@ -218,30 +220,30 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 value={formData.description}
                 onChange={handleChange}
                 required
-                rows={4}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
                 placeholder="Përshkruani problemin ose kërkesën..."
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Anulo
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4" />
               )}
               {ticket ? 'Përditëso' : 'Krijo'}
             </button>

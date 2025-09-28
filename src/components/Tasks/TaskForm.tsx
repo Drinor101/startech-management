@@ -81,25 +81,26 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900">
             {task ? 'Modifiko Taskun' : 'Task i Ri'}
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-4">
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <div className="flex items-center">
-                <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                <AlertCircle className="w-4 h-4 text-red-500 mr-2" />
                 <span className="text-sm text-red-700">{error}</span>
               </div>
             </div>
@@ -107,22 +108,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
 
           {/* Titulli */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Titulli *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Titulli *</label>
             <input
               type="text"
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Shkruani titullin e taskut"
               required
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Caktuar për */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Caktuar për *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për *</label>
         <UserDropdown
           value={formData.assignedToId}
           onChange={handleAssignedToChange}
@@ -134,13 +135,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
 
             {/* Caktuar nga */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Caktuar nga *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga *</label>
               <input
                 type="text"
                 name="assignedBy"
                 value={formData.assignedBy}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 placeholder="Emri i përdoruesit që caktoi"
                 required
               />
@@ -148,13 +149,13 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
 
             {/* Departamenti */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Departamenti *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti *</label>
               <div className="relative">
                 <select
                   name="department"
                   value={formData.department}
                   onChange={handleChange}
-                  className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                  className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
                   required
                 >
                   <option value="">Zgjidh Departamentin</option>
@@ -165,18 +166,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                   <option value="Design">Dizajn</option>
                   <option value="Management">Menaxhment</option>
                 </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
             {/* Prioriteti */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Prioriteti *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prioriteti *</label>
               <select
                 name="priority"
                 value={formData.priority}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
                 required
               >
                 <option value="low">I Ulët</option>
@@ -184,17 +185,17 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 <option value="high">I Lartë</option>
                 <option value="urgent">Urgjent</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Statusi */}
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Statusi *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Statusi *</label>
               <select
                 name="status"
                 value={formData.status}
                 onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
                 required
               >
                 <option value="todo">Për të bërë</option>
@@ -202,42 +203,45 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 <option value="review">Rishikim</option>
                 <option value="done">Përfunduar</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
           </div>
 
           {/* Përshkrimi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Përshkrimi *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi *</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
               placeholder="Përshkruani detajet e taskut..."
               required
             />
           </div>
 
-          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 bg-gray-50">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               Anulo
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               {loading ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
               ) : (
-                <Save className="h-4 w-4 mr-2" />
+                <Save className="h-4 w-4" />
               )}
               {task ? 'Përditëso' : 'Krijo'}
             </button>

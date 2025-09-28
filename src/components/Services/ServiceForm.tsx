@@ -116,13 +116,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Krijuar nga */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Krijuar nga *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga *</label>
             <input
               type="text"
               name="createdBy"
               value={formData.createdBy}
               onChange={handleChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Emri i përdoruesit që krijoi"
               required
             />
@@ -130,7 +130,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Përcaktuar për */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Përcaktuar për *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për *</label>
         <UserDropdown
           value={formData.assignedToId}
           onChange={handleAssignedToChange}
@@ -142,7 +142,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Klienti */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Klienti *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
             <CustomerDropdown
               value={formData.customerId}
               onChange={handleCustomerChange}
@@ -153,13 +153,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Problemi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Problemi *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Problemi *</label>
             <textarea
               name="problem"
               value={formData.problem}
               onChange={handleChange}
               rows={4}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Përshkruani problemin ose kërkesën..."
               required
             />
@@ -167,12 +167,12 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Statusi */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Statusi *</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Statusi *</label>
             <select
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               required
             >
               <option value="received">Marrë</option>
@@ -186,13 +186,13 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
 
           {/* Garancioni */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Garancioni</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Garancioni</label>
             <input
               type="text"
               name="warranty"
               value={formData.warranty}
               onChange={handleChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Informacione për garancinë"
             />
           </div>

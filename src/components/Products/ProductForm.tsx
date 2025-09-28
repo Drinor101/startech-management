@@ -96,37 +96,38 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg">
-      <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Package className="w-5 h-5 text-blue-600" />
+          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <Package className="w-4 h-4 text-blue-600" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900">
               {product ? 'Modifiko Produktin' : 'Shto Produkt të Ri'}
             </h2>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="text-gray-400 hover:text-gray-600 transition-colors"
+          className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-6">
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800 text-sm">{error}</p>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p className="text-red-800 text-sm">{error}</p>
+            </div>
+          )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Title */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Titulli i Produktit *
             </label>
             <input
@@ -134,7 +135,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="Shkruani titullin e produktit"
               required
             />
@@ -142,7 +143,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Kategoria *
             </label>
             <input
@@ -150,7 +151,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="category"
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="P.sh. Laptops, Printers, etc."
               required
             />
@@ -158,7 +159,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
 
           {/* Supplier */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Furnizuesi
             </label>
             <input
@@ -166,14 +167,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="supplier"
               value={formData.supplier}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="P.sh. Dell, HP, etc."
             />
           </div>
 
           {/* Base Price */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Çmimi Bazë (€) *
             </label>
             <input
@@ -183,7 +184,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               onChange={handleInputChange}
               min="0"
               step="0.01"
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="0.00"
               required
             />
@@ -191,7 +192,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
 
           {/* Additional Cost */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Kosto Shtesë (€)
             </label>
             <input
@@ -201,7 +202,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               onChange={handleInputChange}
               min="0"
               step="0.01"
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="0.00"
             />
           </div>
@@ -223,7 +224,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
 
           {/* Image URL */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               URL e Imazhit
             </label>
             <input
@@ -231,14 +232,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="image"
               value={formData.image}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="https://example.com/image.jpg"
             />
           </div>
 
           {/* WooCommerce Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Kategoria WooCommerce
             </label>
             <input
@@ -246,21 +247,21 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               name="wooCommerceCategory"
               value={formData.wooCommerceCategory}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               placeholder="P.sh. Computers, Electronics"
             />
           </div>
 
           {/* Product Status */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
               Statusi i Produktit
             </label>
             <select
               name="wooCommerceStatus"
               value={formData.wooCommerceStatus}
               onChange={handleInputChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             >
               <option value="active">Aktiv - Gati për shitje</option>
               <option value="inactive">Joaktiv - Në magazinë</option>
@@ -287,6 +288,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
             <Save className="w-4 h-4" />
             {loading ? 'Duke ruajtur...' : (product ? 'Modifiko' : 'Krijo')}
           </button>
+          </div>
         </div>
       </form>
     </div>
