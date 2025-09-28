@@ -266,6 +266,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
               <option value="inactive">Joaktiv - Në magazinë</option>
               <option value="draft">Draft - Në zhvillim</option>
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
 

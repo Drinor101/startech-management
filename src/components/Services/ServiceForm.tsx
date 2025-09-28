@@ -181,6 +181,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
               <option value="completed">Përfunduar</option>
               <option value="delivered">Dërguar</option>
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
 
           {/* Garancioni */}

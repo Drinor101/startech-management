@@ -154,30 +154,36 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tipi</label>
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleChange}
-            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-          >
-            <option value="task">Task</option>
-            <option value="ticket">Tiket</option>
-          </select>
+          <div className="relative">
+            <select
+              name="type"
+              value={formData.type}
+              onChange={handleChange}
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+            >
+              <option value="task">Task</option>
+              <option value="ticket">Tiket</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Prioriteti</label>
-          <select
-            name="priority"
-            value={formData.priority}
-            onChange={handleChange}
-            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-          >
-            <option value="low">Ulët</option>
-            <option value="medium">Mesatar</option>
-            <option value="high">Lartë</option>
-            <option value="urgent">Urgjent</option>
-          </select>
+          <div className="relative">
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+            >
+              <option value="low">Ulët</option>
+              <option value="medium">Mesatar</option>
+              <option value="high">Lartë</option>
+              <option value="urgent">Urgjent</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -209,23 +215,27 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Cakto Për</label>
-          <select
-            name="assigned_to"
-            value={formData.assigned_to}
-            onChange={handleChange}
-            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-            required
-          >
-            <option value="">Zgjidh Përdoruesin</option>
-            <option value="admin">Admin</option>
-            <option value="technician">Teknik</option>
-            <option value="support">Mbështetje</option>
-          </select>
+          <div className="relative">
+            <select
+              name="assigned_to"
+              value={formData.assigned_to}
+              onChange={handleChange}
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              required
+            >
+              <option value="">Zgjidh Përdoruesin</option>
+              <option value="admin">Admin</option>
+              <option value="technician">Teknik</option>
+              <option value="support">Mbështetje</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Kategoria</label>
-          <select
+          <div className="relative">
+            <select
             name="category"
             value={formData.category}
             onChange={handleChange}
@@ -240,6 +250,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             <option value="Marketing">Marketingu</option>
             <option value="Support">Mbështetja</option>
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 
@@ -249,17 +261,20 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Klienti (Opsionale)</label>
               <div className="space-y-2">
-                <select
-                  name="customer_id"
-                  value={formData.customer_id}
-                  onChange={handleChange}
-                  className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-                >
-                  <option value="">Zgjidh Klientin</option>
-                  {customers.map(customer => (
-                    <option key={customer.id} value={customer.id}>{customer.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    name="customer_id"
+                    value={formData.customer_id}
+                    onChange={handleChange}
+                    className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                  >
+                    <option value="">Zgjidh Klientin</option>
+                    {customers.map(customer => (
+                      <option key={customer.id} value={customer.id}>{customer.name}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                </div>
                 
                 <button
                   type="button"
@@ -320,35 +335,41 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Porosia e Lidhur (Opsionale)</label>
-              <select
-                name="related_order_id"
-                value={formData.related_order_id}
-                onChange={handleChange}
-                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-              >
-                <option value="">Zgjidh Porosinë</option>
-                {orders.map(order => (
-                  <option key={order.id} value={order.id}>{order.id} - {order.customer_name}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  name="related_order_id"
+                  value={formData.related_order_id}
+                  onChange={handleChange}
+                  className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+                >
+                  <option value="">Zgjidh Porosinë</option>
+                  {orders.map(order => (
+                    <option key={order.id} value={order.id}>{order.id} - {order.customer_name}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>
-            <select
-              name="source"
-              value={formData.source}
-              onChange={handleChange}
-              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-            >
-              <option value="">Zgjidh Burimin</option>
-              <option value="Email">Email</option>
-              <option value="Phone">Telefon</option>
-              <option value="Website">Website</option>
-              <option value="Social Media">Rrjetet Sociale</option>
-              <option value="In Person">Personalisht</option>
-            </select>
+            <div className="relative">
+              <select
+                name="source"
+                value={formData.source}
+                onChange={handleChange}
+                className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              >
+                <option value="">Zgjidh Burimin</option>
+                <option value="Email">Email</option>
+                <option value="Phone">Telefon</option>
+                <option value="Website">Website</option>
+                <option value="Social Media">Rrjetet Sociale</option>
+                <option value="In Person">Personalisht</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
           </div>
         </>
       )}
@@ -356,19 +377,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti</label>
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-            required
-          >
-            <option value="">Zgjidh Departamentin</option>
-            <option value="IT">IT</option>
-            <option value="Marketing">Marketing</option>
-            <option value="Sales">Shitje</option>
-            <option value="Support">Mbështetje</option>
-          </select>
+          <div className="relative">
+            <select
+              name="department"
+              value={formData.department}
+              onChange={handleChange}
+              className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              required
+            >
+              <option value="">Zgjidh Departamentin</option>
+              <option value="IT">IT</option>
+              <option value="Marketing">Marketing</option>
+              <option value="Sales">Shitje</option>
+              <option value="Support">Mbështetje</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Temporarily disabled until database is updated

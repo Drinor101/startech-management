@@ -141,6 +141,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 <option value="Design">Dizajn</option>
                 <option value="Management">Menaxhment</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Prioriteti */}
@@ -158,6 +159,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 <option value="high">I Lartë</option>
                 <option value="urgent">Urgjent</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* Statusi */}
@@ -175,6 +177,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
                 <option value="completed">Përfunduar</option>
                 <option value="cancelled">Anuluar</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             {/* ID e Klientit */}

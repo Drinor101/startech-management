@@ -453,6 +453,7 @@ const Reports: React.FC = () => {
               <option value="this-year">Këtë Vit</option>
               <option value="custom">Gama e Personalizuar</option>
             </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
           <button className="flex items-center gap-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
             <Filter className="w-4 h-4" />
@@ -718,6 +719,7 @@ const Reports: React.FC = () => {
                     <option value="">Të gjithë përdoruesit</option>
                     {/* Add user options here if needed */}
                   </select>
+                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 </div>
               </div>
               

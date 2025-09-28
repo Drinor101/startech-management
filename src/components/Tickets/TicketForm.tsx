@@ -140,6 +140,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 <option value="In Person">Në Person</option>
                 <option value="Internal">I Brendshëm</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             <div>
@@ -172,6 +173,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 <option value="high">I Lartë</option>
                 <option value="urgent">Urgjent</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             <div>
@@ -190,6 +192,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
                 <option value="resolved">Zgjidhur</option>
                 <option value="closed">Mbyllur</option>
               </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             </div>
 
             <div>

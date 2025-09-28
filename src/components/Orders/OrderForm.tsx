@@ -170,15 +170,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
           <label className="block text-sm font-medium text-gray-700">Produktet</label>
           <div className="flex items-center gap-3">
             {/* Product Source Filter */}
-            <select
-              value={productSourceFilter}
-              onChange={(e) => setProductSourceFilter(e.target.value)}
-              className="px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            >
-              <option value="all">Të gjitha produktet</option>
-              <option value="WooCommerce">Vetëm WooCommerce</option>
-              <option value="Manual">Vetëm Manuale</option>
-            </select>
+            <div className="relative">
+              <select
+                value={productSourceFilter}
+                onChange={(e) => setProductSourceFilter(e.target.value)}
+                className="pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+              >
+                <option value="all">Të gjitha produktet</option>
+                <option value="WooCommerce">Vetëm WooCommerce</option>
+                <option value="Manual">Vetëm Manuale</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
             <button
               type="button"
               onClick={addItem}
@@ -211,6 +214,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                     ))
                   )}
                 </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
               <div className="col-span-3">
                 <input
@@ -285,6 +289,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
             <option value="Overnight">Gjatë Natës</option>
             <option value="Pickup">Marrja nga Klienti</option>
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
@@ -327,6 +332,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
             <option value="delivered">Dërguar</option>
             <option value="cancelled">Anuluar</option>
           </select>
+          <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         </div>
       )}
 
