@@ -21,6 +21,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [productSourceFilter, setProductSourceFilter] = useState<string>('all');
+  const [openDropdowns, setOpenDropdowns] = useState<{ [key: number]: boolean }>({});
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
@@ -67,6 +68,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
 
     fetchProducts();
   }, [productSourceFilter]);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.dropdown-container')) {
+        setOpenDropdowns({});
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +146,25 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         i === index ? { ...item, [field]: value } : item
       )
     }));
+  };
+
+  const toggleDropdown = (index: number) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const selectProduct = (index: number, productId: string) => {
+    handleItemChange(index, 'productId', productId);
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [index]: false
+    }));
+  };
+
+  const getSelectedProduct = (productId: string) => {
+    return products.find(p => p.id === productId);
   };
 
   const addItem = () => {
@@ -197,25 +232,44 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         <div className="space-y-3">
           {formData.items.map((item, index) => (
             <div key={index} className="grid grid-cols-12 gap-3 items-end">
-              <div className="col-span-7">
-                <select
-                  value={item.productId}
-                  onChange={(e) => handleItemChange(index, 'productId', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                  required
+              <div className="col-span-7 relative dropdown-container">
+                <button
+                  type="button"
+                  onClick={() => toggleDropdown(index)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-left bg-white flex items-center justify-between"
                 >
-                  <option value="">Zgjidh Produktin</option>
-                  {loading ? (
-                    <option disabled>Duke ngarkuar...</option>
-                  ) : (
-                    products.map(product => (
-                      <option key={product.id} value={product.id}>
-                        {product.title} - ${(product.finalPrice || 0).toFixed(2)} ({product.source})
-                      </option>
-                    ))
-                  )}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <span className="truncate">
+                    {item.productId ? 
+                      `${getSelectedProduct(item.productId)?.title || 'Produkt i zgjedhur'} - $${(getSelectedProduct(item.productId)?.finalPrice || 0).toFixed(2)}` 
+                      : 'Zgjidh Produktin'
+                    }
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openDropdowns[index] ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {openDropdowns[index] && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                    {loading ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">Duke ngarkuar...</div>
+                    ) : (
+                      products.map(product => (
+                        <button
+                          key={product.id}
+                          type="button"
+                          onClick={() => selectProduct(index, product.id)}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0 flex items-center justify-between"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium truncate">{product.title}</div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {product.category} - ${(product.finalPrice || 0).toFixed(2)} ({product.source})
+                            </div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
               <div className="col-span-3">
                 <input
