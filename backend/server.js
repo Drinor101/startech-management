@@ -18,7 +18,10 @@ app.use(cors({
     'http://localhost:5175',
     'https://startechmanagement.netlify.app',
     'https://startechapp.netlify.app',
-    'https://startechapp.vercel.app'
+    'https://startechapp.vercel.app',
+    // Render domains (will be updated after deployment)
+    'https://startech-backend.onrender.com',
+    'https://startech-management.onrender.com'
   ],
   credentials: true
 }));
