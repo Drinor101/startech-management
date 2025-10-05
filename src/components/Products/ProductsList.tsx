@@ -31,6 +31,14 @@ const ProductsList: React.FC = () => {
     search: searchTerm
   });
 
+  // Get all categories from all products
+  const { data: allProductsData } = useProducts({
+    page: 1,
+    limit: 10000, // Get all products to extract all categories
+    source: 'all',
+    search: ''
+  });
+
   const wooCommerceSyncMutation = useWooCommerceSync();
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
@@ -109,8 +117,9 @@ const ProductsList: React.FC = () => {
   };
 
 
-  // Get unique categories from products
-  const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
+  // Get unique categories from all products
+  const allProducts = allProductsData?.data || [];
+  const categories = ['all', ...Array.from(new Set(allProducts.map(product => product.category)))];
 
   // Group products by category
   const groupedProducts = products.reduce((acc, product) => {
