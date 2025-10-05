@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
-import { useProducts, useWooCommerceSync, useClearCache, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
+import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
 import ProductForm from './ProductForm';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -32,7 +32,6 @@ const ProductsList: React.FC = () => {
   });
 
   const wooCommerceSyncMutation = useWooCommerceSync();
-  const clearCacheMutation = useClearCache();
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
   const deleteProductMutation = useDeleteProduct();
@@ -47,11 +46,6 @@ const ProductsList: React.FC = () => {
   // Handle WooCommerce sync
   const handleWooCommerceSync = async () => {
     await wooCommerceSyncMutation.mutateAsync();
-  };
-
-  // Handle clear cache
-  const handleClearCache = async () => {
-    await clearCacheMutation.mutateAsync();
   };
 
   // Handle product creation
@@ -234,15 +228,6 @@ const ProductsList: React.FC = () => {
              wooCommerceSyncMutation.isSuccess ? 'Sinkronizimi u përfundua!' :
              wooCommerceSyncMutation.isError ? 'Gabim në sinkronizim' :
              'Sinkronizo me WooCommerce'}
-          </button>
-          
-          <button 
-            onClick={handleClearCache}
-            disabled={clearCacheMutation.isPending}
-            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Clock className={`w-4 h-4 ${clearCacheMutation.isPending ? 'animate-spin' : ''}`} />
-            {clearCacheMutation.isPending ? 'Duke fshirë cache...' : 'Fshi Cache'}
           </button>
         </div>
       </div>
@@ -486,7 +471,6 @@ const ProductsList: React.FC = () => {
       <Modal
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        title={isEditMode ? 'Modifiko Produktin' : 'Shto Produkt të Ri'}
         size="lg"
       >
         <ProductForm
