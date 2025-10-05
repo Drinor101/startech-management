@@ -38,9 +38,9 @@ const AllTasks: React.FC = () => {
 
       // Fetch all data in parallel
       const [servicesRes, tasksRes, ticketsRes] = await Promise.all([
-        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management.onrender.com'}/api/services`, { headers }),
-        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management.onrender.com'}/api/tasks`, { headers }),
-        fetch(`${process.env.REACT_APP_API_URL || 'https://startech-management.onrender.com'}/api/tickets`, { headers })
+        fetch(`https://startech-management.onrender.com/api/services`, { headers }),
+        fetch(`https://startech-management.onrender.com/api/tasks`, { headers }),
+        fetch(`https://startech-management.onrender.com/api/tickets`, { headers })
       ]);
 
       const [servicesData, tasksData, ticketsData] = await Promise.all([

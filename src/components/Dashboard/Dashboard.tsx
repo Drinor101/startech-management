@@ -64,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const apiUrl = import.meta.env.VITE_API_URL || 'https://startech-management.onrender.com';
+      const apiUrl = 'https://startech-management.onrender.com';
       
       // Get user ID for authentication (backend expects X-User-ID header)
       const user = JSON.parse(localStorage.getItem('user') || '{}');
