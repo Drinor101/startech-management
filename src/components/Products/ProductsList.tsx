@@ -118,12 +118,12 @@ const ProductsList: React.FC = () => {
   // Get unique categories from products
   const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
 
-  // Group products by supplier
+  // Group products by category
   const groupedProducts = products.reduce((acc, product) => {
-    if (!acc[product.supplier]) {
-      acc[product.supplier] = [];
+    if (!acc[product.category]) {
+      acc[product.category] = [];
     }
-    acc[product.supplier].push(product);
+    acc[product.category].push(product);
     return acc;
   }, {} as Record<string, Product[]>);
 
@@ -284,14 +284,14 @@ const ProductsList: React.FC = () => {
       )}
 
       <div className="space-y-8">
-        {Object.entries(groupedProducts).map(([supplier, supplierProducts]) => (
-          <div key={supplier} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
+          <div key={category} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
               <div className="flex items-center gap-2">
-                <Building className="w-5 h-5 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900">{supplier}</h3>
+                <Tag className="w-5 h-5 text-gray-400" />
+                <h3 className="text-lg font-medium text-gray-900">{category}</h3>
                 <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">
-                  {supplierProducts.length} produkte
+                  {categoryProducts.length} produkte
                 </span>
               </div>
             </div>
@@ -327,7 +327,7 @@ const ProductsList: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {supplierProducts.map((product) => (
+                  {categoryProducts.map((product) => (
                     <tr key={product.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">

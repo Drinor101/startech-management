@@ -48,6 +48,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       try {
         setLoading(true);
         const params = new URLSearchParams();
+        params.append('limit', '10000'); // Get all products
         if (productSourceFilter !== 'all') {
           params.append('source', productSourceFilter);
         }
