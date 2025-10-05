@@ -253,7 +253,7 @@ const ProductsList: React.FC = () => {
           <div className="flex items-center gap-2">
             <Tag className="w-4 h-4 text-blue-600" />
             <span className="text-sm text-blue-800">
-              Duke shfaqur produktet në kategorinë: <strong>{selectedCategory}</strong> ({filteredProducts.length} produkte)
+              Duke shfaqur produktet në kategorinë: <strong>{selectedCategory}</strong> ({products.length} produkte)
             </span>
             <button
               onClick={() => setSelectedCategory('all')}

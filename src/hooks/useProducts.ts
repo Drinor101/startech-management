@@ -11,10 +11,10 @@ export interface Product {
   additionalCost: number;
   finalPrice: number;
   supplier: string;
-  wooCommerceStatus: string;
+  wooCommerceStatus: 'active' | 'inactive' | 'draft';
   wooCommerceCategory: string;
   lastSyncDate: string;
-  source: string;
+  source: 'WooCommerce' | 'Manual';
 }
 
 interface ProductsResponse {
