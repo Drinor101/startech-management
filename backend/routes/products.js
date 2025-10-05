@@ -4,6 +4,73 @@ import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Cache system for WooCommerce products
+let productsCache = {
+  data: [],
+  timestamp: null,
+  expiry: 10 * 60 * 1000, // 10 minutes cache
+  loading: false // Track if cache is being loaded
+};
+
+// Check if cache is valid
+const isCacheValid = () => {
+  if (!productsCache.timestamp) return false;
+  return (Date.now() - productsCache.timestamp) < productsCache.expiry;
+};
+
+// Get cached products or fetch fresh ones
+const getCachedProducts = async () => {
+  if (isCacheValid()) {
+    console.log('Using cached WooCommerce products');
+    return productsCache.data;
+  }
+
+  // If cache is being loaded, return empty array to avoid duplicate requests
+  if (productsCache.loading) {
+    console.log('Cache is being loaded, returning empty array');
+    return [];
+  }
+
+  console.log('Cache expired, fetching fresh WooCommerce products...');
+  productsCache.loading = true;
+  
+  try {
+    const wooCommerceConfig = {
+      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+    };
+
+    const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+    
+    if (freshProducts && freshProducts.length > 0) {
+      const transformedProducts = freshProducts.map(product => ({
+        id: product.id.toString(),
+        image: product.images && product.images.length > 0 ? product.images[0].src : '',
+        title: product.name || 'Untitled Product',
+        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
+        basePrice: parseFloat(product.price || 0),
+        additionalCost: 0,
+        finalPrice: parseFloat(product.price || 0),
+        supplier: 'WooCommerce',
+        wooCommerceStatus: product.status || 'draft',
+        wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
+        lastSyncDate: new Date().toISOString(),
+        source: 'WooCommerce'
+      }));
+
+      productsCache.data = transformedProducts;
+      productsCache.timestamp = Date.now();
+      console.log(`Cached ${transformedProducts.length} WooCommerce products`);
+      return transformedProducts;
+    }
+    
+    return [];
+  } finally {
+    productsCache.loading = false;
+  }
+};
+
 // Merr të gjithë produktet (WooCommerce + Manual)
 router.get('/', authenticateUser, async (req, res) => {
   try {
@@ -16,32 +83,11 @@ router.get('/', authenticateUser, async (req, res) => {
     // 1. Fetch WooCommerce products if source is 'all' or 'WooCommerce'
     if (!source || source === 'all' || source === 'WooCommerce') {
       try {
-        const wooCommerceConfig = {
-          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
-          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
-        };
-
-        const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+        const cachedProducts = await getCachedProducts();
         
-        if (wooCommerceProducts && wooCommerceProducts.length > 0) {
-          const transformedWooProducts = wooCommerceProducts.map(product => ({
-            id: product.id.toString(),
-            image: product.images && product.images.length > 0 ? product.images[0].src : '',
-            title: product.name || 'Untitled Product',
-            category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
-            basePrice: parseFloat(product.price || 0),
-            additionalCost: 0,
-            finalPrice: parseFloat(product.price || 0),
-            supplier: 'WooCommerce',
-            wooCommerceStatus: product.status || 'draft',
-            wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
-            lastSyncDate: new Date().toISOString(),
-            source: 'WooCommerce'
-          }));
-          
-          allProducts = [...allProducts, ...transformedWooProducts];
-          console.log(`Added ${transformedWooProducts.length} WooCommerce products`);
+        if (cachedProducts && cachedProducts.length > 0) {
+          allProducts = [...allProducts, ...cachedProducts];
+          console.log(`Added ${cachedProducts.length} cached WooCommerce products`);
         }
       } catch (wooError) {
         console.error('Error fetching WooCommerce products:', wooError);
@@ -294,6 +340,19 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
       success: false,
       error: 'Gabim në fshirjen e produktit'
     });
+  }
+});
+
+// Clear products cache endpoint
+router.post('/clear-cache', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    productsCache.data = [];
+    productsCache.timestamp = null;
+    console.log('Products cache cleared');
+    res.json({ success: true, message: 'Cache cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing cache:', error);
+    res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }
 });
 

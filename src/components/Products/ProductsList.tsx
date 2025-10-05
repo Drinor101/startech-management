@@ -1,56 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
-import { apiCall, apiConfig } from '../../config/api';
+import { useProducts, useWooCommerceSync, useClearCache, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
 import ProductForm from './ProductForm';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const ProductsList: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastSync, setLastSync] = useState<string>('');
-  const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalProducts, setTotalProducts] = useState(0);
   const [pageSize] = useState(25);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
 
-  // Manual WooCommerce sync function
+  // React Query hooks
+  const { 
+    data: productsData, 
+    isLoading: loading, 
+    error: queryError,
+    refetch 
+  } = useProducts({
+    page: currentPage,
+    limit: pageSize,
+    category: selectedCategory,
+    source: selectedSource,
+    search: searchTerm
+  });
+
+  const wooCommerceSyncMutation = useWooCommerceSync();
+  const clearCacheMutation = useClearCache();
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+
+  // Extract data from query result
+  const products = productsData?.data || [];
+  const totalProducts = productsData?.pagination?.total || 0;
+  const totalPages = productsData?.pagination?.pages || 1;
+  const lastSync = productsData?.data?.[0]?.lastSyncDate || '';
+  const error = queryError ? 'Gabim në ngarkimin e produkteve' : null;
+
+  // Handle WooCommerce sync
   const handleWooCommerceSync = async () => {
-    try {
-      setSyncStatus('syncing');
-      console.log('Starting manual WooCommerce sync...');
-      
-      const response = await apiCall('/api/products/sync-woocommerce', {
-        method: 'POST'
-      });
-      
-      console.log('WooCommerce sync response:', response);
-      
-      if (response.success) {
-        setSyncStatus('success');
-        // Refresh products after successful sync
-        const productsResponse = await apiCall(apiConfig.endpoints.products);
-        const data = productsResponse.success ? productsResponse.data : productsResponse.data || [];
-        setProducts(data || []);
-        
-        // Reset status after 3 seconds
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      }
-    } catch (error) {
-      console.error('WooCommerce sync error:', error);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 3000);
+    await wooCommerceSyncMutation.mutateAsync();
+  };
+
+  // Handle clear cache
+  const handleClearCache = async () => {
+    await clearCacheMutation.mutateAsync();
+  };
+
+  // Handle product creation
+  const handleCreateProduct = async (productData: Partial<Product>) => {
+    await createProductMutation.mutateAsync(productData);
+    setIsFormOpen(false);
+  };
+
+  // Handle product update
+  const handleUpdateProduct = async (productData: Partial<Product>) => {
+    if (selectedProduct) {
+      await updateProductMutation.mutateAsync({ id: selectedProduct.id, ...productData });
+      setIsFormOpen(false);
+      setSelectedProduct(null);
+      setIsEditMode(false);
+    }
+  };
+
+  // Handle product deletion
+  const handleDeleteProduct = async (id: string) => {
+    if (window.confirm('A jeni të sigurt që dëshironi të fshini këtë produkt?')) {
+      await deleteProductMutation.mutateAsync(id);
     }
   };
 
@@ -66,105 +89,43 @@ const ProductsList: React.FC = () => {
     setIsFormOpen(true);
   };
 
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-
-  // Fetch products from API with pagination
-  const fetchProducts = async (page = 1) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log(`Fetching products page ${page}...`);
-      
-      // Build query parameters
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pageSize.toString()
-      });
-      
-      if (selectedCategory !== 'all') {
-        params.append('category', selectedCategory);
-      }
-      
-      if (selectedSource !== 'all') {
-        params.append('source', selectedSource);
-      }
-      
-      // Fetch products with pagination and filters
-      const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
-      console.log('Products API response:', response);
-      
-      // Handle the correct API response structure
-      const data = response.success ? response.data : response.data || [];
-      setProducts(data || []);
-      
-      // Update pagination info
-      if (response.pagination) {
-        setTotalPages(response.pagination.pages || 1);
-        setTotalProducts(response.pagination.total || 0);
-      }
-      
-      // Set last sync time
-      setLastSync(new Date().toISOString());
-      
-      console.log(`Products loaded: ${data?.length || 0} of ${response.pagination?.total || 0}`);
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setError('Gabim në ngarkimin e produkteve');
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
+  const handleViewProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setIsEditMode(false);
+    setIsFormOpen(true);
   };
 
-  useEffect(() => {
-    fetchProducts(currentPage);
-  }, [currentPage, selectedCategory, selectedSource]);
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
+
+  const handleSourceChange = (source: string) => {
+    setSelectedSource(source);
+    setCurrentPage(1);
+  };
+
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+  };
+
 
   // Get unique categories from products
   const categories = ['all', ...Array.from(new Set(products.map(product => product.category)))];
 
-  // Filter products by selected category
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
-
-  const groupedProducts = filteredProducts.reduce((acc, product) => {
+  // Group products by supplier
+  const groupedProducts = products.reduce((acc, product) => {
     if (!acc[product.supplier]) {
       acc[product.supplier] = [];
     }
     acc[product.supplier].push(product);
     return acc;
   }, {} as Record<string, Product[]>);
-
-  const handleSync = async () => {
-    setSyncStatus('syncing');
-    try {
-      console.log('Starting WooCommerce sync...');
-      const response = await apiCall('/api/products/sync-woocommerce', {
-        method: 'POST'
-      });
-      
-      console.log('WooCommerce sync response:', response);
-      
-      if (response.success) {
-        setSyncStatus('success');
-        // Refresh products after successful sync
-        const productsResponse = await apiCall(apiConfig.endpoints.products);
-        const data = productsResponse.success ? productsResponse.data : [];
-        setProducts(data || []);
-        
-        setTimeout(() => setSyncStatus('idle'), 3000);
-      } else {
-        setSyncStatus('error');
-        setTimeout(() => setSyncStatus('idle'), 5000);
-      }
-    } catch (err) {
-      console.error('WooCommerce sync error:', err);
-      setSyncStatus('error');
-      setTimeout(() => setSyncStatus('idle'), 5000);
-    }
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -214,9 +175,9 @@ const ProductsList: React.FC = () => {
             {lastSync ? `Sinkronizimi i fundit: ${new Date(lastSync).toLocaleString()}` : 'Nuk ka të dhëna për sinkronizimin'}
           </p>
           <div className="flex items-center gap-2 mt-1">
-            <div className={`w-2 h-2 rounded-full ${syncStatus === 'syncing' ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`}></div>
+            <div className={`w-2 h-2 rounded-full ${wooCommerceSyncMutation.isPending ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`}></div>
             <span className="text-xs text-gray-500">
-              {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 'Gati për sinkronizim'}
+              {wooCommerceSyncMutation.isPending ? 'Duke sinkronizuar...' : 'Gati për sinkronizim'}
             </span>
           </div>
         </div>
@@ -226,7 +187,7 @@ const ProductsList: React.FC = () => {
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select
               value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
+              onChange={(e) => handleSourceChange(e.target.value)}
               className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
               <option value="all">Të gjitha produktet</option>
@@ -241,7 +202,7 @@ const ProductsList: React.FC = () => {
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
               {categories.map((category) => (
@@ -265,14 +226,23 @@ const ProductsList: React.FC = () => {
           )}
           <button 
             onClick={handleWooCommerceSync}
-            disabled={syncStatus === 'syncing'}
+            disabled={wooCommerceSyncMutation.isPending}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Sync className={`w-4 h-4 ${syncStatus === 'syncing' ? 'animate-spin' : ''}`} />
-            {syncStatus === 'syncing' ? 'Duke sinkronizuar...' : 
-             syncStatus === 'success' ? 'Sinkronizimi u përfundua!' :
-             syncStatus === 'error' ? 'Gabim në sinkronizim' :
+            <Sync className={`w-4 h-4 ${wooCommerceSyncMutation.isPending ? 'animate-spin' : ''}`} />
+            {wooCommerceSyncMutation.isPending ? 'Duke sinkronizuar...' : 
+             wooCommerceSyncMutation.isSuccess ? 'Sinkronizimi u përfundua!' :
+             wooCommerceSyncMutation.isError ? 'Gabim në sinkronizim' :
              'Sinkronizo me WooCommerce'}
+          </button>
+          
+          <button 
+            onClick={handleClearCache}
+            disabled={clearCacheMutation.isPending}
+            className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Clock className={`w-4 h-4 ${clearCacheMutation.isPending ? 'animate-spin' : ''}`} />
+            {clearCacheMutation.isPending ? 'Duke fshirë cache...' : 'Fshi Cache'}
           </button>
         </div>
       </div>
@@ -295,11 +265,20 @@ const ProductsList: React.FC = () => {
         </div>
       )}
 
-      {syncStatus === 'success' && (
+      {wooCommerceSyncMutation.isSuccess && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-green-600" />
             <span className="text-sm text-green-800">Products synchronized successfully!</span>
+          </div>
+        </div>
+      )}
+
+      {wooCommerceSyncMutation.isError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-sm text-red-800">Error synchronizing products. Please try again.</span>
           </div>
         </div>
       )}
@@ -442,7 +421,7 @@ const ProductsList: React.FC = () => {
           
           <div className="flex items-center space-x-2">
             <button
-              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              onClick={() => handlePageChange(Math.max(currentPage - 1, 1))}
               disabled={currentPage === 1}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -465,7 +444,7 @@ const ProductsList: React.FC = () => {
                 return (
                   <button
                     key={pageNum}
-                    onClick={() => setCurrentPage(pageNum)}
+                    onClick={() => handlePageChange(pageNum)}
                     className={`px-3 py-2 text-sm font-medium rounded-md ${
                       currentPage === pageNum
                         ? 'bg-blue-600 text-white'
@@ -479,7 +458,7 @@ const ProductsList: React.FC = () => {
             </div>
             
             <button
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
               disabled={currentPage === totalPages}
               className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -513,10 +492,8 @@ const ProductsList: React.FC = () => {
         <ProductForm
           product={selectedProduct}
           onClose={() => setIsFormOpen(false)}
-          onSuccess={() => {
-            setIsFormOpen(false);
-            fetchProducts(currentPage); // Refresh products
-          }}
+          onSuccess={isEditMode ? handleUpdateProduct : handleCreateProduct}
+          isEditMode={isEditMode}
         />
       </Modal>
     </div>
