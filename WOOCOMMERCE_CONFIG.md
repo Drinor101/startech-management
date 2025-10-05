@@ -16,7 +16,7 @@ Duhet të jepni URL-në e dyqanit tuaj WooCommerce. Kjo duhet të jetë URL-ja b
 - `https://yourdomain.com/shop`
 
 ### 2. Environment Variables
-Shtoni këto variabla në mjedisin e prodhimit (Railway):
+Shtoni këto variabla në mjedisin e prodhimit (Render):
 
 ```bash
 WOOCOMMERCE_URL=https://startech24.com
@@ -62,6 +62,6 @@ Mund ta testoni lidhjen duke kontrolluar konsolën e shfletuesit për përgjigje
 
 ## Hapat e Ardhshëm
 1. Jepni URL-në e dyqanit tuaj WooCommerce
-2. Shtoni variablat e mjedisit në Railway
+2. Shtoni variablat e mjedisit në Render
 3. Ekzekutoni migration-in e bazës së të dhënave
 4. Testoni funksionalitetin e sinkronizimit
