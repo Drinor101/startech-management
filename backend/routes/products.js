@@ -350,12 +350,12 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
 });
 
 // Fetch products from WooCommerce API
-async function fetchWooCommerceProducts(config, maxProducts = 50000) {
+async function fetchWooCommerceProducts(config, maxProducts = 100) {
   try {
     console.log(`Fetching products from WooCommerce (max ${maxProducts})...`);
     const products = [];
     let page = 1;
-    const perPage = 1000;
+    const perPage = 100;
     
     while (products.length < maxProducts) {
       const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
@@ -394,8 +394,8 @@ async function fetchWooCommerceProducts(config, maxProducts = 50000) {
       page++;
       
       // Safety limit to prevent infinite loops
-      if (page > 100) {
-        console.log('Reached page limit (100), stopping...');
+      if (page > 10) {
+        console.log('Reached page limit (10), stopping...');
         break;
       }
     }
