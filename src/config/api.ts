@@ -1,5 +1,5 @@
 // Konfigurimi i API-së për backend
-const API_BASE_URL = 'https://startech-backend.onrender.com';
+const API_BASE_URL = 'https://startech-management.onrender.com';
 export const apiConfig = {
   baseURL: API_BASE_URL,
   endpoints: {
