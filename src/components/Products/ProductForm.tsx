@@ -97,7 +97,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
 
   return (
     <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col">
-      <div className="flex items-center justify-end p-4 border-b border-gray-200 bg-gray-50">
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
