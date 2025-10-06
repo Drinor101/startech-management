@@ -19,6 +19,7 @@ app.use(cors({
     'https://startechmanagement.netlify.app',
     'https://startechapp.netlify.app',
     'https://startechapp.vercel.app',
+    'https://menaxhimi.startech24.com', // Your custom domain
     // Render domains (will be updated after deployment)
     'https://startech-backend.onrender.com',
     'https://startech-management.onrender.com'
