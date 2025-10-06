@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 const LoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,7 +17,7 @@ const LoginForm: React.FC = () => {
 
     try {
       console.log('Calling login function...');
-      await login({ username, password });
+      await login({ username: name, password });
       console.log('Login successful!');
     } catch (err: any) {
       console.error('Login error:', err);
@@ -43,18 +43,18 @@ const LoginForm: React.FC = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="username" className="sr-only">
-                Username
+              <label htmlFor="name" className="sr-only">
+                Emri
               </label>
               <input
-                id="username"
-                name="username"
+                id="name"
+                name="name"
                 type="text"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                 placeholder="Emri i përdoruesit"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
               />
             </div>
             <div>
