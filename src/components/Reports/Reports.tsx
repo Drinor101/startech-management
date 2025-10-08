@@ -30,8 +30,8 @@ const Reports: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userActivity, setUserActivity] = useState<any[]>([]);
-  const [selectedUser, setSelectedUser] = useState<string>('');
-  const [users, setUsers] = useState<any[]>([]);
+  // const [selectedUser, setSelectedUser] = useState<string>('');
+  // const [users, setUsers] = useState<any[]>([]);
 
   const tabs = [
     { id: 'services', label: 'Servisi' },
@@ -70,32 +70,32 @@ const Reports: React.FC = () => {
   }, [dateRange]);
 
   // Fetch users list
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await apiCall('/api/users');
-        console.log('Users API response:', response);
-        if (response.success) {
-          setUsers(response.data || []);
-        }
-      } catch (err) {
-        console.error('Error fetching users:', err);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     try {
+  //       const response = await apiCall('/api/users');
+  //       console.log('Users API response:', response);
+  //       if (response.success) {
+  //         setUsers(response.data || []);
+  //       }
+  //     } catch (err) {
+  //       console.error('Error fetching users:', err);
+  //     }
+  //   };
 
-    if (activeTab === 'users') {
-      fetchUsers();
-    }
-  }, [activeTab]);
+  //   if (activeTab === 'users') {
+  //     fetchUsers();
+  //   }
+  // }, [activeTab]);
 
   // Fetch user activity
   useEffect(() => {
     const fetchUserActivity = async () => {
       try {
         const params = new URLSearchParams();
-        if (selectedUser) {
-          params.append('userId', selectedUser);
-        }
+        // if (selectedUser) {
+        //   params.append('userId', selectedUser);
+        // }
         console.log('Fetching user activity with params:', params.toString());
         const response = await apiCall(`/api/reports/users/activity?${params.toString()}`);
         console.log('User activity response:', response);
@@ -114,7 +114,7 @@ const Reports: React.FC = () => {
     if (activeTab === 'users') {
       fetchUserActivity();
     }
-  }, [activeTab, selectedUser]);
+  }, [activeTab]);
 
   const mockReportData = {
     services: {
@@ -758,7 +758,7 @@ const Reports: React.FC = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Aktiviteti i Përdoruesve</h3>
-                <div className="flex items-center gap-2">
+                {/* <div className="flex items-center gap-2">
                   <label className="text-sm text-gray-600">Filtro sipas përdoruesit:</label>
                   <select
                     value={selectedUser}
@@ -776,7 +776,7 @@ const Reports: React.FC = () => {
                   {users.length === 0 && (
                     <span className="text-xs text-gray-400">Duke ngarkuar...</span>
                   )}
-                </div>
+                </div> */}
               </div>
               
               <div className="space-y-3">
