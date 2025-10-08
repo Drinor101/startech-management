@@ -445,7 +445,12 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'Service ID,Customer,Problem,Status,Category,Created Date,Warranty\n';
             response.data.forEach((service: any) => {
-              csvContent += `${service.id},"${service.customer?.name || 'N/A"}","${service.problem || 'N/A'}","${service.status}","${service.category || 'N/A'}","${new Date(service.created_at).toLocaleDateString('sq-AL')}","${service.warranty ? 'Po' : 'Jo'}"\n`;
+              const customerName = service.customer?.name || 'N/A';
+              const problem = service.problem || 'N/A';
+              const category = service.category || 'N/A';
+              const warranty = service.warranty ? 'Po' : 'Jo';
+              const date = new Date(service.created_at).toLocaleDateString('sq-AL');
+              csvContent += service.id + ',"' + customerName + '","' + problem + '","' + service.status + '","' + category + '","' + date + '","' + warranty + '"\n';
             });
           }
           break;
@@ -455,7 +460,10 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'Task ID,Type,Title,Priority,Status,Created Date\n';
             response.data.forEach((task: any) => {
-              csvContent += `${task.id},"${task.type}","${task.title || 'N/A'}","${task.priority || 'N/A'}","${task.status}","${new Date(task.created_at).toLocaleDateString('sq-AL')}"\n`;
+              const title = task.title || 'N/A';
+              const priority = task.priority || 'N/A';
+              const date = new Date(task.created_at).toLocaleDateString('sq-AL');
+              csvContent += task.id + ',"' + task.type + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
             });
           }
           break;
@@ -465,7 +473,10 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'Order ID,Customer,Status,Total,Created Date\n';
             response.data.forEach((order: any) => {
-              csvContent += `${order.id},"${order.customer?.name || 'N/A'}","${order.status}","${order.total || 0}","${new Date(order.created_at).toLocaleDateString('sq-AL')}"\n`;
+              const customerName = order.customer?.name || 'N/A';
+              const total = order.total || 0;
+              const date = new Date(order.created_at).toLocaleDateString('sq-AL');
+              csvContent += order.id + ',"' + customerName + '","' + order.status + '","' + total + '","' + date + '"\n';
             });
           }
           break;
@@ -475,7 +486,13 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'Product ID,Title,Category,Base Price,Final Price,WC Status,Created Date\n';
             response.data.forEach((product: any) => {
-              csvContent += `${product.id},"${product.title || 'N/A'}","${product.category || 'N/A'}","${product.base_price || 0}","${product.final_price || 0}","${product.woo_commerce_status || 'N/A'}","${new Date(product.created_at).toLocaleDateString('sq-AL')}"\n`;
+              const title = product.title || 'N/A';
+              const category = product.category || 'N/A';
+              const basePrice = product.base_price || 0;
+              const finalPrice = product.final_price || 0;
+              const wcStatus = product.woo_commerce_status || 'N/A';
+              const date = new Date(product.created_at).toLocaleDateString('sq-AL');
+              csvContent += product.id + ',"' + title + '","' + category + '","' + basePrice + '","' + finalPrice + '","' + wcStatus + '","' + date + '"\n';
             });
           }
           break;
@@ -485,7 +502,11 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'User ID,Name,Email,Role,Department,Created Date\n';
             response.data.forEach((user: any) => {
-              csvContent += `${user.id},"${user.name || 'N/A'}","${user.email}","${user.role || 'N/A'}","${user.department || 'N/A'}","${new Date(user.created_at).toLocaleDateString('sq-AL')}"\n`;
+              const name = user.name || 'N/A';
+              const role = user.role || 'N/A';
+              const department = user.department || 'N/A';
+              const date = new Date(user.created_at).toLocaleDateString('sq-AL');
+              csvContent += user.id + ',"' + name + '","' + user.email + '","' + role + '","' + department + '","' + date + '"\n';
             });
           }
           break;
