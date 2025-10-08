@@ -45,7 +45,10 @@ const authenticateUser = async (req, res, next) => {
 
 // Middleware për të verifikuar rolin e adminit
 const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
+  const userRole = req.user.role?.toLowerCase();
+  const isAdmin = userRole === 'admin' || userRole === 'administrator';
+  
+  if (!isAdmin) {
     return res.status(403).json({ 
       error: 'Kërkohet roli i adminit' 
     });

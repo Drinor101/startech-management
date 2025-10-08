@@ -179,7 +179,7 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
           <option value="Administrator">Administrator</option>
           <option value="Menaxher">Menaxher</option>
           <option value="Marketer">Marketer</option>
-          <option value="Dizajner">Dizajner</option>
+          <option value="Design">Design</option>
           <option value="Agjent shitjeje">Agjent shitjeje</option>
           <option value="Agjent mbështetje">Agjent mbështetje</option>
           <option value="Serviser">Serviser</option>
