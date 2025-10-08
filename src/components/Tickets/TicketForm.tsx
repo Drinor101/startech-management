@@ -59,13 +59,16 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
         body: JSON.stringify(ticketData)
       });
 
-      onSuccess();
       setNotification({
         type: 'success',
         message: ticket ? 'Tiketa u përditësua me sukses' : 'Tiketa u shtua me sukses',
         isVisible: true
       });
-      onClose(); // Close modal immediately
+      
+      // Call onSuccess after a short delay to show the notification
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
     } catch (err) {
       console.error('Error saving ticket:', err);
       setNotification({

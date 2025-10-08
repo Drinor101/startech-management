@@ -253,6 +253,19 @@ const CustomersList: React.FC = () => {
                           {customer.phone}
                         </div>
                       )}
+                      {customer.address && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          {customer.address}
+                        </div>
+                      )}
+                      {customer.city && (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          {customer.city}
+                          {customer.neighborhood && `, ${customer.neighborhood}`}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">

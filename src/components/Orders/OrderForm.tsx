@@ -103,8 +103,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       if (response.success) {
         console.log('Order saved successfully:', response);
         setShowSuccess(true);
-        onSuccess?.();
-        onClose(); // Close modal immediately
+        setNotification({
+          type: 'success',
+          message: order ? 'Porosia u përditësua me sukses' : 'Porosia u shtua me sukses',
+          isVisible: true
+        });
+        
+        // Call onSuccess after a short delay to show the notification
+        setTimeout(() => {
+          onSuccess?.();
+        }, 1000);
       } else {
         console.error('Error saving order:', response.error);
         setNotification({

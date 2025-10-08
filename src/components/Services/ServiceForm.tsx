@@ -50,13 +50,16 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
         body: JSON.stringify(formData)
       });
 
-      onSuccess();
       setNotification({
         type: 'success',
         message: service ? 'Shërbimi u përditësua me sukses' : 'Shërbimi u shtua me sukses',
         isVisible: true
       });
-      onClose(); // Close modal immediately
+      
+      // Call onSuccess after a short delay to show the notification
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
     } catch (err) {
       console.error('Error saving service:', err);
       setError('Gabim në ruajtjen e shërbimit');

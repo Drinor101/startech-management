@@ -405,11 +405,16 @@ const UsersList: React.FC = () => {
             setIsFormOpen(false);
             setSelectedUser(null);
           }}
-          onSuccess={() => {
+          onSuccess={async () => {
             setIsFormOpen(false);
             setSelectedUser(null);
-            // Refresh the users list
-            window.location.reload();
+            // Refresh the users list without page reload
+            try {
+              const response = await apiCall(apiConfig.endpoints.users);
+              setUsers(response.data || []);
+            } catch (err) {
+              console.error('Error refreshing users:', err);
+            }
           }}
         />
       </Modal>

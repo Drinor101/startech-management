@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
+import Notification from '../Common/Notification';
 
 interface CustomerFormProps {
   onClose: () => void;
@@ -13,10 +14,22 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
     name: customer?.name || '',
     email: customer?.email || '',
     phone: customer?.phone || '',
+    address: customer?.address || '',
+    city: customer?.city || '',
+    neighborhood: customer?.neighborhood || '',
     source: customer?.source || 'Internal'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+    isVisible: boolean;
+  }>({
+    type: 'success',
+    message: '',
+    isVisible: false
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +52,16 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
       }
       
       onSuccess?.();
-      onClose();
+      setNotification({
+        type: 'success',
+        message: customer ? 'Klienti u përditësua me sukses' : 'Klienti u shtua me sukses',
+        isVisible: true
+      });
+      
+      // Call onSuccess after a short delay to show the notification
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gabim në ruajtjen e klientit');
     } finally {
@@ -99,6 +121,42 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
         />
       </div>
 
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Adresa</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+          placeholder="Rruga, numri, pallati"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Qyteti</label>
+        <input
+          type="text"
+          name="city"
+          value={formData.city}
+          onChange={handleChange}
+          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+          placeholder="Prishtinë, Prizren, Gjakovë..."
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">Lagjja</label>
+        <input
+          type="text"
+          name="neighborhood"
+          value={formData.neighborhood}
+          onChange={handleChange}
+          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+          placeholder="Qendra, Dardania, Ulpiana..."
+        />
+      </div>
+
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>
@@ -133,6 +191,14 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
           {loading ? 'Duke ruajtur...' : (customer ? 'Përditëso' : 'Krijo Klient')}
         </button>
       </div>
+      
+      {/* Notification */}
+      <Notification
+        type={notification.type}
+        message={notification.message}
+        isVisible={notification.isVisible}
+        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+      />
     </form>
   );
 };

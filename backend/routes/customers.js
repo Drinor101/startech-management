@@ -17,7 +17,7 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Search functionality
     if (search) {
-      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,id.ilike.%${search}%`);
+      query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%,address.ilike.%${search}%,city.ilike.%${search}%,neighborhood.ilike.%${search}%,id.ilike.%${search}%`);
     }
 
     // Filtra
@@ -95,7 +95,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një klient të ri
 router.post('/', authenticateUser, async (req, res) => {
   try {
-    const { name, email, phone, address, source } = req.body;
+    const { name, email, phone, address, city, neighborhood, source } = req.body;
 
     // Validimi i të dhënave
     if (!name || !email) {
@@ -124,6 +124,8 @@ router.post('/', authenticateUser, async (req, res) => {
       email,
       phone: phone || null,
       address: address || null,
+      city: city || null,
+      neighborhood: neighborhood || null,
       source: source || 'Internal',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -158,13 +160,15 @@ router.post('/', authenticateUser, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, address, source } = req.body;
+    const { name, email, phone, address, city, neighborhood, source } = req.body;
 
     const updates = {
       name,
       email,
       phone: phone || null,
       address: address || null,
+      city: city || null,
+      neighborhood: neighborhood || null,
       source: source || 'Internal',
       updated_at: new Date().toISOString()
     };

@@ -49,13 +49,16 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
         body: JSON.stringify(formData)
       });
 
-      onSuccess();
       setNotification({
         type: 'success',
         message: task ? 'Tasku u përditësua me sukses' : 'Tasku u shtua me sukses',
         isVisible: true
       });
-      onClose(); // Close modal immediately
+      
+      // Call onSuccess after a short delay to show the notification
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
     } catch (err) {
       console.error('Error saving task:', err);
       setError('Gabim në ruajtjen e taskut');

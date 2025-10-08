@@ -74,13 +74,16 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
         });
       }
       
-      onSuccess?.();
       setNotification({
         type: 'success',
         message: user ? 'Përdoruesi u përditësua me sukses' : 'Përdoruesi u shtua me sukses',
         isVisible: true
       });
-      onClose(); // Close modal immediately
+      
+      // Call onSuccess after a short delay to show the notification
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1000);
     } catch (err) {
       setNotification({
         type: 'error',
