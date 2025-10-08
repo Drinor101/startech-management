@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { apiConfig } from './config/api';
 import LoginForm from './components/LoginForm';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
@@ -38,9 +39,9 @@ const AllTasks: React.FC = () => {
 
       // Fetch all data in parallel
       const [servicesRes, tasksRes, ticketsRes] = await Promise.all([
-        fetch(`https://startech-management.onrender.com/api/services`, { headers }),
-        fetch(`https://startech-management.onrender.com/api/tasks`, { headers }),
-        fetch(`https://startech-management.onrender.com/api/tickets`, { headers })
+        fetch(`${apiConfig.baseURL}/api/services`, { headers }),
+        fetch(`${apiConfig.baseURL}/api/tasks`, { headers }),
+        fetch(`${apiConfig.baseURL}/api/tickets`, { headers })
       ]);
 
       const [servicesData, tasksData, ticketsData] = await Promise.all([

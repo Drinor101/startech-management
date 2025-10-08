@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart3, Users, Package, Settings, CheckSquare, Plus, ChevronDown } from 'lucide-react';
+import { apiConfig } from '../../config/api';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -64,7 +65,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const apiUrl = 'https://startech-management.onrender.com';
+      const apiUrl = apiConfig.baseURL;
       
       // Get user ID for authentication (backend expects X-User-ID header)
       const user = JSON.parse(localStorage.getItem('user') || '{}');
