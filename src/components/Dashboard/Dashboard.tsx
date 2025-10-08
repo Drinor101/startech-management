@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, Users, Package, Settings, CheckSquare, Plus, ChevronDown } from 'lucide-react';
+import { BarChart3, Users, Package, Settings, CheckSquare, Plus, ChevronDown } from 'lucide-react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -38,10 +38,10 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [showNewMenu, setShowNewMenu] = useState(false);
   const [stats, setStats] = useState([
-    { label: 'Servisi Aktivë', value: '0', icon: Settings, color: 'bg-blue-500', change: '+0%' },
-    { label: 'Taskat e Hapura', value: '0', icon: CheckSquare, color: 'bg-green-500', change: '+0%' },
-    { label: 'Porositë Sot', value: '0', icon: Package, color: 'bg-purple-500', change: '+0%' },
-    { label: 'Produktet', value: '0', icon: Package, color: 'bg-indigo-500', change: '+0%' },
+    { label: 'Servisi Aktivë', value: '0', icon: Settings, color: 'bg-blue-500' },
+    { label: 'Taskat e Hapura', value: '0', icon: CheckSquare, color: 'bg-green-500' },
+    { label: 'Porositë Sot', value: '0', icon: Package, color: 'bg-purple-500' },
+    { label: 'Produktet', value: '0', icon: Package, color: 'bg-indigo-500' },
   ]);
   const [recentActivities, setRecentActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -136,15 +136,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
           label: 'Servisi Aktivë', 
           value: activeServices.length > 0 ? activeServices.length.toString() : servicesDataArray.length.toString(), 
           icon: Settings, 
-          color: 'bg-blue-500', 
-          change: '+12%' 
+          color: 'bg-blue-500'
         },
         { 
           label: 'Taskat e Hapura', 
           value: openTasks.length > 0 ? openTasks.length.toString() : tasksDataArray.length.toString(), 
           icon: CheckSquare, 
-          color: 'bg-green-500', 
-          change: '+8%' 
+          color: 'bg-green-500'
         },
         { 
           label: 'Porositë Sot', 
@@ -163,15 +161,13 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
             return todayOrders.length > 0 ? todayOrders.length.toString() : ordersDataArray.length.toString();
           })(), 
           icon: Package, 
-          color: 'bg-purple-500', 
-          change: '+15%' 
+          color: 'bg-purple-500'
         },
         { 
           label: 'Produktet', 
           value: products.length.toString(), 
           icon: Package, 
-          color: 'bg-indigo-500', 
-          change: '+5%' 
+          color: 'bg-indigo-500'
         },
       ]);
 
@@ -504,11 +500,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                 <div className={`p-3 rounded-lg ${stat.color}`}>
                   <Icon className="w-6 h-6 text-white" />
                 </div>
-              </div>
-              <div className="flex items-center mt-4">
-                <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                <span className="text-sm text-green-600 font-medium">{stat.change}</span>
-                <span className="text-sm text-gray-500 ml-1">krahasuar me muajin e kaluar</span>
               </div>
             </div>
           );
