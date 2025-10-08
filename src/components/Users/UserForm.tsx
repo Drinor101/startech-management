@@ -34,17 +34,31 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
     setLoading(true);
     setError(null);
     
+    // Validimi i fjalëkalimit në frontend
+    if (formData.password && formData.password.trim() !== '' && formData.password.length < 6) {
+      setError('Fjalëkalimi duhet të ketë të paktën 6 karaktere');
+      setLoading(false);
+      return;
+    }
+    
     try {
       if (user) {
         // Update existing user
+        const updateData: any = {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          phone: formData.phone
+        };
+        
+        // Shto fjalëkalimin vetëm nëse është dhënë
+        if (formData.password && formData.password.trim() !== '') {
+          updateData.password = formData.password;
+        }
+        
         await apiCall(`${apiConfig.endpoints.users}/${user.id}`, {
           method: 'PUT',
-          body: JSON.stringify({
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            phone: formData.phone
-          })
+          body: JSON.stringify(updateData)
         });
       } else {
         // Create new user
@@ -120,20 +134,21 @@ const UserForm: React.FC<UserFormProps> = ({ onClose, onSuccess, user }) => {
         />
       </div>
 
-      {!user && (
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Fjalëkalimi</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-            required={!user}
-            minLength={6}
-          />
-        </div>
-      )}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Fjalëkalimi {user && <span className="text-gray-500 text-xs">(lëreni bosh për të ruajtur fjalëkalimin aktual)</span>}
+        </label>
+        <input
+          type="password"
+          name="password"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
+          placeholder={user ? "Fjalëkalimi i ri (opsional)" : "Fjalëkalimi"}
+          required={!user}
+          minLength={6}
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Telefoni</label>

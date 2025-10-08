@@ -157,7 +157,7 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, role, phone, department } = req.body;
+    const { name, email, role, phone, department, password } = req.body;
 
     // Kontrollo nëse përdoruesi po përditëson vetveten ose ka të drejta admin
     if (req.user.id !== id && req.user.role !== 'admin') {
@@ -175,6 +175,18 @@ router.put('/:id', authenticateUser, async (req, res) => {
       department: department || null,
       updated_at: new Date().toISOString()
     };
+
+    // Shto fjalëkalimin vetëm nëse është dhënë
+    if (password && password.trim() !== '') {
+      // Validimi i fjalëkalimit
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          error: 'Fjalëkalimi duhet të ketë të paktën 6 karaktere'
+        });
+      }
+      updates.password = password;
+    }
 
     // Heq fushët që nuk duhet të përditësohen
     delete updates.id;
