@@ -52,8 +52,10 @@ const Reports: React.FC = () => {
         console.log('Reports API response:', response);
         
         if (response.success) {
+          console.log('Dashboard data received:', response.data);
           setReportData(response.data);
         } else {
+          console.error('Failed to fetch dashboard data:', response.error);
           setError('Gabim në ngarkimin e raporteve');
         }
       } catch (err) {
@@ -94,12 +96,18 @@ const Reports: React.FC = () => {
         if (selectedUser) {
           params.append('userId', selectedUser);
         }
+        console.log('Fetching user activity with params:', params.toString());
         const response = await apiCall(`/api/reports/users/activity?${params.toString()}`);
+        console.log('User activity response:', response);
         if (response.success) {
           setUserActivity(response.data || []);
+        } else {
+          console.error('Failed to fetch user activity:', response.error);
+          setUserActivity([]);
         }
       } catch (err) {
         console.error('Error fetching user activity:', err);
+        setUserActivity([]);
       }
     };
 
@@ -138,29 +146,44 @@ const Reports: React.FC = () => {
 
   // Transform real data to match expected structure
   const getCurrentData = () => {
-    if (!reportData) return mockReportData[activeTab as keyof typeof mockReportData];
+    console.log('getCurrentData called for tab:', activeTab);
+    console.log('reportData:', reportData);
+    
+    if (!reportData) {
+      console.log('No reportData, using mock data');
+      return mockReportData[activeTab as keyof typeof mockReportData];
+    }
     
     const realData = reportData[activeTab];
-    if (!realData) return mockReportData[activeTab as keyof typeof mockReportData];
+    console.log('Real data for', activeTab, ':', realData);
+    
+    if (!realData) {
+      console.log('No real data for', activeTab, ', using mock data');
+      return mockReportData[activeTab as keyof typeof mockReportData];
+    }
     
     // Transform real data to match frontend expectations
     switch (activeTab) {
       case 'services':
-        return {
+        const servicesData = {
           total: realData.total || 0,
           completed: realData.completed || 0,
           inProgress: realData.inProgress || 0,
           pending: realData.received || 0
         };
+        console.log('Services data transformed:', servicesData);
+        return servicesData;
       case 'tasks':
-        return {
+        const tasksData = {
           total: realData.total || 0,
           completed: realData.done || 0,
           inProgress: realData.inProgress || 0,
           pending: realData.todo || 0
         };
+        console.log('Tasks data transformed:', tasksData);
+        return tasksData;
       case 'orders':
-        return {
+        const ordersData = {
           total: realData.total || 0,
           delivered: realData.delivered || 0,
           processing: realData.processing || 0,
@@ -168,19 +191,25 @@ const Reports: React.FC = () => {
           totalValue: realData.totalRevenue || 0,
           averageValue: realData.total > 0 ? (realData.totalRevenue / realData.total) : 0
         };
+        console.log('Orders data transformed:', ordersData);
+        return ordersData;
       case 'products':
-        return {
+        const productsData = {
           total: realData.total || 0,
           active: realData.active || 0,
           inactive: realData.inactive || 0
         };
+        console.log('Products data transformed:', productsData);
+        return productsData;
       case 'users':
-        return {
+        const usersData = {
           total: realData.total || 0,
           active: realData.active || 0,
           inactive: realData.inactive || 0,
           byRole: realData.byRole || []
         };
+        console.log('Users data transformed:', usersData);
+        return usersData;
       default:
         return realData;
     }
@@ -195,10 +224,51 @@ const Reports: React.FC = () => {
       'this-week': 'Këtë Javë',
       'this-month': 'Këtë Muaj',
       'last-month': 'Muajin e Kaluar',
-      'this-year': 'Këtë Vit',
-      'custom': 'Gama e Personalizuar'
+      'this-year': 'Këtë Vit'
     };
     return translations[range] || range;
+  };
+
+  // Helper functions for date range calculation
+  const getDateRangeStart = () => {
+    const now = new Date();
+    switch (dateRange) {
+      case 'today':
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      case 'this-week':
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        return startOfWeek.toISOString();
+      case 'this-month':
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      case 'last-month':
+        return new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      case 'this-year':
+        return new Date(now.getFullYear(), 0, 1).toISOString();
+      default:
+        return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    }
+  };
+
+  const getDateRangeEnd = () => {
+    const now = new Date();
+    switch (dateRange) {
+      case 'today':
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
+      case 'this-week':
+        const endOfWeek = new Date(now);
+        endOfWeek.setDate(now.getDate() - now.getDay() + 6);
+        endOfWeek.setHours(23, 59, 59);
+        return endOfWeek.toISOString();
+      case 'this-month':
+        return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+      case 'last-month':
+        return new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+      case 'this-year':
+        return new Date(now.getFullYear(), 11, 31, 23, 59, 59).toISOString();
+      default:
+        return new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+    }
   };
 
   // Chart data for reports
@@ -360,50 +430,85 @@ const Reports: React.FC = () => {
     },
   };
 
-  const handleExport = () => {
-    console.log(`Exporting ${activeTab} report for ${dateRange}`);
-    // Mock CSV export
-    const filename = `${activeTab}_report_${dateRange}_${new Date().toISOString().split('T')[0]}.csv`;
-    
-    // Create mock CSV content
-    let csvContent = '';
-    if (activeTab === 'services') {
-      csvContent = 'Service ID,Customer,Problem,Status,Category,Assigned To,Created Date,Warranty\n';
-      csvContent += 'SRV001,Alice Johnson,Headphones not charging,in-progress,Repair,Mike Tech,2024-01-15,Yes\n';
-      csvContent += 'SRV002,Bob Smith,Laptop stand wobbling,completed,Quality Issue,Mike Tech,2024-01-14,No\n';
-    } else if (activeTab === 'tasks') {
-      csvContent = 'Task ID,Type,Title,Priority,Status,Assigned To,Category,Created Date\n';
-      csvContent += 'TASK001,task,Update product catalog,medium,in-progress,Alex Ecommerce,System Maintenance,2024-01-15\n';
-      csvContent += 'TICK001,ticket,Customer complaint,high,todo,Lisa Support,Customer Service,2024-01-15\n';
-    } else if (activeTab === 'orders') {
-      csvContent = 'Order ID,Customer,Status,Total,Products,Created Date,Shipping Method\n';
-      csvContent += 'ORD001,Alice Johnson,processing,$169.97,2,2024-01-15,Standard Post\n';
-      csvContent += 'ORD002,Bob Smith,shipped,$57.99,1,2024-01-14,Express Post\n';
-    } else if (activeTab === 'products') {
-      csvContent = 'Product ID,Title,Category,Supplier,Base Price,Final Price,WC Status,Last Sync\n';
-      csvContent += '1,Wireless Headphones Pro,Electronics,TechCorp,$99.99,$109.99,active,2024-01-15\n';
-      csvContent += '2,Premium Smartphone Case,Accessories,AccessoryPlus,$24.99,$29.99,active,2024-01-15\n';
-    } else if (activeTab === 'users') {
-      csvContent = 'User ID,Name,Email,Role,Status,Total Actions\n';
-      if (currentData.byRole && currentData.byRole.length > 0) {
-        currentData.byRole.forEach((role, index) => {
-          csvContent += `${index + 1},User ${index + 1},user${index + 1}@company.com,${role.name},Active,${role.count}\n`;
-        });
-      } else {
-        csvContent += '1,Sample User,sample@company.com,User,Active,0\n';
+  const handleExport = async () => {
+    try {
+      console.log('Exporting ' + activeTab + ' report for ' + dateRange);
+      const filename = activeTab + '_report_' + dateRange + '_' + new Date().toISOString().split('T')[0] + '.csv';
+      
+      // Fetch real data for export
+      let csvContent = '';
+      let response;
+      
+      switch (activeTab) {
+        case 'services':
+          response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
+          if (response.success && response.data) {
+            csvContent = 'Service ID,Customer,Problem,Status,Category,Created Date,Warranty\n';
+            response.data.forEach((service: any) => {
+              csvContent += `${service.id},"${service.customer?.name || 'N/A"}","${service.problem || 'N/A'}","${service.status}","${service.category || 'N/A'}","${new Date(service.created_at).toLocaleDateString('sq-AL')}","${service.warranty ? 'Po' : 'Jo'}"\n`;
+            });
+          }
+          break;
+          
+        case 'tasks':
+          response = await apiCall('/api/reports/tasks?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
+          if (response.success && response.data) {
+            csvContent = 'Task ID,Type,Title,Priority,Status,Created Date\n';
+            response.data.forEach((task: any) => {
+              csvContent += `${task.id},"${task.type}","${task.title || 'N/A'}","${task.priority || 'N/A'}","${task.status}","${new Date(task.created_at).toLocaleDateString('sq-AL')}"\n`;
+            });
+          }
+          break;
+          
+        case 'orders':
+          response = await apiCall('/api/reports/orders?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
+          if (response.success && response.data) {
+            csvContent = 'Order ID,Customer,Status,Total,Created Date\n';
+            response.data.forEach((order: any) => {
+              csvContent += `${order.id},"${order.customer?.name || 'N/A'}","${order.status}","${order.total || 0}","${new Date(order.created_at).toLocaleDateString('sq-AL')}"\n`;
+            });
+          }
+          break;
+          
+        case 'products':
+          response = await apiCall('/api/reports/products?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
+          if (response.success && response.data) {
+            csvContent = 'Product ID,Title,Category,Base Price,Final Price,WC Status,Created Date\n';
+            response.data.forEach((product: any) => {
+              csvContent += `${product.id},"${product.title || 'N/A'}","${product.category || 'N/A'}","${product.base_price || 0}","${product.final_price || 0}","${product.woo_commerce_status || 'N/A'}","${new Date(product.created_at).toLocaleDateString('sq-AL')}"\n`;
+            });
+          }
+          break;
+          
+        case 'users':
+          response = await apiCall('/api/users');
+          if (response.success && response.data) {
+            csvContent = 'User ID,Name,Email,Role,Department,Created Date\n';
+            response.data.forEach((user: any) => {
+              csvContent += `${user.id},"${user.name || 'N/A'}","${user.email}","${user.role || 'N/A'}","${user.department || 'N/A'}","${new Date(user.created_at).toLocaleDateString('sq-AL')}"\n`;
+            });
+          }
+          break;
+          
+        default:
+          csvContent = 'No data available\n';
       }
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      alert('Gabim në eksportimin e të dhënave');
     }
-    
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -448,7 +553,6 @@ const Reports: React.FC = () => {
               <option value="this-month">Këtë Muaj</option>
               <option value="last-month">Muajin e Kaluar</option>
               <option value="this-year">Këtë Vit</option>
-              <option value="custom">Gama e Personalizuar</option>
             </select>
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
