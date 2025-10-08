@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart3, Download, Filter, Calendar, FileText, TrendingUp, Users, Euro, Activity, Shield, UserX, ChevronDown } from 'lucide-react';
+import { Download, Filter, Calendar, FileText, TrendingUp, Users, Shield, UserX, ChevronDown } from 'lucide-react';
 import { apiCall, apiConfig } from '../../config/api';
 import {
   Chart as ChartJS,
@@ -31,6 +31,7 @@ const Reports: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [userActivity, setUserActivity] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>('');
+  const [users, setUsers] = useState<any[]>([]);
 
   const tabs = [
     { id: 'services', label: 'Servisi' },
@@ -66,6 +67,25 @@ const Reports: React.FC = () => {
     fetchReportData();
   }, [dateRange]);
 
+  // Fetch users list
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await apiCall('/api/users');
+        console.log('Users API response:', response);
+        if (response.success) {
+          setUsers(response.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+
+    if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab]);
+
   // Fetch user activity
   useEffect(() => {
     const fetchUserActivity = async () => {
@@ -93,23 +113,13 @@ const Reports: React.FC = () => {
       total: 47,
       completed: 32,
       inProgress: 12,
-      pending: 3,
-      categories: [
-        { name: 'Repair', count: 28, percentage: 59.6 },
-        { name: 'Replacement', count: 12, percentage: 25.5 },
-        { name: 'Quality Issue', count: 7, percentage: 14.9 }
-      ]
+      pending: 3
     },
     tasks: {
       total: 156,
       completed: 89,
       inProgress: 45,
-      pending: 22,
-      byPriority: [
-        { name: 'High', count: 34, percentage: 21.8 },
-        { name: 'Medium', count: 78, percentage: 50.0 },
-        { name: 'Low', count: 44, percentage: 28.2 }
-      ]
+      pending: 22
     },
     orders: {
       total: 234,
@@ -122,12 +132,7 @@ const Reports: React.FC = () => {
     products: {
       total: 145,
       active: 132,
-      inactive: 13,
-      bySupplier: [
-        { name: 'TechCorp', count: 67, percentage: 46.2 },
-        { name: 'AccessoryPlus', count: 45, percentage: 31.0 },
-        { name: 'OfficeSupply', count: 33, percentage: 22.8 }
-      ]
+      inactive: 13
     },
   };
 
@@ -145,16 +150,14 @@ const Reports: React.FC = () => {
           total: realData.total || 0,
           completed: realData.completed || 0,
           inProgress: realData.inProgress || 0,
-          pending: realData.received || 0,
-          categories: mockReportData.services.categories // Keep mock categories for now
+          pending: realData.received || 0
         };
       case 'tasks':
         return {
           total: realData.total || 0,
           completed: realData.done || 0,
           inProgress: realData.inProgress || 0,
-          pending: realData.todo || 0,
-          byPriority: mockReportData.tasks.byPriority // Keep mock priority for now
+          pending: realData.todo || 0
         };
       case 'orders':
         return {
@@ -169,8 +172,7 @@ const Reports: React.FC = () => {
         return {
           total: realData.total || 0,
           active: realData.active || 0,
-          inactive: realData.inactive || 0,
-          bySupplier: mockReportData.products.bySupplier // Keep mock supplier for now
+          inactive: realData.inactive || 0
         };
       case 'users':
         return {
@@ -616,84 +618,11 @@ const Reports: React.FC = () => {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Tendenca</h3>
             <div className="h-64">
               <Line data={getChartData()} options={chartOptions} />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Ndarja</h3>
-            <div className="space-y-4">
-              {activeTab === 'services' && currentData.categories.map((category, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{category.name}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${category.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                      {category.count}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {activeTab === 'tasks' && currentData.byPriority.map((priority, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{priority.name} Priority</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${priority.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                      {priority.count}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {activeTab === 'products' && currentData.bySupplier.map((supplier, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{supplier.name}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${supplier.percentage}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                      {supplier.count}
-                    </span>
-                  </div>
-                </div>
-              ))}
-
-              {activeTab === 'users' && currentData.byRole.map((role, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{role.name}</span>
-                  <div className="flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full" 
-                        style={{ width: `${(role.count / currentData.total) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-gray-900 w-12 text-right">
-                      {role.count}
-                    </span>
-                  </div>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -710,11 +639,18 @@ const Reports: React.FC = () => {
                     value={selectedUser}
                     onChange={(e) => setSelectedUser(e.target.value)}
                     className="px-3 py-1 border border-gray-300 rounded-lg text-sm"
+                    disabled={users.length === 0}
                   >
                     <option value="">Të gjithë përdoruesit</option>
-                    {/* Add user options here if needed */}
+                    {users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name || user.email}
+                      </option>
+                    ))}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  {users.length === 0 && (
+                    <span className="text-xs text-gray-400">Duke ngarkuar...</span>
+                  )}
                 </div>
               </div>
               
