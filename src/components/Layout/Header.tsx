@@ -58,12 +58,36 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
       ]);
 
       const results: SearchResult[] = [
-        ...(tasksRes.data || []).map((item: any) => ({ ...item, type: 'task' as const })),
-        ...(ticketsRes.data || []).map((item: any) => ({ ...item, type: 'ticket' as const })),
-        ...(servicesRes.data || []).map((item: any) => ({ ...item, type: 'service' as const })),
-        ...(ordersRes.data || []).map((item: any) => ({ ...item, type: 'order' as const })),
-        ...(productsRes.data || []).map((item: any) => ({ ...item, type: 'product' as const })),
-        ...(customersRes.data || []).map((item: any) => ({ ...item, type: 'customer' as const }))
+        ...(tasksRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'task' as const,
+          title: item.title || item.id 
+        })),
+        ...(ticketsRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'ticket' as const,
+          title: item.title || item.subject || item.id 
+        })),
+        ...(servicesRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'service' as const,
+          title: item.problem_description || item.id 
+        })),
+        ...(ordersRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'order' as const,
+          title: item.id || `Porosi ${item.id}` 
+        })),
+        ...(productsRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'product' as const,
+          title: item.title || item.name || item.id 
+        })),
+        ...(customersRes.data || []).map((item: any) => ({ 
+          ...item, 
+          type: 'customer' as const,
+          title: item.name || item.email || item.id 
+        }))
       ];
 
       setSearchResults(results);
@@ -170,7 +194,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
               value={searchQuery}
               onChange={handleInputChange}
               onFocus={() => setShowResults(searchResults.length > 0)}
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm hover:border-gray-400 transition-colors min-w-[300px]"
+              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm hover:border-gray-400 transition-colors min-w-[400px] w-[500px]"
             />
             
             {/* Search Results Dropdown */}
