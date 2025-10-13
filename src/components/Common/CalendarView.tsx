@@ -4,11 +4,15 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, User, Alert
 interface CalendarItem {
   id: string;
   title: string;
+  description?: string;
   status: string;
   priority?: string;
-  type: 'task' | 'service';
+  type: 'task' | 'service' | 'ticket';
   assignedTo?: string;
+  assignedBy?: string;
+  createdBy?: string;
   createdAt: string;
+  updatedAt?: string;
   dueDate?: string;
   completedAt?: string;
 }
@@ -17,7 +21,7 @@ interface CalendarViewProps {
   items: CalendarItem[];
   onItemClick?: (item: CalendarItem) => void;
   onStatusChange?: (itemId: string, newStatus: string) => void;
-  type: 'tasks' | 'services';
+  type: 'tasks' | 'services' | 'tickets';
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ 
@@ -98,8 +102,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   };
 
   // Get type icon
-  const getTypeIcon = (type: 'task' | 'service') => {
-    return type === 'task' ? Clock : AlertCircle;
+  const getTypeIcon = (type: 'task' | 'service' | 'ticket') => {
+    if (type === 'task') return Clock;
+    if (type === 'service') return AlertCircle;
+    return AlertCircle; // Default for ticket
   };
 
   const monthNames = [
@@ -215,10 +221,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                             <Icon className="w-3 h-3 flex-shrink-0" />
                             <span className="truncate">{item.title}</span>
                           </div>
+                          {item.description && (
+                            <div className="text-xs text-gray-700 mt-1 truncate">
+                              {item.description}
+                            </div>
+                          )}
                           {item.assignedTo && (
                             <div className="flex items-center gap-1 mt-1">
                               <User className="w-2 h-2" />
                               <span className="text-xs truncate">{item.assignedTo}</span>
+                            </div>
+                          )}
+                          {item.createdBy && (
+                            <div className="text-xs text-gray-600 mt-1 truncate">
+                              Krijuar nga: {item.createdBy}
+                            </div>
+                          )}
+                          {item.updatedAt && (
+                            <div className="text-xs text-gray-500 mt-1 truncate">
+                              Përditësuar: {new Date(item.updatedAt).toLocaleDateString('sq-AL')}
                             </div>
                           )}
                         </div>
@@ -263,10 +284,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                             <Icon className="w-4 h-4 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
                               <div className="font-medium truncate">{item.title}</div>
+                              {item.description && (
+                                <div className="text-xs text-gray-700 mt-1 truncate">
+                                  {item.description}
+                                </div>
+                              )}
                               {item.assignedTo && (
                                 <div className="flex items-center gap-1 mt-1">
                                   <User className="w-3 h-3" />
                                   <span className="text-xs truncate">{item.assignedTo}</span>
+                                </div>
+                              )}
+                              {item.createdBy && (
+                                <div className="text-xs text-gray-600 mt-1 truncate">
+                                  Krijuar nga: {item.createdBy}
+                                </div>
+                              )}
+                              {item.updatedAt && (
+                                <div className="text-xs text-gray-500 mt-1 truncate">
+                                  Përditësuar: {new Date(item.updatedAt).toLocaleDateString('sq-AL')}
                                 </div>
                               )}
                             </div>

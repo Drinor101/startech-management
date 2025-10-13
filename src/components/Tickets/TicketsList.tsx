@@ -544,11 +544,15 @@ const TicketsList: React.FC = () => {
           items={filteredTickets.map(ticket => ({
             id: ticket.id,
             title: ticket.title,
+            description: ticket.description,
             status: ticket.status,
             priority: ticket.priority,
             type: 'ticket' as const,
             assignedTo: ticket.assignedTo || ticket.assigned_to,
+            assignedBy: ticket.assignedBy,
+            createdBy: ticket.createdBy,
             createdAt: ticket.createdAt,
+            updatedAt: ticket.updatedAt,
             dueDate: ticket.dueDate,
             completedAt: ticket.resolvedAt
           }))}
@@ -607,23 +611,30 @@ const TicketsList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
-                <p className="text-sm text-gray-900">{selectedTicket.createdBy || selectedTicket.created_by || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTicket.assignedBy || selectedTicket.assigned_by || 'N/A'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
-                <p className="text-sm text-gray-900">{selectedTicket.assignedTo || selectedTicket.assigned_to || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTicket.createdBy || selectedTicket.created_by || 'N/A'}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
+                <p className="text-sm text-gray-900">{selectedTicket.assignedTo || selectedTicket.assigned_to || 'N/A'}</p>
+              </div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
                 <p className="text-sm text-gray-900">{new Date(selectedTicket.createdAt).toLocaleString('sq-AL')}</p>
               </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
-                <p className="text-sm text-gray-900">{new Date(selectedTicket.updatedAt).toLocaleString('sq-AL')}</p>
+                <p className="text-sm text-gray-900">{selectedTicket.updatedAt ? new Date(selectedTicket.updatedAt).toLocaleString('sq-AL') : 'N/A'}</p>
               </div>
             </div>
 

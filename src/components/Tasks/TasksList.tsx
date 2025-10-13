@@ -497,11 +497,15 @@ const TasksList: React.FC = () => {
           items={filteredTasks.map(task => ({
             id: task.id,
             title: task.title,
+            description: task.description,
             status: task.status,
             priority: task.priority,
             type: 'task' as const,
             assignedTo: task.assignedTo,
+            assignedBy: task.assignedBy,
+            createdBy: task.createdBy,
             createdAt: task.createdAt,
+            updatedAt: task.updatedAt,
             dueDate: task.dueDate,
             completedAt: task.completedAt
           }))}
@@ -576,12 +580,12 @@ const TasksList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
-                <p className="text-sm text-gray-900">{selectedTask.createdBy || selectedTask.created_by || 'N/A'}</p>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
                 <p className="text-sm text-gray-900">{new Date(selectedTask.createdAt).toLocaleString('sq-AL')}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
+                <p className="text-sm text-gray-900">{selectedTask.updatedAt ? new Date(selectedTask.updatedAt).toLocaleString('sq-AL') : 'N/A'}</p>
               </div>
             </div>
 

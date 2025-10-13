@@ -459,10 +459,14 @@ const ServicesList: React.FC = () => {
           items={services.map(service => ({
             id: service.id,
             title: service.problemDescription || 'Servis',
+            description: service.problemDescription,
             status: service.status,
             type: 'service' as const,
             assignedTo: service.assignedTo,
+            assignedBy: service.assignedBy,
+            createdBy: service.createdBy,
             createdAt: service.createdAt,
+            updatedAt: service.updatedAt,
             completedAt: service.completedAt
           }))}
           onItemClick={handleViewService}
@@ -507,27 +511,36 @@ const ServicesList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
                 <p className="text-sm text-gray-900">
-                  {selectedService.createdBy || selectedService.created_by || 'N/A'}
+                  {selectedService.assignedBy || selectedService.assigned_by || 'N/A'}
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
                 <p className="text-sm text-gray-900">
-                  {selectedService.assignedTo || selectedService.assigned_to || 'N/A'}
+                  {selectedService.createdBy || selectedService.created_by || 'N/A'}
                 </p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar</label>
-                <p className="text-sm text-gray-900">{new Date(selectedService.createdAt).toLocaleString()}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
+                <p className="text-sm text-gray-900">
+                  {selectedService.assignedTo || selectedService.assigned_to || 'N/A'}
+                </p>
               </div>
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
+                <p className="text-sm text-gray-900">{new Date(selectedService.createdAt).toLocaleString('sq-AL')}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
-                <p className="text-sm text-gray-900">{new Date(selectedService.updatedAt).toLocaleString()}</p>
+                <p className="text-sm text-gray-900">{selectedService.updatedAt ? new Date(selectedService.updatedAt).toLocaleString('sq-AL') : 'N/A'}</p>
               </div>
             </div>
 
