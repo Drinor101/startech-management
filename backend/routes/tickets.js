@@ -296,7 +296,10 @@ router.put('/:id', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     const updateData = {
       title,
@@ -417,7 +420,10 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     const { data, error } = await supabase
       .from('ticket_comments')

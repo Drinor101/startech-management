@@ -436,20 +436,23 @@ const Reports: React.FC = () => {
       console.log('Exporting ' + activeTab + ' report for ' + dateRange);
       const filename = activeTab + '_report_' + dateRange + '_' + new Date().toISOString().split('T')[0] + '.csv';
       
-      // Fetch real data for export
+      // Fetch real data for export with proper date filtering
       let csvContent = '';
       let response;
+      
+      // Add BOM for Excel compatibility
+      csvContent = '\uFEFF';
       
       switch (activeTab) {
         case 'services':
           response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID,Krijuar nga,Përcaktuar për,Klienti,Problemi,Statusi,Garancioni,Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar për,Klienti,Problemi,Statusi,Garancioni,Data\n';
             response.data.forEach((service: any) => {
               const customerName = service.customer?.name || 'N/A';
               const problem = service.problem_description || service.problem || 'N/A';
               const warranty = service.warranty_info || 'N/A';
-              const date = new Date(service.created_at).toISOString().split('T')[0];
+              const date = new Date(service.created_at).toLocaleDateString('en-US');
               csvContent += service.id + ',"' + (service.created_by || 'N/A') + '","' + (service.assigned_to || 'N/A') + '","' + customerName + '","' + problem + '","' + service.status + '","' + warranty + '","' + date + '"\n';
             });
           }
@@ -458,11 +461,11 @@ const Reports: React.FC = () => {
         case 'tasks':
           response = await apiCall('/api/reports/tasks?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID,Krijuar nga,Përcaktuar për,Titulli,Prioriteti,Statusi,Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar për,Titulli,Prioriteti,Statusi,Data\n';
             response.data.forEach((task: any) => {
               const title = task.title || 'N/A';
               const priority = task.priority || 'N/A';
-              const date = new Date(task.created_at).toISOString().split('T')[0];
+              const date = new Date(task.created_at).toLocaleDateString('en-US');
               csvContent += task.id + ',"' + (task.created_by || 'N/A') + '","' + (task.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
             });
           }
@@ -471,11 +474,11 @@ const Reports: React.FC = () => {
           const ticketsResponse = await apiCall('/api/reports/tickets?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (ticketsResponse.success && ticketsResponse.data) {
             csvContent += '\n\nTIKETAT\n';
-            csvContent += 'ID,Krijuar nga,Përcaktuar për,Titulli,Prioriteti,Statusi,Data\n';
+            csvContent += 'ID,Krijuar nga,Percaktuar për,Titulli,Prioriteti,Statusi,Data\n';
             ticketsResponse.data.forEach((ticket: any) => {
               const title = ticket.title || 'N/A';
               const priority = ticket.priority || 'N/A';
-              const date = new Date(ticket.created_at).toISOString().split('T')[0];
+              const date = new Date(ticket.created_at).toLocaleDateString('en-US');
               csvContent += ticket.id + ',"' + (ticket.created_by || 'N/A') + '","' + (ticket.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + ticket.status + '","' + date + '"\n';
             });
           }
@@ -488,7 +491,7 @@ const Reports: React.FC = () => {
             response.data.forEach((order: any) => {
               const customerName = order.customer?.name || 'N/A';
               const total = order.total || 0;
-              const date = new Date(order.created_at).toISOString().split('T')[0];
+              const date = new Date(order.created_at).toLocaleDateString('en-US');
               csvContent += order.id + ',"' + customerName + '","' + order.status + '","' + total + '","' + date + '"\n';
             });
           }
@@ -504,7 +507,7 @@ const Reports: React.FC = () => {
               const basePrice = product.base_price || 0;
               const finalPrice = product.final_price || 0;
               const wcStatus = product.woo_commerce_status || 'N/A';
-              const date = new Date(product.created_at).toISOString().split('T')[0];
+              const date = new Date(product.created_at).toLocaleDateString('en-US');
               csvContent += product.id + ',"' + title + '","' + category + '","' + basePrice + '","' + finalPrice + '","' + wcStatus + '","' + date + '"\n';
             });
           }
@@ -517,7 +520,7 @@ const Reports: React.FC = () => {
             response.data.forEach((user: any) => {
               const name = user.name || 'N/A';
               const role = user.role || 'N/A';
-              const date = new Date(user.created_at).toISOString().split('T')[0];
+              const date = new Date(user.created_at).toLocaleDateString('en-US');
               csvContent += user.id + ',"' + name + '","' + user.email + '","' + role + '","' + date + '"\n';
             });
           }

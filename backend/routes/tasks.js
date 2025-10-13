@@ -170,7 +170,10 @@ router.post('/', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     // Generate TSK ID manually
     const currentYear = new Date().getFullYear().toString();
@@ -292,7 +295,10 @@ router.put('/:id', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     const updates = {
       title: req.body.title,

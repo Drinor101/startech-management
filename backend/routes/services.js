@@ -166,7 +166,10 @@ router.post('/', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     // Handle customer - create if doesn't exist or use existing
     let customerId = req.body.customer || req.body.customerId;
@@ -319,7 +322,10 @@ router.put('/:id', authenticateUser, async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const userName = userData?.name || userData?.email || 'Unknown';
+    // Update userName with actual user data if available
+    if (userData?.name || userData?.email) {
+      userName = userData.name || userData.email || userName;
+    }
 
     // Handle customer - create if doesn't exist or use existing
     let customerId = req.body.customer || req.body.customerId;
