@@ -10,7 +10,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false
+}));
 app.use(cors({
   origin: [
     'http://localhost:5173', 
@@ -24,11 +27,25 @@ app.use(cors({
     'https://startech-backend.onrender.com',
     'https://startech-management.onrender.com'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-User-ID'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar']
 }));
 app.use(morgan('combined'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Handle preflight requests
+app.options('*', cors());
+
+// CORS debugging middleware
+app.use((req, res, next) => {
+  console.log(`CORS Debug - ${req.method} ${req.url}`);
+  console.log('Origin:', req.headers.origin);
+  console.log('User-Agent:', req.headers['user-agent']);
+  next();
+});
 
 // Import routes after dotenv.config()
 const setupRoutes = async () => {
@@ -62,7 +79,21 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'Startech Backend API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    cors: {
+      origin: req.headers.origin,
+      allowedOrigins: [
+        'http://localhost:5173', 
+        'http://localhost:5174', 
+        'http://localhost:5175',
+        'https://startechmanagement.netlify.app',
+        'https://startechapp.netlify.app',
+        'https://startechapp.vercel.app',
+        'https://menaxhimi.startech24.com',
+        'https://startech-backend.onrender.com',
+        'https://startech-management.onrender.com'
+      ]
+    }
   });
 });
 

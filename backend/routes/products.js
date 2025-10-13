@@ -29,7 +29,7 @@ const getCachedProducts = async () => {
   // If cache is being loaded, check if it's been too long
   if (productsCache.loading) {
     const loadingDuration = Date.now() - (productsCache.loadingStartTime || 0);
-    if (loadingDuration > 60000) { // 60 seconds timeout
+    if (loadingDuration > 30000) { // Reduced from 60s to 30s timeout
       console.log('Cache loading timeout, resetting and trying again');
       productsCache.loading = false;
       productsCache.loadingStartTime = null;
@@ -421,8 +421,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
 
 // Fetch products from WooCommerce API with retry logic
 async function fetchWooCommerceProducts(config, retryCount = 0) {
-  const maxRetries = 3;
-  const timeout = 30000; // 30 seconds timeout
+  const maxRetries = 2; // Reduced from 3 to 2
+  const timeout = 15000; // Reduced from 30s to 15s
   
   try {
     console.log(`Fetching all products from WooCommerce... (attempt ${retryCount + 1})`);
@@ -465,9 +465,9 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
         products.push(...pageProducts);
         page++;
         
-        // Safety limit to prevent infinite loops (increased to 1000 pages = 100,000 products)
-        if (page > 1000) {
-          console.log('Reached page limit (1000), stopping...');
+        // Safety limit to prevent infinite loops (reduced to 500 pages = 50,000 products)
+        if (page > 500) {
+          console.log('Reached page limit (500), stopping...');
           break;
         }
       } catch (fetchError) {
@@ -482,9 +482,9 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
   } catch (error) {
     console.error(`Error fetching WooCommerce products (attempt ${retryCount + 1}):`, error);
     
-    // Retry logic
+    // Retry logic with shorter delays
     if (retryCount < maxRetries) {
-      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, retryCount) * 500; // Reduced delays: 500ms, 1s
       console.log(`Retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return fetchWooCommerceProducts(config, retryCount + 1);
@@ -500,66 +500,89 @@ async function syncProductsToDatabase(wooCommerceProducts) {
     console.log('Syncing products to database...');
     const syncedProducts = [];
     
-    for (const wcProduct of wooCommerceProducts) {
-      try {
-        // Transform WooCommerce product to our database schema
-        const productData = {
-          title: wcProduct.name || 'Untitled Product',
-          description: wcProduct.description || '',
-          image: wcProduct.images && wcProduct.images.length > 0 ? wcProduct.images[0].src : '',
-          category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : 'Uncategorized',
-          base_price: parseFloat(wcProduct.price || 0),
-          additional_cost: 0,
-          final_price: parseFloat(wcProduct.price || 0),
-          supplier: 'WooCommerce',
-          woo_commerce_status: wcProduct.status || 'draft',
-          woo_commerce_category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : '',
-          last_sync_date: new Date().toISOString(),
-          woo_commerce_id: wcProduct.id
-        };
+    // Process products in batches of 50 for better performance
+    const batchSize = 50;
+    const batches = [];
+    
+    for (let i = 0; i < wooCommerceProducts.length; i += batchSize) {
+      batches.push(wooCommerceProducts.slice(i, i + batchSize));
+    }
+    
+    console.log(`Processing ${batches.length} batches of ${batchSize} products each`);
+    
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} products)`);
+      
+      // Process batch in parallel
+      const batchPromises = batch.map(async (wcProduct) => {
+        try {
+          // Transform WooCommerce product to our database schema
+          const productData = {
+            title: wcProduct.name || 'Untitled Product',
+            description: wcProduct.description || '',
+            image: wcProduct.images && wcProduct.images.length > 0 ? wcProduct.images[0].src : '',
+            category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : 'Uncategorized',
+            base_price: parseFloat(wcProduct.price || 0),
+            additional_cost: 0,
+            final_price: parseFloat(wcProduct.price || 0),
+            supplier: 'WooCommerce',
+            woo_commerce_status: wcProduct.status || 'draft',
+            woo_commerce_category: wcProduct.categories && wcProduct.categories.length > 0 ? wcProduct.categories[0].name : '',
+            last_sync_date: new Date().toISOString(),
+            woo_commerce_id: wcProduct.id
+          };
 
-        // Check if product already exists by WooCommerce ID
-        const { data: existingProduct } = await supabase
-          .from('products')
-          .select('id')
-          .eq('woo_commerce_id', wcProduct.id)
-          .single();
-
-        if (existingProduct) {
-          // Update existing product
-          const { data: updatedProduct, error: updateError } = await supabase
+          // Check if product already exists by WooCommerce ID
+          const { data: existingProduct } = await supabase
             .from('products')
-            .update(productData)
+            .select('id')
             .eq('woo_commerce_id', wcProduct.id)
-            .select()
             .single();
 
-          if (updateError) {
-            console.error(`Error updating product ${wcProduct.id}:`, updateError);
-            continue;
-          }
-          
-          syncedProducts.push(updatedProduct);
-        } else {
-          // Insert new product
-          const { data: newProduct, error: insertError } = await supabase
-            .from('products')
-            .insert(productData)
-            .select()
-            .single();
+          if (existingProduct) {
+            // Update existing product
+            const { data: updatedProduct, error: updateError } = await supabase
+              .from('products')
+              .update(productData)
+              .eq('woo_commerce_id', wcProduct.id)
+              .select()
+              .single();
 
-          if (insertError) {
-            console.error(`Error inserting product ${wcProduct.id}:`, insertError);
-            continue;
+            if (updateError) {
+              console.error(`Error updating product ${wcProduct.id}:`, updateError);
+              return null;
+            }
+            
+            return updatedProduct;
+          } else {
+            // Insert new product
+            const { data: newProduct, error: insertError } = await supabase
+              .from('products')
+              .insert(productData)
+              .select()
+              .single();
+
+            if (insertError) {
+              console.error(`Error inserting product ${wcProduct.id}:`, insertError);
+              return null;
+            }
+            
+            return newProduct;
           }
           
-          syncedProducts.push(newProduct);
+        } catch (productError) {
+          console.error(`Error processing product ${wcProduct.id}:`, productError);
+          return null;
         }
-        
-      } catch (productError) {
-        console.error(`Error processing product ${wcProduct.id}:`, productError);
-        continue;
-      }
+      });
+      
+      // Wait for batch to complete
+      const batchResults = await Promise.all(batchPromises);
+      const validResults = batchResults.filter(result => result !== null);
+      syncedProducts.push(...validResults);
+      
+      console.log(`Batch ${batchIndex + 1} completed: ${validResults.length}/${batch.length} products synced`);
     }
     
     console.log(`Successfully synced ${syncedProducts.length} products to database`);

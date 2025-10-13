@@ -101,14 +101,7 @@ const ProductsList: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Group products by category for display
-  const groupedProducts = products.reduce((acc, product) => {
-    if (!acc[product.category]) {
-      acc[product.category] = [];
-    }
-    acc[product.category].push(product);
-    return acc;
-  }, {} as Record<string, Product[]>);
+  // No need to group products anymore since we removed category grouping
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -222,121 +215,98 @@ const ProductsList: React.FC = () => {
         </div>
       )}
 
-      <div className="space-y-8">
-        {Object.entries(groupedProducts).map(([category, categoryProducts]) => (
-          <div key={category} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center gap-2">
-                <Tag className="w-5 h-5 text-gray-400" />
-                <h3 className="text-lg font-medium text-gray-900">{category}</h3>
-                <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">
-                  {categoryProducts.length} produkte
-                </span>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                      Produkti
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Çmimi Bazë
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Kostoja Shtesë
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Çmimi Final
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                      Statusi WC
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                      Kategoria WC
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
-                      Sinkronizimi i Fundit
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {categoryProducts.map((product) => (
-                    <tr key={product.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <img 
-                            src={product.image} 
-                            alt={product.title}
-                            className="w-10 h-10 object-cover rounded-lg"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="text-sm font-medium text-gray-900 truncate">{product.title}</div>
-                              <span className={`px-2 py-1 text-xs rounded-full ${
-                                product.source === 'WooCommerce' 
-                                  ? 'bg-green-100 text-green-800' 
-                                  : 'bg-blue-100 text-blue-800'
-                              }`}>
-                                {product.source}
-                              </span>
-                            </div>
-                            <div className="text-xs text-gray-500">ID: {product.id}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Euro className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{product.basePrice.toFixed(2)} €</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Euro className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{product.additionalCost.toFixed(2)} €</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Euro className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm font-bold text-gray-900">{product.finalPrice.toFixed(2)} €</span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                  Produkti
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  Çmimi Bazë
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  Çmimi Final
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  Statusi WC
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                  Kategoria WC
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
+                  Sinkronizimi i Fundit
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {products.map((product) => (
+                <tr key={product.id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <img 
+                        src={product.image} 
+                        alt={product.title}
+                        className="w-10 h-10 object-cover rounded-lg"
+                      />
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          {getStatusIcon(product.wooCommerceStatus)}
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            product.wooCommerceStatus === 'active' 
+                          <div className="text-sm font-medium text-gray-900 truncate">{product.title}</div>
+                          <span className={`px-2 py-1 text-xs rounded-full ${
+                            product.source === 'WooCommerce' 
                               ? 'bg-green-100 text-green-800' 
-                              : product.wooCommerceStatus === 'draft'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : 'bg-gray-100 text-gray-800'
+                              : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {product.wooCommerceStatus}
+                            {product.source}
                           </span>
                         </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="text-sm text-gray-900">{product.wooCommerceCategory}</span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
-                            {new Date(product.lastSyncDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ))}
+                        <div className="text-xs text-gray-500">ID: {product.id}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <Euro className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-900">{product.basePrice.toFixed(2)} €</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <Euro className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-bold text-gray-900">{product.finalPrice.toFixed(2)} €</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(product.wooCommerceStatus)}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        product.wooCommerceStatus === 'active' 
+                          ? 'bg-green-100 text-green-800' 
+                          : product.wooCommerceStatus === 'draft'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {product.wooCommerceStatus}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="text-sm text-gray-900">{product.wooCommerceCategory}</span>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-600">
+                        {new Date(product.lastSyncDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Pagination */}
@@ -399,7 +369,7 @@ const ProductsList: React.FC = () => {
       )}
 
       {/* No results message */}
-      {Object.keys(groupedProducts).length === 0 && !loading && (
+      {products.length === 0 && !loading && (
         <div className="text-center py-12">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nuk u gjetën produkte</h3>
