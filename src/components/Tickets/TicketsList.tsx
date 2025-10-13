@@ -14,7 +14,8 @@ import {
   List,
   Calendar,
   Filter,
-  ChevronDown
+  ChevronDown,
+  User
 } from 'lucide-react';
 import { Ticket, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';

@@ -37,7 +37,6 @@ const TasksList: React.FC = () => {
     isOpen: false,
     task: null
   });
-  const [departmentFilter, setDepartmentFilter] = useState<string>('all');
 
   // Fetch tasks from API
   const fetchTasks = async () => {
@@ -61,13 +60,8 @@ const TasksList: React.FC = () => {
   // Filter only tasks (not tickets)
   const tasks = allTasks.filter(task => task.type === 'task');
   
-  // Apply department filter
-  const filteredTasks = departmentFilter === 'all' 
-    ? tasks 
-    : tasks.filter(task => task.department === departmentFilter);
-  
-  // Get unique departments for filter dropdown
-  const departments = ['all', ...Array.from(new Set(tasks.map(task => task.department)))];
+  // Use all tasks without department filter
+  const filteredTasks = tasks;
 
   const getPriorityColor = (priority: string) => {
     const colors = {
@@ -327,21 +321,6 @@ const TasksList: React.FC = () => {
               Kalendar
             </button>
           </div>
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select
-              value={departmentFilter}
-              onChange={(e) => setDepartmentFilter(e.target.value)}
-              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
-            >
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept === 'all' ? 'Të gjitha departamentet' : dept}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
           <button 
             onClick={() => setShowForm(true)}
             className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 flex items-center gap-2 shadow-sm hover:shadow-md font-medium"
@@ -553,10 +532,6 @@ const TasksList: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti</label>
-                <p className="text-sm text-gray-900">{selectedTask.department}</p>
               </div>
             </div>
 
