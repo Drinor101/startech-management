@@ -47,50 +47,90 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
 
     setIsSearching(true);
     try {
-      // Search across all entities
+      // Search across all entities with improved error handling
       const [tasksRes, ticketsRes, servicesRes, ordersRes, productsRes, customersRes] = await Promise.all([
-        apiCall(`${apiConfig.endpoints.tasks}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] })),
-        apiCall(`${apiConfig.endpoints.tickets}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] })),
-        apiCall(`${apiConfig.endpoints.services}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] })),
-        apiCall(`${apiConfig.endpoints.orders}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] })),
-        apiCall(`${apiConfig.endpoints.products}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] })),
-        apiCall(`${apiConfig.endpoints.customers}?search=${encodeURIComponent(query)}`).catch(() => ({ data: [] }))
+        apiCall(`${apiConfig.endpoints.tasks}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Tasks search error:', err);
+          return { data: [] };
+        }),
+        apiCall(`${apiConfig.endpoints.tickets}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Tickets search error:', err);
+          return { data: [] };
+        }),
+        apiCall(`${apiConfig.endpoints.services}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Services search error:', err);
+          return { data: [] };
+        }),
+        apiCall(`${apiConfig.endpoints.orders}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Orders search error:', err);
+          return { data: [] };
+        }),
+        apiCall(`${apiConfig.endpoints.products}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Products search error:', err);
+          return { data: [] };
+        }),
+        apiCall(`${apiConfig.endpoints.customers}?search=${encodeURIComponent(query)}`).catch((err) => {
+          console.error('Customers search error:', err);
+          return { data: [] };
+        })
       ]);
 
       const results: SearchResult[] = [
+        // Tasks with improved title mapping
         ...(tasksRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'task' as const,
-          title: item.title || item.id 
+          title: item.title || `Task ${item.id}`,
+          status: item.status,
+          priority: item.priority
         })),
+        // Tickets with improved title mapping
         ...(ticketsRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'ticket' as const,
-          title: item.title || item.subject || item.id 
+          title: item.title || `Tiket ${item.id}`,
+          status: item.status,
+          priority: item.priority
         })),
+        // Services with improved title mapping
         ...(servicesRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'service' as const,
-          title: item.problem_description || item.id 
+          title: item.problem_description || `Shërbim ${item.id}`,
+          status: item.status
         })),
+        // Orders
         ...(ordersRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'order' as const,
-          title: item.id || `Porosi ${item.id}` 
+          title: `Porosi ${item.id}`,
+          status: item.status
         })),
+        // Products
         ...(productsRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'product' as const,
-          title: item.title || item.name || item.id 
+          title: item.title || item.name || `Produkt ${item.id}`
         })),
+        // Customers
         ...(customersRes.data || []).map((item: any) => ({ 
           ...item, 
           type: 'customer' as const,
-          title: item.name || item.email || item.id 
+          title: item.name || item.email || `Klient ${item.id}`
         }))
       ];
 
-      setSearchResults(results);
+      // Sort results by relevance (exact matches first, then partial matches)
+      const sortedResults = results.sort((a, b) => {
+        const aExact = a.id.toLowerCase().includes(query.toLowerCase()) || a.title.toLowerCase().includes(query.toLowerCase());
+        const bExact = b.id.toLowerCase().includes(query.toLowerCase()) || b.title.toLowerCase().includes(query.toLowerCase());
+        
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+        return 0;
+      });
+
+      setSearchResults(sortedResults.slice(0, 20)); // Limit to 20 results for performance
       setShowResults(true);
     } catch (error) {
       console.error('Search error:', error);
@@ -190,7 +230,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Kërko taska, tiketat, shërbimet, porositë, produktet, klientët..."
+              placeholder="Kërko me ID (TSK-2024-001), titull, përshkrim, emër, email..."
               value={searchQuery}
               onChange={handleInputChange}
               onFocus={() => setShowResults(searchResults.length > 0)}
@@ -220,6 +260,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
                             </div>
                             <div className="text-xs text-gray-500 mt-1">
                               ID: {result.id}
+                              {result.priority && (
+                                <span className="ml-2 px-1 py-0.5 rounded text-xs bg-yellow-100 text-yellow-800">
+                                  {result.priority}
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -240,7 +285,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
                   <div className="p-4 text-center text-gray-500">
                     <div className="text-sm mb-2">Nuk u gjet asgjë për "{searchQuery}"</div>
                     <div className="text-xs text-gray-400">
-                      Provo të kërkosh me: titull, ID, përshkrim, emër, email, telefon
+                      Provo të kërkosh me: ID (TSK-2024-001, SRV-2024-001, TIK-2024-001), titull, përshkrim, emër, email, telefon
                     </div>
                   </div>
                 )}

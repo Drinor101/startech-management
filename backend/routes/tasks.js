@@ -20,9 +20,10 @@ router.get('/', authenticateUser, async (req, res) => {
       `)
       .order('created_at', { ascending: false });
 
-    // Search functionality
+    // Search functionality - improved search across multiple fields
     if (search) {
-      query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,id.ilike.%${search}%`);
+      const searchTerm = `%${search}%`;
+      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},created_by.ilike.${searchTerm},category.ilike.${searchTerm},department.ilike.${searchTerm},source.ilike.${searchTerm}`);
     }
 
     // Filtri për taskat e përcaktuar për atë përdorues

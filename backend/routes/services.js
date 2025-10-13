@@ -21,9 +21,10 @@ router.get('/', authenticateUser, async (req, res) => {
       `)
       .order('created_at', { ascending: false });
 
-    // Search functionality
+    // Search functionality - improved search across multiple fields
     if (search) {
-      query = query.or(`problem_description.ilike.%${search}%,solution.ilike.%${search}%,id.ilike.%${search}%`);
+      const searchTerm = `%${search}%`;
+      query = query.or(`problem_description.ilike.${searchTerm},id.ilike.${searchTerm},category.ilike.${searchTerm},assigned_to.ilike.${searchTerm},created_by.ilike.${searchTerm},warranty_info.ilike.${searchTerm}`);
     }
 
     // Filtri për serviset e përcaktuar për atë përdorues
