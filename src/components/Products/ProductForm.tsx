@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Save, Package, ChevronDown } from 'lucide-react';
+import { Save, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 
@@ -14,7 +14,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
     title: product?.title || '',
     category: product?.category || '',
     basePrice: product?.basePrice || 0,
-    additionalCost: product?.additionalCost || 0,
     supplier: product?.supplier || '',
     image: product?.image || '',
     wooCommerceCategory: product?.wooCommerceCategory || '',
@@ -26,7 +25,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
   const [error, setError] = useState<string | null>(null);
 
   // Calculate final price
-  const finalPrice = formData.basePrice + formData.additionalCost;
+  const finalPrice = formData.basePrice;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +53,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
         title: formData.title,
         category: formData.category,
         basePrice: formData.basePrice,
-        additionalCost: formData.additionalCost,
         finalPrice: finalPrice,
         supplier: formData.supplier,
         image: formData.image,
@@ -91,7 +89,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'basePrice' || name === 'additionalCost' ? parseFloat(value) || 0 : value
+      [name]: name === 'basePrice' ? parseFloat(value) || 0 : value
     }));
   };
 
@@ -171,23 +169,6 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
             />
           </div>
 
-          {/* Additional Cost */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Kosto Shtesë (€)
-            </label>
-            <input
-              type="number"
-              name="additionalCost"
-              value={formData.additionalCost}
-              onChange={handleInputChange}
-              min="0"
-              step="0.01"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              placeholder="0.00"
-            />
-          </div>
-
           {/* Final Price Display */}
           <div className="md:col-span-2">
             <div className="bg-gray-50 rounded-lg p-4">
@@ -198,7 +179,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
                 </span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
-                Çmimi Bazë + Kosto Shtesë
+                Çmimi Bazë
               </p>
             </div>
           </div>

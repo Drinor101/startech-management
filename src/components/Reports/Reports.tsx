@@ -497,7 +497,7 @@ const Reports: React.FC = () => {
         case 'services':
           response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID;Krijuar nga;Percaktuar per;Klienti;Problemi;Statusi;Garancioni;Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar per,Klienti,Problemi,Statusi,Garancioni,Data\n';
             response.data.forEach((service: any) => {
               const customerName = cleanText(service.customer?.name);
               const problem = cleanText(service.problem_description || service.problem);
@@ -505,7 +505,7 @@ const Reports: React.FC = () => {
               const createdBy = cleanText(service.created_by);
               const assignedTo = cleanText(service.assigned_to);
               const date = formatDate(service.created_at);
-              csvContent += `"${service.id}";"${createdBy}";"${assignedTo}";"${customerName}";"${problem}";"${service.status}";"${warranty}";"${date}"\n`;
+              csvContent += `"${service.id}","${createdBy}","${assignedTo}","${customerName}","${problem}","${service.status}","${warranty}","${date}"\n`;
             });
           }
           break;
@@ -513,14 +513,14 @@ const Reports: React.FC = () => {
         case 'tasks':
           response = await apiCall('/api/reports/tasks?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID;Krijuar nga;Percaktuar per;Titulli;Prioriteti;Statusi;Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             response.data.forEach((task: any) => {
               const title = cleanText(task.title);
               const priority = cleanText(task.priority);
               const createdBy = cleanText(task.created_by);
               const assignedTo = cleanText(task.assigned_to);
               const date = formatDate(task.created_at);
-              csvContent += `"${task.id}";"${createdBy}";"${assignedTo}";"${title}";"${priority}";"${task.status}";"${date}"\n`;
+              csvContent += `"${task.id}","${createdBy}","${assignedTo}","${title}","${priority}","${task.status}","${date}"\n`;
             });
           }
           
@@ -528,14 +528,14 @@ const Reports: React.FC = () => {
           const ticketsResponse = await apiCall('/api/reports/tickets?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (ticketsResponse.success && ticketsResponse.data) {
             csvContent += '\n\nTIKETAT\n';
-            csvContent += 'ID;Krijuar nga;Percaktuar per;Titulli;Prioriteti;Statusi;Data\n';
+            csvContent += 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             ticketsResponse.data.forEach((ticket: any) => {
               const title = cleanText(ticket.title);
               const priority = cleanText(ticket.priority);
               const createdBy = cleanText(ticket.created_by);
               const assignedTo = cleanText(ticket.assigned_to);
               const date = formatDate(ticket.created_at);
-              csvContent += `"${ticket.id}";"${createdBy}";"${assignedTo}";"${title}";"${priority}";"${ticket.status}";"${date}"\n`;
+              csvContent += `"${ticket.id}","${createdBy}","${assignedTo}","${title}","${priority}","${ticket.status}","${date}"\n`;
             });
           }
           break;
@@ -543,12 +543,12 @@ const Reports: React.FC = () => {
         case 'orders':
           response = await apiCall('/api/reports/orders?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID;Klienti;Statusi;Totali;Data\n';
+            csvContent = 'ID,Klienti,Statusi,Totali,Data\n';
             response.data.forEach((order: any) => {
               const customerName = cleanText(order.customer?.name);
               const total = order.total || 0;
               const date = formatDate(order.created_at);
-              csvContent += `"${order.id}";"${customerName}";"${order.status}";"${total}";"${date}"\n`;
+              csvContent += `"${order.id}","${customerName}","${order.status}","${total}","${date}"\n`;
             });
           }
           break;
@@ -556,7 +556,7 @@ const Reports: React.FC = () => {
         case 'products':
           response = await apiCall('/api/reports/products?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID;Titulli;Kategoria;Cmimi Baze;Cmimi Final;Statusi WC;Data\n';
+            csvContent = 'ID,Titulli,Kategoria,Cmimi Baze,Cmimi Final,Statusi WC,Data\n';
             response.data.forEach((product: any) => {
               const title = cleanText(product.title);
               const category = cleanText(product.category);
@@ -564,7 +564,7 @@ const Reports: React.FC = () => {
               const finalPrice = product.final_price || 0;
               const wcStatus = product.woo_commerce_status || 'N/A';
               const date = formatDate(product.created_at);
-              csvContent += `"${product.id}";"${title}";"${category}";"${basePrice}";"${finalPrice}";"${wcStatus}";"${date}"\n`;
+              csvContent += `"${product.id}","${title}","${category}","${basePrice}","${finalPrice}","${wcStatus}","${date}"\n`;
             });
           }
           break;
@@ -572,12 +572,12 @@ const Reports: React.FC = () => {
         case 'users':
           response = await apiCall('/api/reports/users?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID;Emri;Email;Roli;Data\n';
+            csvContent = 'ID,Emri,Email,Roli,Data\n';
             response.data.forEach((user: any) => {
               const name = cleanText(user.name);
               const role = cleanText(user.role);
               const date = formatDate(user.created_at);
-              csvContent += `"${user.id}";"${name}";"${user.email}";"${role}";"${date}"\n`;
+              csvContent += `"${user.id}","${name}","${user.email}","${role}","${date}"\n`;
             });
           }
           break;
