@@ -361,9 +361,16 @@ router.put('/:id', authenticateUser, async (req, res) => {
       assigned_to: req.body.assignedToName || req.body.assignedTo,
       warranty_info: req.body.warranty || req.body.warrantyInfo,
       customer_id: customerId,
-      assigned_by: req.body.assignedToName || req.body.assignedTo || userName,
       updated_at: new Date().toISOString()
     };
+
+    // Only add fields that exist in the database
+    if (req.body.createdBy) {
+      updates.created_by = req.body.createdBy;
+    }
+    if (req.body.assignedToName || req.body.assignedTo) {
+      updates.assigned_by = req.body.assignedToName || req.body.assignedTo || userName;
+    }
 
     // Remove undefined values
     Object.keys(updates).forEach(key => {
@@ -372,6 +379,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
       }
     });
 
+    console.log('Updating service with data:', updates);
+    
     const { data, error } = await supabase
       .from('services')
       .update(updates)
@@ -383,6 +392,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       .single();
 
     if (error) {
+      console.error('Supabase update error:', error);
       throw error;
     }
 

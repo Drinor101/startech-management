@@ -201,7 +201,7 @@ const ServicesList: React.FC = () => {
       
              <div>
          <p className="text-sm font-medium text-gray-900">{service.customer.name}</p>
-         <p className="text-sm text-gray-600">{service.problem_description || 'N/A'}</p>
+         <p className="text-sm text-gray-600">{service.problemDescription || 'N/A'}</p>
        </div>
       
       <div className="flex items-center justify-between text-xs text-gray-500">
@@ -381,7 +381,7 @@ const ServicesList: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="max-w-xs">
                       <p className="text-sm text-gray-900 truncate">
-                        {service.problemDescription || service.problem_description || service.problem || 'Nuk ka përshkrim'}
+                        {service.problemDescription || 'Nuk ka përshkrim'}
                       </p>
                     </div>
                   </td>
@@ -460,12 +460,12 @@ const ServicesList: React.FC = () => {
         <CalendarView
           items={services.map(service => {
             // Get description with fallback logic
-            const description = service.problemDescription || service.problem_description || service.problem;
+            const description = service.problemDescription;
             const displayDescription = description && description.trim() !== '' ? description : 'Nuk ka përshkrim';
             
             return {
               id: service.id,
-              title: service.problemDescription || service.problem_description || service.problem || 'Servis',
+              title: service.problemDescription || 'Servis',
               description: displayDescription,
               status: service.status,
               type: 'service' as const,
@@ -514,7 +514,7 @@ const ServicesList: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
               <p className="text-sm text-gray-900">
-                {selectedService.problemDescription || selectedService.problem_description || selectedService.problem || 'Nuk ka përshkrim'}
+                {selectedService.problemDescription || 'Nuk ka përshkrim'}
               </p>
             </div>
 

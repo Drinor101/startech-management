@@ -206,8 +206,7 @@ router.post('/', authenticateUser, async (req, res) => {
         priority,
         status: 'open',
         description,
-        assigned_to: assignedTo,
-        assigned_to_id: req.body.assignedToId
+        assigned_to: assignedTo
       })
       .select()
       .single();
@@ -298,7 +297,6 @@ router.put('/:id', authenticateUser, async (req, res) => {
       status,
       description,
       assigned_to: assignedTo,
-      assigned_to_id: req.body.assignedToId,
       updated_at: new Date().toISOString()
     };
 
