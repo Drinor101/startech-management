@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -164,6 +165,16 @@ router.post('/', authenticateUser, async (req, res) => {
   try {
     console.log('Creating new order with data:', req.body);
     const { customerId, customerName, customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
+    
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID mungon'
+      });
+    }
     
     console.log('Order data parsed:', {
       customer,
@@ -446,6 +457,16 @@ router.post('/', authenticateUser, async (req, res) => {
     }
 
     console.log('Order products inserted successfully');
+
+    // Log user activity
+    await logActivity(
+      userId,
+      userName,
+      `Krijoi porosinë ${orderId}`,
+      'orders',
+      `Porosia ${orderId} u krijua për klientin ${finalCustomerId}`,
+      req.ip
+    );
 
     res.status(201).json({
       success: true,

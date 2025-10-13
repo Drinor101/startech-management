@@ -149,7 +149,9 @@ router.post('/', authenticateUser, async (req, res) => {
   try {
     console.log('Service creation request body:', req.body);
     
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -307,7 +309,8 @@ router.post('/', authenticateUser, async (req, res) => {
 router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     
     // Get user info
     const { data: userData } = await supabase

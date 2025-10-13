@@ -159,7 +159,8 @@ router.post('/', authenticateUser, async (req, res) => {
       assignedTo
     } = req.body;
 
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -233,7 +234,7 @@ router.post('/', authenticateUser, async (req, res) => {
     // Log user activity
     await logActivity(
       userId,
-      createdBy,
+      userName,
       `Krijoi tiket ${data.id}`,
       'tickets',
       `Tiketa "${title}" u krijua me prioritet ${priority}`,
@@ -279,7 +280,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
       assignedTo
     } = req.body;
 
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -399,7 +401,8 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
     const { id } = req.params;
     const { message } = req.body;
 
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,

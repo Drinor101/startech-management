@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser } from '../middleware/auth.js';
+import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -97,6 +98,16 @@ router.post('/', authenticateUser, async (req, res) => {
   try {
     const { name, email, phone, address, city, neighborhood, source } = req.body;
 
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        error: 'User ID mungon'
+      });
+    }
+
     // Validimi i të dhënave
     if (!name || !email) {
       return res.status(400).json({
@@ -141,6 +152,16 @@ router.post('/', authenticateUser, async (req, res) => {
       console.error('Supabase error:', error);
       throw error;
     }
+
+    // Log user activity
+    await logActivity(
+      userId,
+      userName,
+      `Krijoi klientin ${data.id}`,
+      'customers',
+      `Klienti "${name}" u krijua me email ${email}`,
+      req.ip
+    );
 
     res.status(201).json({
       success: true,

@@ -153,7 +153,9 @@ router.post('/', authenticateUser, async (req, res) => {
   try {
     console.log('Task creation request body:', req.body);
     
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -273,7 +275,8 @@ router.put('/:id', authenticateUser, async (req, res) => {
     console.log('Task update request body:', req.body);
     
     const { id } = req.params;
-    const userId = req.headers['x-user-id'];
+    const userId = req.user.id;
+    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     
     if (!userId) {
       return res.status(401).json({

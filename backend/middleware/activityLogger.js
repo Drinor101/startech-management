@@ -63,9 +63,15 @@ export const logUserActivityAfter = (action, module, details = null) => {
 // Funksion për të ruajtur aktivitetin manualisht
 export const logActivity = async (userId, userName, action, module, details = null, ipAddress = null) => {
   try {
+    // Kontrollo nëse userId është valid
+    if (!userId) {
+      console.warn('Activity logging skipped: userId is null or undefined');
+      return;
+    }
+
     const activityData = {
       user_id: userId,
-      user_name: userName,
+      user_name: userName || 'Unknown',
       action: action,
       module: module,
       details: details,
@@ -73,12 +79,16 @@ export const logActivity = async (userId, userName, action, module, details = nu
       ip_address: ipAddress
     };
 
+    console.log('Logging activity:', activityData);
+
     const { error } = await supabase
       .from('user_actions')
       .insert(activityData);
 
     if (error) {
       console.error('Gabim në ruajtjen e aktivitetit:', error);
+    } else {
+      console.log('Activity logged successfully');
     }
   } catch (error) {
     console.error('Gabim në ruajtjen e aktivitetit:', error);
