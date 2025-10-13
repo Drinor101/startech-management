@@ -428,14 +428,14 @@ const TicketsList: React.FC = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     ID
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
-                    Titulli
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                    Burimi
-                  </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                     Krijuar nga
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                    Përcaktuar për
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
+                    Titulli
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                     Prioriteti
@@ -462,6 +462,17 @@ const TicketsList: React.FC = () => {
                         <span className="text-sm font-medium text-gray-900">{ticket.id}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm text-gray-900">{ticket.createdBy || ticket.created_by || 'N/A'}</span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="text-sm text-gray-900">
+                          {ticket.assignedTo || ticket.assigned_to || 'N/A'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="px-4 py-3">
                       <div className="text-sm font-medium text-gray-900">{ticket.title}</div>
                       {ticket.description && (
@@ -469,12 +480,6 @@ const TicketsList: React.FC = () => {
                           {ticket.description}
                         </div>
                       )}
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{getSourceText(ticket.source)}</span>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <span className="text-sm text-gray-900">{ticket.createdBy || 'N/A'}</span>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">

@@ -458,15 +458,16 @@ const ServicesList: React.FC = () => {
         <CalendarView
           items={services.map(service => ({
             id: service.id,
-            title: service.problemDescription || 'Servis',
-            description: service.problemDescription,
+            title: service.problemDescription || service.problem_description || service.problem || 'Servis',
+            description: service.problemDescription || service.problem_description || service.problem || 'N/A',
             status: service.status,
             type: 'service' as const,
             assignedTo: service.assignedTo,
             createdBy: service.createdBy,
             createdAt: service.createdAt,
             updatedAt: service.updatedAt,
-            completedAt: service.completedAt
+            completedAt: service.completedAt,
+            warrantyInfo: service.warrantyInfo || service.warranty_info || 'N/A'
           }))}
           onItemClick={handleViewService}
           onStatusChange={handleStatusChange}
@@ -502,7 +503,7 @@ const ServicesList: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi i Problemit</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
               <p className="text-sm text-gray-900">
                 {selectedService.problemDescription || selectedService.problem_description || selectedService.problem || 'N/A'}
               </p>

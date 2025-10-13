@@ -14,6 +14,7 @@ interface CalendarItem {
   updatedAt?: string;
   dueDate?: string;
   completedAt?: string;
+  warrantyInfo?: string;
 }
 
 interface CalendarViewProps {
@@ -225,6 +226,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               {item.description}
                             </div>
                           )}
+                          {item.warrantyInfo && item.warrantyInfo !== 'N/A' && (
+                            <div className="text-xs text-green-600 mt-1 truncate">
+                              Garancioni: {item.warrantyInfo}
+                            </div>
+                          )}
                           {item.assignedTo && (
                             <div className="flex items-center gap-1 mt-1">
                               <User className="w-2 h-2" />
@@ -286,6 +292,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               {item.description && (
                                 <div className="text-xs text-gray-700 mt-1 truncate">
                                   {item.description}
+                                </div>
+                              )}
+                              {item.warrantyInfo && item.warrantyInfo !== 'N/A' && (
+                                <div className="text-xs text-green-600 mt-1 truncate">
+                                  Garancioni: {item.warrantyInfo}
                                 </div>
                               )}
                               {item.assignedTo && (
