@@ -463,7 +463,6 @@ const ServicesList: React.FC = () => {
             status: service.status,
             type: 'service' as const,
             assignedTo: service.assignedTo,
-            assignedBy: service.assignedBy,
             createdBy: service.createdBy,
             createdAt: service.createdAt,
             updatedAt: service.updatedAt,
@@ -511,9 +510,9 @@ const ServicesList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
                 <p className="text-sm text-gray-900">
-                  {selectedService.assignedBy || selectedService.assigned_by || 'N/A'}
+                  {selectedService.assignedTo || selectedService.assigned_to || 'N/A'}
                 </p>
               </div>
               <div>
@@ -526,18 +525,9 @@ const ServicesList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Përcaktuar për</label>
-                <p className="text-sm text-gray-900">
-                  {selectedService.assignedTo || selectedService.assigned_to || 'N/A'}
-                </p>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
                 <p className="text-sm text-gray-900">{new Date(selectedService.createdAt).toLocaleString('sq-AL')}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
                 <p className="text-sm text-gray-900">{selectedService.updatedAt ? new Date(selectedService.updatedAt).toLocaleString('sq-AL') : 'N/A'}</p>
@@ -557,6 +547,23 @@ const ServicesList: React.FC = () => {
                 {selectedService.warrantyInfo || 'N/A'}
               </p>
             </div>
+
+            {selectedService.comments && selectedService.comments.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Komentet</label>
+                <div className="space-y-3">
+                  {selectedService.comments.map((comment) => (
+                    <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900">{comment.userName}</span>
+                        <span className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{comment.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {selectedService.serviceHistory && selectedService.serviceHistory.length > 0 && (
               <div>

@@ -502,7 +502,6 @@ const TasksList: React.FC = () => {
             priority: task.priority,
             type: 'task' as const,
             assignedTo: task.assignedTo,
-            assignedBy: task.assignedBy,
             createdBy: task.createdBy,
             createdAt: task.createdAt,
             updatedAt: task.updatedAt,
@@ -573,8 +572,8 @@ const TasksList: React.FC = () => {
                 <p className="text-sm text-gray-900">{selectedTask.assignedTo || selectedTask.assigned_to || 'N/A'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
-                <p className="text-sm text-gray-900">{selectedTask.assignedBy || selectedTask.assigned_by || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
+                <p className="text-sm text-gray-900">{selectedTask.createdBy || selectedTask.created_by || 'N/A'}</p>
               </div>
             </div>
 
@@ -607,6 +606,26 @@ const TasksList: React.FC = () => {
                         <span className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</span>
                       </div>
                       <p className="text-sm text-gray-700">{comment.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedTask.history && selectedTask.history.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Historia e Ndryshimeve</label>
+                <div className="space-y-3">
+                  {selectedTask.history.map((historyItem) => (
+                    <div key={historyItem.id} className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900">{historyItem.userName}</span>
+                        <span className="text-xs text-gray-500">{new Date(historyItem.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 font-medium">{historyItem.action}</p>
+                      {historyItem.details && (
+                        <p className="text-sm text-gray-600 mt-1">{historyItem.details}</p>
+                      )}
                     </div>
                   ))}
                 </div>

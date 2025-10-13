@@ -9,7 +9,6 @@ interface CalendarItem {
   priority?: string;
   type: 'task' | 'service' | 'ticket';
   assignedTo?: string;
-  assignedBy?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt?: string;

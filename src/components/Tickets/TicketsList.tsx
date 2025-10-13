@@ -549,7 +549,6 @@ const TicketsList: React.FC = () => {
             priority: ticket.priority,
             type: 'ticket' as const,
             assignedTo: ticket.assignedTo || ticket.assigned_to,
-            assignedBy: ticket.assignedBy,
             createdBy: ticket.createdBy,
             createdAt: ticket.createdAt,
             updatedAt: ticket.updatedAt,
@@ -611,8 +610,8 @@ const TicketsList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar nga</label>
-                <p className="text-sm text-gray-900">{selectedTicket.assignedBy || selectedTicket.assigned_by || 'N/A'}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
+                <p className="text-sm text-gray-900">{selectedTicket.assignedTo || selectedTicket.assigned_to || 'N/A'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar nga</label>
@@ -622,16 +621,9 @@ const TicketsList: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Caktuar për</label>
-                <p className="text-sm text-gray-900">{selectedTicket.assignedTo || selectedTicket.assigned_to || 'N/A'}</p>
-              </div>
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Krijuar më</label>
                 <p className="text-sm text-gray-900">{new Date(selectedTicket.createdAt).toLocaleString('sq-AL')}</p>
               </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Përditësuar më</label>
                 <p className="text-sm text-gray-900">{selectedTicket.updatedAt ? new Date(selectedTicket.updatedAt).toLocaleString('sq-AL') : 'N/A'}</p>
@@ -642,6 +634,43 @@ const TicketsList: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Zgjidhur më</label>
                 <p className="text-sm text-gray-900">{new Date(selectedTicket.resolvedAt).toLocaleString('sq-AL')}</p>
+              </div>
+            )}
+
+            {selectedTicket.comments && selectedTicket.comments.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Komentet</label>
+                <div className="space-y-3">
+                  {selectedTicket.comments.map((comment) => (
+                    <div key={comment.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900">{comment.userName}</span>
+                        <span className="text-xs text-gray-500">{new Date(comment.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700">{comment.message}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedTicket.history && selectedTicket.history.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Historia e Ndryshimeve</label>
+                <div className="space-y-3">
+                  {selectedTicket.history.map((historyItem) => (
+                    <div key={historyItem.id} className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-400">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-gray-900">{historyItem.userName}</span>
+                        <span className="text-xs text-gray-500">{new Date(historyItem.createdAt).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-gray-700 font-medium">{historyItem.action}</p>
+                      {historyItem.details && (
+                        <p className="text-sm text-gray-600 mt-1">{historyItem.details}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
