@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
+import { Package, Euro, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
@@ -12,7 +12,6 @@ const ProductsList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
@@ -26,17 +25,8 @@ const ProductsList: React.FC = () => {
   } = useProducts({
     page: currentPage,
     limit: pageSize,
-    category: selectedCategory,
     source: selectedSource,
     search: searchTerm
-  });
-
-  // Get all categories from all products
-  const { data: allProductsData } = useProducts({
-    page: 1,
-    limit: 10000, // Get all products to extract all categories
-    source: 'all',
-    search: ''
   });
 
   const wooCommerceSyncMutation = useWooCommerceSync();
@@ -101,11 +91,6 @@ const ProductsList: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const handleCategoryChange = (category: string) => {
-    setSelectedCategory(category);
-    setCurrentPage(1);
-  };
-
   const handleSourceChange = (source: string) => {
     setSelectedSource(source);
     setCurrentPage(1);
@@ -116,12 +101,7 @@ const ProductsList: React.FC = () => {
     setCurrentPage(1);
   };
 
-
-  // Get unique categories from all products
-  const allProducts = allProductsData?.data || [];
-  const categories = ['all', ...Array.from(new Set(allProducts.map(product => product.category)))];
-
-  // Group products by category
+  // Group products by category for display
   const groupedProducts = products.reduce((acc, product) => {
     if (!acc[product.category]) {
       acc[product.category] = [];
@@ -196,23 +176,6 @@ const ProductsList: React.FC = () => {
               <option value="all">Të gjitha produktet</option>
               <option value="WooCommerce">Vetëm WooCommerce</option>
               <option value="Manual">Vetëm Manuale</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
-
-          {/* Category Filter */}
-          <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <select
-              value={selectedCategory}
-              onChange={(e) => handleCategoryChange(e.target.value)}
-              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
-            >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'Të gjitha kategoritë' : category}
-                </option>
-              ))}
             </select>
             <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
@@ -297,9 +260,6 @@ const ProductsList: React.FC = () => {
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                       Produkti
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
-                      Kategoria
-                    </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                       Çmimi Bazë
                     </th>
@@ -343,12 +303,6 @@ const ProductsList: React.FC = () => {
                             </div>
                             <div className="text-xs text-gray-500">ID: {product.id}</div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-1">
-                          <Tag className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-900">{product.category}</span>
                         </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -468,10 +422,7 @@ const ProductsList: React.FC = () => {
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Nuk u gjetën produkte</h3>
           <p className="text-gray-500">
-            {selectedCategory !== 'all' 
-              ? `Nuk u gjetën produkte në kategorinë "${selectedCategory}"`
-              : 'Nuk ka produkte të disponueshme'
-            }
+            Nuk ka produkte të disponueshme
           </p>
         </div>
       )}

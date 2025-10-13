@@ -8,8 +8,9 @@ const router = express.Router();
 let productsCache = {
   data: [],
   timestamp: null,
-  expiry: 10 * 60 * 1000, // 10 minutes cache
-  loading: false // Track if cache is being loaded
+  expiry: 5 * 60 * 1000, // 5 minutes cache (reduced from 10 minutes)
+  loading: false, // Track if cache is being loaded
+  loadingStartTime: null // Track when loading started
 };
 
 // Check if cache is valid
@@ -25,14 +26,22 @@ const getCachedProducts = async () => {
     return productsCache.data;
   }
 
-  // If cache is being loaded, return empty array to avoid duplicate requests
+  // If cache is being loaded, check if it's been too long
   if (productsCache.loading) {
-    console.log('Cache is being loaded, returning empty array');
-    return [];
+    const loadingDuration = Date.now() - (productsCache.loadingStartTime || 0);
+    if (loadingDuration > 60000) { // 60 seconds timeout
+      console.log('Cache loading timeout, resetting and trying again');
+      productsCache.loading = false;
+      productsCache.loadingStartTime = null;
+    } else {
+      console.log('Cache is being loaded, returning empty array');
+      return [];
+    }
   }
 
   console.log('Cache expired, fetching fresh WooCommerce products...');
   productsCache.loading = true;
+  productsCache.loadingStartTime = Date.now();
   
   try {
     const wooCommerceConfig = {
@@ -66,8 +75,17 @@ const getCachedProducts = async () => {
     }
     
     return [];
+  } catch (error) {
+    console.error('Error fetching WooCommerce products:', error);
+    // Return cached data if available, even if expired
+    if (productsCache.data && productsCache.data.length > 0) {
+      console.log('Returning expired cache due to API error');
+      return productsCache.data;
+    }
+    return [];
   } finally {
     productsCache.loading = false;
+    productsCache.loadingStartTime = null;
   }
 };
 
@@ -76,18 +94,21 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit = 25, category, source, search } = req.query;
+    const { page = 1, limit = 25, source, search } = req.query;
 
     let allProducts = [];
 
     // 1. Fetch WooCommerce products if source is 'all' or 'WooCommerce'
     if (!source || source === 'all' || source === 'WooCommerce') {
       try {
+        console.log('Attempting to fetch WooCommerce products...');
         const cachedProducts = await getCachedProducts();
         
         if (cachedProducts && cachedProducts.length > 0) {
           allProducts = [...allProducts, ...cachedProducts];
           console.log(`Added ${cachedProducts.length} cached WooCommerce products`);
+        } else {
+          console.log('No WooCommerce products available');
         }
       } catch (wooError) {
         console.error('Error fetching WooCommerce products:', wooError);
@@ -99,11 +120,6 @@ router.get('/', authenticateUser, async (req, res) => {
     if (!source || source === 'all' || source === 'Manual') {
       try {
         let query = supabase.from('products').select('*');
-        
-        // Apply category filter for manual products
-        if (category && category !== 'all') {
-          query = query.eq('category', category);
-        }
 
         const { data: manualProducts, error } = await query;
 
@@ -140,12 +156,7 @@ router.get('/', authenticateUser, async (req, res) => {
       allProducts = allProducts.filter(product => product.source === source);
     }
 
-    // 4. Apply category filter to combined results
-    if (category && category !== 'all') {
-      allProducts = allProducts.filter(product => product.category === category);
-    }
-
-    // 5. Apply search filter to combined results
+    // 4. Apply search filter to combined results
     if (search) {
       const searchLower = search.toLowerCase();
       allProducts = allProducts.filter(product => 
@@ -375,8 +386,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
       });
     }
 
-    // Fetch products from WooCommerce API (limit to 100 for sync)
-    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig, 100);
+    // Fetch products from WooCommerce API for sync
+    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
     
     if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
       return res.status(404).json({
@@ -408,54 +419,60 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
   }
 });
 
-// Fetch products from WooCommerce API
-async function fetchWooCommerceProducts(config, maxProducts = 10000) {
+// Fetch products from WooCommerce API with retry logic
+async function fetchWooCommerceProducts(config, retryCount = 0) {
+  const maxRetries = 3;
+  const timeout = 30000; // 30 seconds timeout
+  
   try {
-    console.log(`Fetching products from WooCommerce (max ${maxProducts})...`);
+    console.log(`Fetching all products from WooCommerce... (attempt ${retryCount + 1})`);
     const products = [];
     let page = 1;
     const perPage = 100;
     
-    while (products.length < maxProducts) {
+    while (true) {
       const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
       const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
       
       console.log(`Fetching page ${page} from: ${url}`);
       
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Basic ${auth}`,
-          'Content-Type': 'application/json'
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+      
+      try {
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${auth}`,
+            'Content-Type': 'application/json'
+          },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
         }
-      });
 
-      if (!response.ok) {
-        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
-      }
-
-      const pageProducts = await response.json();
-      
-      if (pageProducts.length === 0) {
-        break; // No more products
-      }
-      
-      // Add only up to maxProducts
-      const remainingSlots = maxProducts - products.length;
-      const productsToAdd = pageProducts.slice(0, remainingSlots);
-      products.push(...productsToAdd);
-      
-      // If we've added all products from this page and reached our limit, stop
-      if (productsToAdd.length < pageProducts.length || products.length >= maxProducts) {
-        break;
-      }
-      
-      page++;
-      
-      // Safety limit to prevent infinite loops
-      if (page > 100) {
-        console.log('Reached page limit (100), stopping...');
-        break;
+        const pageProducts = await response.json();
+        
+        if (pageProducts.length === 0) {
+          break; // No more products
+        }
+        
+        products.push(...pageProducts);
+        page++;
+        
+        // Safety limit to prevent infinite loops (increased to 1000 pages = 100,000 products)
+        if (page > 1000) {
+          console.log('Reached page limit (1000), stopping...');
+          break;
+        }
+      } catch (fetchError) {
+        clearTimeout(timeoutId);
+        throw fetchError;
       }
     }
     
@@ -463,7 +480,16 @@ async function fetchWooCommerceProducts(config, maxProducts = 10000) {
     return products;
     
   } catch (error) {
-    console.error('Error fetching WooCommerce products:', error);
+    console.error(`Error fetching WooCommerce products (attempt ${retryCount + 1}):`, error);
+    
+    // Retry logic
+    if (retryCount < maxRetries) {
+      const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+      console.log(`Retrying in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWooCommerceProducts(config, retryCount + 1);
+    }
+    
     throw error;
   }
 }

@@ -32,7 +32,6 @@ interface ProductsResponse {
 interface UseProductsParams {
   page?: number;
   limit?: number;
-  category?: string;
   source?: string;
   search?: string;
 }
@@ -42,22 +41,17 @@ export const useProducts = (params: UseProductsParams = {}) => {
   const {
     page = 1,
     limit = 25,
-    category = 'all',
     source = 'all',
     search
   } = params;
 
   return useQuery<ProductsResponse>({
-    queryKey: ['products', page, limit, category, source, search],
+    queryKey: ['products', page, limit, source, search],
     queryFn: async (): Promise<ProductsResponse> => {
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString()
       });
-
-      if (category !== 'all') {
-        queryParams.append('category', category);
-      }
 
       if (source !== 'all') {
         queryParams.append('source', source);
