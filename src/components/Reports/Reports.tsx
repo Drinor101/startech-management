@@ -48,7 +48,7 @@ const Reports: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        const response = await apiCall(`${apiConfig.endpoints.reports}/dashboard`);
+        const response = await apiCall(`${apiConfig.endpoints.reports}/dashboard?startDate=${getDateRangeStart()}&endDate=${getDateRangeEnd()}`);
         console.log('Reports API response:', response);
         
         if (response.success) {
@@ -272,18 +272,40 @@ const Reports: React.FC = () => {
     }
   };
 
-  // Chart data for reports
+  // Chart data for reports - using real filtered data
   const getChartData = () => {
     const labels = ['Jan', 'Shk', 'Mar', 'Pri', 'Maj', 'Qer', 'Kor', 'Gus', 'Sht', 'Tet', 'Nën', 'Dhj'];
     
+    // Generate data based on current date range and active tab
+    const generateMonthlyData = (data: any[], statusField: string, statusValue?: string) => {
+      const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; // 0-11 for months
+      const currentYear = new Date().getFullYear();
+      
+      return months.map(month => {
+        const monthStart = new Date(currentYear, month, 1);
+        const monthEnd = new Date(currentYear, month + 1, 0);
+        
+        return data.filter(item => {
+          const itemDate = new Date(item.created_at);
+          const isInMonth = itemDate >= monthStart && itemDate <= monthEnd;
+          const matchesStatus = statusValue ? item[statusField] === statusValue : true;
+          return isInMonth && matchesStatus;
+        }).length;
+      });
+    };
+    
     switch (activeTab) {
       case 'services':
+        if (!reportData?.services) {
+          return { labels, datasets: [] };
+        }
+        
         return {
           labels,
           datasets: [
             {
               label: 'Kërkesat për Servis',
-              data: [12, 19, 15, 25, 22, 30, 28, 35, 32, 40, 38, 45],
+              data: generateMonthlyData(reportData.services.all || [], 'status'),
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.4,
@@ -291,7 +313,7 @@ const Reports: React.FC = () => {
             },
             {
               label: 'Servisi të Përfunduar',
-              data: [10, 15, 12, 20, 18, 25, 23, 30, 28, 35, 32, 40],
+              data: generateMonthlyData(reportData.services.all || [], 'status', 'completed'),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4,
@@ -300,12 +322,16 @@ const Reports: React.FC = () => {
           ],
         };
       case 'tasks':
+        if (!reportData?.tasks) {
+          return { labels, datasets: [] };
+        }
+        
         return {
           labels,
           datasets: [
             {
               label: 'Taskat e Krijuar',
-              data: [8, 12, 10, 18, 15, 22, 20, 28, 25, 32, 30, 38],
+              data: generateMonthlyData(reportData.tasks.all || [], 'status'),
               borderColor: 'rgb(168, 85, 247)',
               backgroundColor: 'rgba(168, 85, 247, 0.1)',
               tension: 0.4,
@@ -313,7 +339,7 @@ const Reports: React.FC = () => {
             },
             {
               label: 'Taskat e Përfunduar',
-              data: [6, 10, 8, 15, 12, 18, 16, 24, 22, 28, 26, 32],
+              data: generateMonthlyData(reportData.tasks.all || [], 'status', 'done'),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4,
@@ -322,12 +348,16 @@ const Reports: React.FC = () => {
           ],
         };
       case 'orders':
+        if (!reportData?.orders) {
+          return { labels, datasets: [] };
+        }
+        
         return {
           labels,
           datasets: [
             {
               label: 'Porositë e Marra',
-              data: [15, 22, 18, 30, 25, 35, 32, 42, 38, 48, 45, 55],
+              data: generateMonthlyData(reportData.orders.all || [], 'status'),
               borderColor: 'rgb(245, 158, 11)',
               backgroundColor: 'rgba(245, 158, 11, 0.1)',
               tension: 0.4,
@@ -335,7 +365,7 @@ const Reports: React.FC = () => {
             },
             {
               label: 'Porositë e Dërguara',
-              data: [12, 18, 15, 25, 22, 30, 28, 38, 35, 42, 40, 48],
+              data: generateMonthlyData(reportData.orders.all || [], 'status', 'delivered'),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4,
@@ -344,12 +374,16 @@ const Reports: React.FC = () => {
           ],
         };
       case 'products':
+        if (!reportData?.products) {
+          return { labels, datasets: [] };
+        }
+        
         return {
           labels,
           datasets: [
             {
               label: 'Produktet e Shtuar',
-              data: [5, 8, 6, 12, 10, 15, 13, 18, 16, 22, 20, 25],
+              data: generateMonthlyData(reportData.products.all || [], 'woo_commerce_status'),
               borderColor: 'rgb(239, 68, 68)',
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
               tension: 0.4,
@@ -357,7 +391,7 @@ const Reports: React.FC = () => {
             },
             {
               label: 'Produktet Aktive',
-              data: [4, 7, 5, 10, 8, 12, 11, 15, 14, 18, 17, 20],
+              data: generateMonthlyData(reportData.products.all || [], 'woo_commerce_status', 'active'),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4,
@@ -366,12 +400,16 @@ const Reports: React.FC = () => {
           ],
         };
       case 'users':
+        if (!reportData?.users) {
+          return { labels, datasets: [] };
+        }
+        
         return {
           labels,
           datasets: [
             {
               label: 'Përdorues të Regjistruar',
-              data: [2, 3, 2, 4, 3, 5, 4, 6, 5, 7, 6, 8],
+              data: generateMonthlyData(reportData.users.all || [], 'role'),
               borderColor: 'rgb(59, 130, 246)',
               backgroundColor: 'rgba(59, 130, 246, 0.1)',
               tension: 0.4,
@@ -379,7 +417,7 @@ const Reports: React.FC = () => {
             },
             {
               label: 'Përdorues Aktivë',
-              data: [1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7],
+              data: generateMonthlyData(reportData.users.all || [], 'role'),
               borderColor: 'rgb(34, 197, 94)',
               backgroundColor: 'rgba(34, 197, 94, 0.1)',
               tension: 0.4,

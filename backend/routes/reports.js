@@ -7,35 +7,100 @@ const router = express.Router();
 // Merr raportin e përgjithshëm të dashboard-it
 router.get('/dashboard', authenticateUser, async (req, res) => {
   try {
+    const { startDate, endDate } = req.query;
+    
+    // Build date filter
+    let dateFilter = {};
+    if (startDate) {
+      dateFilter.gte = startDate;
+    }
+    if (endDate) {
+      dateFilter.lte = endDate;
+    }
+
     // Merr statistikat e porosive
-    const { data: orders } = await supabase
+    let ordersQuery = supabase
       .from('orders')
       .select('status, total, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      ordersQuery = ordersQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        ordersQuery = ordersQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: orders } = await ordersQuery;
 
     // Merr statistikat e shërbimeve
-    const { data: services } = await supabase
+    let servicesQuery = supabase
       .from('services')
       .select('status, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      servicesQuery = servicesQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        servicesQuery = servicesQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: services } = await servicesQuery;
 
     // Merr statistikat e taskave
-    const { data: tasks } = await supabase
+    let tasksQuery = supabase
       .from('tasks')
       .select('type, status, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      tasksQuery = tasksQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        tasksQuery = tasksQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: tasks } = await tasksQuery;
 
     // Merr statistikat e klientëve
-    const { data: customers } = await supabase
+    let customersQuery = supabase
       .from('customers')
       .select('source, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      customersQuery = customersQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        customersQuery = customersQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: customers } = await customersQuery;
 
     // Merr statistikat e produkteve
-    const { data: products } = await supabase
+    let productsQuery = supabase
       .from('products')
       .select('woo_commerce_status, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      productsQuery = productsQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        productsQuery = productsQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: products } = await productsQuery;
 
     // Merr statistikat e përdoruesve
-    const { data: users } = await supabase
+    let usersQuery = supabase
       .from('users')
       .select('role, created_at');
+    
+    if (Object.keys(dateFilter).length > 0) {
+      usersQuery = usersQuery.gte('created_at', dateFilter.gte || '1900-01-01');
+      if (dateFilter.lte) {
+        usersQuery = usersQuery.lte('created_at', dateFilter.lte);
+      }
+    }
+    
+    const { data: users } = await usersQuery;
 
     const dashboardStats = {
       orders: {
@@ -44,13 +109,15 @@ router.get('/dashboard', authenticateUser, async (req, res) => {
         processing: orders.filter(o => o.status === 'processing').length,
         shipped: orders.filter(o => o.status === 'shipped').length,
         delivered: orders.filter(o => o.status === 'delivered').length,
-        totalRevenue: orders.reduce((sum, o) => sum + (o.total || 0), 0)
+        totalRevenue: orders.reduce((sum, o) => sum + (o.total || 0), 0),
+        all: orders // Add raw data for charts
       },
       services: {
         total: services.length,
         received: services.filter(s => s.status === 'received').length,
         inProgress: services.filter(s => s.status === 'in-progress').length,
-        completed: services.filter(s => s.status === 'completed').length
+        completed: services.filter(s => s.status === 'completed').length,
+        all: services // Add raw data for charts
       },
       tasks: {
         total: tasks.length,
@@ -58,18 +125,21 @@ router.get('/dashboard', authenticateUser, async (req, res) => {
         tickets: tasks.filter(t => t.type === 'ticket').length,
         todo: tasks.filter(t => t.status === 'todo').length,
         inProgress: tasks.filter(t => t.status === 'in-progress').length,
-        done: tasks.filter(t => t.status === 'done').length
+        done: tasks.filter(t => t.status === 'done').length,
+        all: tasks // Add raw data for charts
       },
       customers: {
         total: customers.length,
         wooCommerce: customers.filter(c => c.source === 'WooCommerce').length,
-        internal: customers.filter(c => c.source === 'Internal').length
+        internal: customers.filter(c => c.source === 'Internal').length,
+        all: customers // Add raw data for charts
       },
       products: {
         total: products.length,
         active: products.filter(p => p.woo_commerce_status === 'active').length,
         inactive: products.filter(p => p.woo_commerce_status === 'inactive').length,
-        draft: products.filter(p => p.woo_commerce_status === 'draft').length
+        draft: products.filter(p => p.woo_commerce_status === 'draft').length,
+        all: products // Add raw data for charts
       },
       users: {
         total: users.length,
@@ -84,7 +154,8 @@ router.get('/dashboard', authenticateUser, async (req, res) => {
             acc.push({ name: role, count: 1 });
           }
           return acc;
-        }, [])
+        }, []),
+        all: users // Add raw data for charts
       }
     };
 
@@ -279,6 +350,52 @@ router.get('/customers', authenticateUser, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Gabim në marrjen e raportit të klientëve'
+    });
+  }
+});
+
+// Merr raportin e tiketave
+router.get('/tickets', authenticateUser, async (req, res) => {
+  try {
+    const { startDate, endDate, status, priority, source } = req.query;
+
+    let query = supabase
+      .from('tickets')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Filtra
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+    if (status) {
+      query = query.eq('status', status);
+    }
+    if (priority) {
+      query = query.eq('priority', priority);
+    }
+    if (source) {
+      query = query.eq('source', source);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Gabim në marrjen e raportit të tiketave:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e raportit të tiketave'
     });
   }
 });
