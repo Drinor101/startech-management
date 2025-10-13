@@ -39,19 +39,36 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   console.log('API Call - Headers:', config.headers);
 
-  const response = await fetch(`${apiConfig.baseURL}${endpoint}`, config);
-  
-  console.log('API Call - Response status:', response.status, response.statusText);
-  console.log('API Call - Response ok:', response.ok);
-  
-  if (!response.ok) {
-    console.error(`API Error: ${response.status} ${response.statusText}`);
-    const errorText = await response.text();
-    console.error('API Error Response:', errorText);
-    throw new Error(`API Error: ${response.status} ${response.statusText}`);
+  try {
+    const response = await fetch(`${apiConfig.baseURL}${endpoint}`, config);
+    
+    console.log('API Call - Response status:', response.status, response.statusText);
+    console.log('API Call - Response ok:', response.ok);
+    
+    if (!response.ok) {
+      console.error(`API Error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log('API Call - Response data:', responseData);
+    return responseData;
+  } catch (error) {
+    console.error('API Call - Network Error:', error);
+    
+    // If it's a network error, try to wake up the backend
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      console.log('Attempting to wake up backend...');
+      try {
+        await fetch(`${apiConfig.baseURL}/api/health`, { method: 'GET' });
+        console.log('Backend wake-up call sent');
+      } catch (wakeUpError) {
+        console.error('Backend wake-up failed:', wakeUpError);
+      }
+    }
+    
+    throw error;
   }
-  
-  const responseData = await response.json();
-  console.log('API Call - Response data:', responseData);
-  return responseData;
 };

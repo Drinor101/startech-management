@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, ChevronDown } from 'lucide-react';
-import { apiCall, getCurrentUser } from '../../config/api';
+import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import CustomerDropdown from '../Common/CustomerDropdown';
 import UserDropdown from '../Common/UserDropdown';
@@ -16,7 +16,7 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   
   const [formData, setFormData] = useState({
     createdBy: service?.createdBy || currentUser?.name || currentUser?.email || '',
-    assignedToId: '', // We'll use this for the UserDropdown component
+    assignedToId: '', // Will be set when users are loaded
     assignedToName: service?.assignedTo || '',
     customerId: service?.customer?.id || service?.customerId || '',
     customerName: service?.customer?.name || service?.customer || '',
@@ -35,6 +35,37 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
     message: '',
     isVisible: false
   });
+
+  // Load users and find the correct assignedToId when editing
+  useEffect(() => {
+    const loadUsersAndSetAssignedTo = async () => {
+      if (service?.assignedTo) {
+        try {
+          const response = await apiCall(apiConfig.endpoints.users);
+          const usersData = response.data || [];
+          
+          // Find the user by name
+          const assignedUser = usersData.find((user: any) => 
+            user.name === service.assignedTo || 
+            user.email === service.assignedTo ||
+            user.id === service.assignedTo
+          );
+          
+          if (assignedUser) {
+            setFormData(prev => ({
+              ...prev,
+              assignedToId: assignedUser.id,
+              assignedToName: assignedUser.name
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading users:', error);
+        }
+      }
+    };
+
+    loadUsersAndSetAssignedTo();
+  }, [service]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
