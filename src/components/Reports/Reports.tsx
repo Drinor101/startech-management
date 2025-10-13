@@ -481,11 +481,14 @@ const Reports: React.FC = () => {
       // Helper function to format dates safely
       const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('sq-AL', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit'
-        });
+        if (isNaN(date.getTime())) return 'N/A';
+        
+        // Format as DD.MM.YYYY and add apostrophe to force Excel to treat as text
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        
+        return `'${day}.${month}.${year}`;
       };
       
       // Helper function to clean Albanian characters
