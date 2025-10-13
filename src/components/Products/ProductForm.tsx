@@ -192,7 +192,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
           <div className="md:col-span-2">
             <div className="bg-gray-50 rounded-lg p-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Çmimi Final:</span>
+                <span className="text-sm font-medium text-gray-700">Çmimi Total:</span>
                 <span className="text-lg font-semibold text-green-600">
                   €{finalPrice.toFixed(2)}
                 </span>

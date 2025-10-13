@@ -226,9 +226,6 @@ const ProductsList: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
                   Çmimi Bazë
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
-                  Çmimi Final
-                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
                   Statusi WC
                 </th>
@@ -269,12 +266,6 @@ const ProductsList: React.FC = () => {
                     <div className="flex items-center gap-1">
                       <Euro className="w-4 h-4 text-gray-400" />
                       <span className="text-sm text-gray-900">{product.basePrice.toFixed(2)} €</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <div className="flex items-center gap-1">
-                      <Euro className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm font-bold text-gray-900">{product.finalPrice.toFixed(2)} €</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">

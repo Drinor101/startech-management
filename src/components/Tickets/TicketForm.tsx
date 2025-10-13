@@ -22,6 +22,9 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
     assignedToId: '', // Will be set when users are loaded
     assignedToName: ticket?.assignedTo?.name || ticket?.assignedTo || ticket?.assigned_to || ''
   });
+  
+  console.log('TicketForm initialized with ticket:', ticket);
+  console.log('Initial formData:', formData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
@@ -39,8 +42,10 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
     const loadUsersAndSetAssignedTo = async () => {
       if (ticket?.assignedTo || ticket?.assigned_to) {
         try {
+          console.log('Loading users for ticket:', ticket);
           const response = await apiCall(apiConfig.endpoints.users);
           const usersData = response.data || [];
+          console.log('Users data:', usersData);
           
           // Find the user by name
           const assignedUser = usersData.find((user: any) => 
@@ -48,6 +53,8 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
             user.email === (ticket.assignedTo || ticket.assigned_to) ||
             user.id === (ticket.assignedTo || ticket.assigned_to)
           );
+          
+          console.log('Found assigned user:', assignedUser);
           
           if (assignedUser) {
             setFormData(prev => ({

@@ -22,6 +22,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     status: task?.status || 'todo',
     description: task?.description || ''
   });
+  
+  console.log('TaskForm initialized with task:', task);
+  console.log('Initial formData:', formData);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
@@ -39,8 +42,10 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     const loadUsersAndSetAssignedTo = async () => {
       if (task?.assignedTo || task?.assigned_to) {
         try {
+          console.log('Loading users for task:', task);
           const response = await apiCall(apiConfig.endpoints.users);
           const usersData = response.data || [];
+          console.log('Users data:', usersData);
           
           // Find the user by name
           const assignedUser = usersData.find((user: any) => 
@@ -48,6 +53,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             user.email === (task.assignedTo || task.assigned_to) ||
             user.id === (task.assignedTo || task.assigned_to)
           );
+          
+          console.log('Found assigned user:', assignedUser);
           
           if (assignedUser) {
             setFormData(prev => ({
