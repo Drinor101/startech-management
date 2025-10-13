@@ -478,17 +478,34 @@ const Reports: React.FC = () => {
       let csvContent = '';
       let response;
       
+      // Helper function to format dates safely
+      const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-US');
+      };
+      
+      // Helper function to clean Albanian characters
+      const cleanText = (text: string) => {
+        return (text || 'N/A')
+          .replace(/ë/g, 'e')
+          .replace(/ç/g, 'c')
+          .replace(/Ç/g, 'C')
+          .replace(/Ë/g, 'E');
+      };
+      
       switch (activeTab) {
         case 'services':
           response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
             csvContent = 'ID,Krijuar nga,Percaktuar per,Klienti,Problemi,Statusi,Garancioni,Data\n';
             response.data.forEach((service: any) => {
-              const customerName = service.customer?.name || 'N/A';
-              const problem = service.problem_description || service.problem || 'N/A';
-              const warranty = service.warranty_info || 'N/A';
-              const date = new Date(service.created_at).toLocaleDateString('en-US');
-              csvContent += `"${service.id}","${service.created_by || 'N/A'}","${service.assigned_to || 'N/A'}","${customerName}","${problem}","${service.status}","${warranty}","${date}"\n`;
+              const customerName = cleanText(service.customer?.name);
+              const problem = cleanText(service.problem_description || service.problem);
+              const warranty = cleanText(service.warranty_info);
+              const createdBy = cleanText(service.created_by);
+              const assignedTo = cleanText(service.assigned_to);
+              const date = formatDate(service.created_at);
+              csvContent += `"${service.id}","${createdBy}","${assignedTo}","${customerName}","${problem}","${service.status}","${warranty}","${date}"\n`;
             });
           }
           break;
@@ -498,10 +515,12 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             response.data.forEach((task: any) => {
-              const title = task.title || 'N/A';
-              const priority = task.priority || 'N/A';
-              const date = new Date(task.created_at).toLocaleDateString('en-US');
-              csvContent += `"${task.id}","${task.created_by || 'N/A'}","${task.assigned_to || 'N/A'}","${title}","${priority}","${task.status}","${date}"\n`;
+              const title = cleanText(task.title);
+              const priority = cleanText(task.priority);
+              const createdBy = cleanText(task.created_by);
+              const assignedTo = cleanText(task.assigned_to);
+              const date = formatDate(task.created_at);
+              csvContent += `"${task.id}","${createdBy}","${assignedTo}","${title}","${priority}","${task.status}","${date}"\n`;
             });
           }
           
@@ -511,10 +530,12 @@ const Reports: React.FC = () => {
             csvContent += '\n\nTIKETAT\n';
             csvContent += 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             ticketsResponse.data.forEach((ticket: any) => {
-              const title = ticket.title || 'N/A';
-              const priority = ticket.priority || 'N/A';
-              const date = new Date(ticket.created_at).toLocaleDateString('en-US');
-              csvContent += `"${ticket.id}","${ticket.created_by || 'N/A'}","${ticket.assigned_to || 'N/A'}","${title}","${priority}","${ticket.status}","${date}"\n`;
+              const title = cleanText(ticket.title);
+              const priority = cleanText(ticket.priority);
+              const createdBy = cleanText(ticket.created_by);
+              const assignedTo = cleanText(ticket.assigned_to);
+              const date = formatDate(ticket.created_at);
+              csvContent += `"${ticket.id}","${createdBy}","${assignedTo}","${title}","${priority}","${ticket.status}","${date}"\n`;
             });
           }
           break;
@@ -524,9 +545,9 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'ID,Klienti,Statusi,Totali,Data\n';
             response.data.forEach((order: any) => {
-              const customerName = order.customer?.name || 'N/A';
+              const customerName = cleanText(order.customer?.name);
               const total = order.total || 0;
-              const date = new Date(order.created_at).toLocaleDateString('en-US');
+              const date = formatDate(order.created_at);
               csvContent += `"${order.id}","${customerName}","${order.status}","${total}","${date}"\n`;
             });
           }
@@ -537,25 +558,25 @@ const Reports: React.FC = () => {
           if (response.success && response.data) {
             csvContent = 'ID,Titulli,Kategoria,Cmimi Baze,Cmimi Final,Statusi WC,Data\n';
             response.data.forEach((product: any) => {
-              const title = product.title || 'N/A';
-              const category = product.category || 'N/A';
+              const title = cleanText(product.title);
+              const category = cleanText(product.category);
               const basePrice = product.base_price || 0;
               const finalPrice = product.final_price || 0;
               const wcStatus = product.woo_commerce_status || 'N/A';
-              const date = new Date(product.created_at).toLocaleDateString('en-US');
+              const date = formatDate(product.created_at);
               csvContent += `"${product.id}","${title}","${category}","${basePrice}","${finalPrice}","${wcStatus}","${date}"\n`;
             });
           }
           break;
           
         case 'users':
-          response = await apiCall('/api/users');
+          response = await apiCall('/api/reports/users?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
             csvContent = 'ID,Emri,Email,Roli,Data\n';
             response.data.forEach((user: any) => {
-              const name = user.name || 'N/A';
-              const role = user.role || 'N/A';
-              const date = new Date(user.created_at).toLocaleDateString('en-US');
+              const name = cleanText(user.name);
+              const role = cleanText(user.role);
+              const date = formatDate(user.created_at);
               csvContent += `"${user.id}","${name}","${user.email}","${role}","${date}"\n`;
             });
           }

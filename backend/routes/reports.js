@@ -444,6 +444,46 @@ router.get('/products', authenticateUser, async (req, res) => {
   }
 });
 
+// Merr raportin e përdoruesve
+router.get('/users', authenticateUser, async (req, res) => {
+  try {
+    const { startDate, endDate, role } = req.query;
+
+    let query = supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    // Filtra
+    if (startDate) {
+      query = query.gte('created_at', startDate);
+    }
+    if (endDate) {
+      query = query.lte('created_at', endDate);
+    }
+    if (role) {
+      query = query.eq('role', role);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Gabim në marrjen e raportit të përdoruesve:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Gabim në marrjen e raportit të përdoruesve'
+    });
+  }
+});
+
 // Merr aktivitetin e përdoruesve
 router.get('/users/activity', authenticateUser, async (req, res) => {
   try {
