@@ -1,7 +1,6 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -150,7 +149,7 @@ router.post('/', authenticateUser, async (req, res) => {
     console.log('Service creation request body:', req.body);
     
     const userId = req.user.id;
-    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    let userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     
     if (!userId) {
       return res.status(401).json({
@@ -264,16 +263,6 @@ router.post('/', authenticateUser, async (req, res) => {
         notes: `Shërbimi u krijua për klientin ${data.customer_id}`
       });
 
-    // Log user activity
-    await logActivity(
-      userId,
-      userName,
-      `Krijoi shërbimin ${data.id}`,
-      'services',
-      `Shërbimi u krijua për klientin ${data.customer_id}`,
-      req.ip
-    );
-
     res.status(201).json({
       success: true,
       data: {
@@ -313,7 +302,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
-    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    let userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     
     // Get user info
     const { data: userData } = await supabase

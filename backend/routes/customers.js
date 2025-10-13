@@ -1,7 +1,6 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser } from '../middleware/auth.js';
-import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -152,16 +151,6 @@ router.post('/', authenticateUser, async (req, res) => {
       console.error('Supabase error:', error);
       throw error;
     }
-
-    // Log user activity
-    await logActivity(
-      userId,
-      userName,
-      `Krijoi klientin ${data.id}`,
-      'customers',
-      `Klienti "${name}" u krijua me email ${email}`,
-      req.ip
-    );
 
     res.status(201).json({
       success: true,

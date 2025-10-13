@@ -1,7 +1,6 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -160,7 +159,7 @@ router.post('/', authenticateUser, async (req, res) => {
     } = req.body;
 
     const userId = req.user.id;
-    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    let userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -231,16 +230,6 @@ router.post('/', authenticateUser, async (req, res) => {
         details: `Tiketa "${title}" u krijua me prioritet ${priority}`
       });
 
-    // Log user activity
-    await logActivity(
-      userId,
-      userName,
-      `Krijoi tiket ${data.id}`,
-      'tickets',
-      `Tiketa "${title}" u krijua me prioritet ${priority}`,
-      req.ip
-    );
-
     res.status(201).json({
       success: true,
       data: {
@@ -281,7 +270,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
     } = req.body;
 
     const userId = req.user.id;
-    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    let userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -405,7 +394,7 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
     const { message } = req.body;
 
     const userId = req.user.id;
-    const userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
+    let userName = req.user.name || req.user.email?.split('@')[0] || 'Unknown';
     if (!userId) {
       return res.status(401).json({
         success: false,
