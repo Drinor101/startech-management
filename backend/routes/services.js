@@ -390,6 +390,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
     console.log('Updating service with data:', updates);
     console.log('Service ID:', id);
     
+    let updatedService;
     try {
       const { data, error } = await supabase
         .from('services')
@@ -407,6 +408,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
         throw error;
       }
 
+      updatedService = data;
       console.log('Service updated successfully:', data);
     } catch (updateError) {
       console.error('Update failed:', updateError);
@@ -418,7 +420,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       await supabase
         .from('service_history')
         .insert({
-          service_id: data.id,
+          service_id: updatedService.id,
           action: 'Shërbimi u përditësua',
           user_id: userId || null,
           user_name: userName,
@@ -434,7 +436,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
       await logActivity(
         userId,
         userName,
-        `Përditësoi shërbimin ${data.id}`,
+        `Përditësoi shërbimin ${updatedService.id}`,
         'services',
         `Shërbimi u përditësua nga ${userName}`,
         req.ip
@@ -446,17 +448,17 @@ router.put('/:id', authenticateUser, async (req, res) => {
 
     // Transform response data to camelCase
     const transformedData = {
-      id: data.id,
-      createdBy: data.created_by,
-      assignedBy: data.assigned_by,
-      assignedTo: data.assigned_to,
-      customer: data.customer,
-      problemDescription: data.problem_description,
-      status: data.status,
-      warrantyInfo: data.warranty_info,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
-      completedAt: data.completed_at
+      id: updatedService.id,
+      createdBy: updatedService.created_by,
+      assignedBy: updatedService.assigned_by,
+      assignedTo: updatedService.assigned_to,
+      customer: updatedService.customer,
+      problemDescription: updatedService.problem_description,
+      status: updatedService.status,
+      warrantyInfo: updatedService.warranty_info,
+      createdAt: updatedService.created_at,
+      updatedAt: updatedService.updated_at,
+      completedAt: updatedService.completed_at
     };
 
     res.json({

@@ -224,7 +224,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                           </div>
                           {item.description && (
                             <div className="text-xs text-gray-700 mt-1 truncate">
-                              {item.description}
+                              {item.type === 'service' ? 'Problemi: ' : ''}{item.description}
                             </div>
                           )}
                           {item.customerName && item.customerName !== 'N/A' && (
@@ -297,7 +297,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               <div className="font-medium truncate">{item.title}</div>
                               {item.description && (
                                 <div className="text-xs text-gray-700 mt-1 truncate">
-                                  {item.description}
+                                  {item.type === 'service' ? 'Problemi: ' : ''}{item.description}
                                 </div>
                               )}
                               {item.customerName && item.customerName !== 'N/A' && (

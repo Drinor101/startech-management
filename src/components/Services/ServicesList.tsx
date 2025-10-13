@@ -393,7 +393,7 @@ const ServicesList: React.FC = () => {
                   <td className="px-6 py-4">
                     <div className="max-w-xs">
                       <p className="text-sm text-gray-900 truncate">
-                        {service.problemDescription || 'Nuk ka përshkrim'}
+                        {service.problemDescription || 'Nuk ka problem'}
                       </p>
                     </div>
                   </td>
@@ -473,7 +473,7 @@ const ServicesList: React.FC = () => {
           items={services.map(service => {
             // Get description with fallback logic
             const description = service.problemDescription;
-            const displayDescription = description && description.trim() !== '' ? description : 'Nuk ka përshkrim';
+            const displayDescription = description && description.trim() !== '' ? description : 'Nuk ka problem';
             
             return {
               id: service.id,
@@ -524,9 +524,9 @@ const ServicesList: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Problemi</label>
               <p className="text-sm text-gray-900">
-                {selectedService.problemDescription || selectedService.description || 'Nuk ka përshkrim'}
+                {selectedService.problemDescription || selectedService.description || 'Nuk ka problem'}
               </p>
             </div>
 
