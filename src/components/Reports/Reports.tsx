@@ -93,11 +93,12 @@ const Reports: React.FC = () => {
     const fetchUserActivity = async () => {
       try {
         const params = new URLSearchParams();
+        params.append('limit', '50');
         // if (selectedUser) {
         //   params.append('userId', selectedUser);
         // }
         console.log('Fetching user activity with params:', params.toString());
-        const response = await apiCall(`/api/reports/users/activity?${params.toString()}`);
+        const response = await apiCall(`/api/activity/activity-logs?${params.toString()}`);
         console.log('User activity response:', response);
         if (response.success) {
           setUserActivity(response.data || []);
@@ -448,7 +449,7 @@ const Reports: React.FC = () => {
               const customerName = service.customer?.name || 'N/A';
               const problem = service.problem_description || service.problem || 'N/A';
               const warranty = service.warranty_info || 'N/A';
-              const date = new Date(service.created_at).toLocaleDateString('sq-AL');
+              const date = new Date(service.created_at).toISOString().split('T')[0];
               csvContent += service.id + ',"' + (service.created_by || 'N/A') + '","' + (service.assigned_to || 'N/A') + '","' + customerName + '","' + problem + '","' + service.status + '","' + warranty + '","' + date + '"\n';
             });
           }
@@ -461,7 +462,7 @@ const Reports: React.FC = () => {
             response.data.forEach((task: any) => {
               const title = task.title || 'N/A';
               const priority = task.priority || 'N/A';
-              const date = new Date(task.created_at).toLocaleDateString('sq-AL');
+              const date = new Date(task.created_at).toISOString().split('T')[0];
               csvContent += task.id + ',"' + (task.created_by || 'N/A') + '","' + (task.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
             });
           }
@@ -474,7 +475,7 @@ const Reports: React.FC = () => {
             ticketsResponse.data.forEach((ticket: any) => {
               const title = ticket.title || 'N/A';
               const priority = ticket.priority || 'N/A';
-              const date = new Date(ticket.created_at).toLocaleDateString('sq-AL');
+              const date = new Date(ticket.created_at).toISOString().split('T')[0];
               csvContent += ticket.id + ',"' + (ticket.created_by || 'N/A') + '","' + (ticket.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + ticket.status + '","' + date + '"\n';
             });
           }
@@ -487,7 +488,7 @@ const Reports: React.FC = () => {
             response.data.forEach((order: any) => {
               const customerName = order.customer?.name || 'N/A';
               const total = order.total || 0;
-              const date = new Date(order.created_at).toLocaleDateString('sq-AL');
+              const date = new Date(order.created_at).toISOString().split('T')[0];
               csvContent += order.id + ',"' + customerName + '","' + order.status + '","' + total + '","' + date + '"\n';
             });
           }
@@ -503,7 +504,7 @@ const Reports: React.FC = () => {
               const basePrice = product.base_price || 0;
               const finalPrice = product.final_price || 0;
               const wcStatus = product.woo_commerce_status || 'N/A';
-              const date = new Date(product.created_at).toLocaleDateString('sq-AL');
+              const date = new Date(product.created_at).toISOString().split('T')[0];
               csvContent += product.id + ',"' + title + '","' + category + '","' + basePrice + '","' + finalPrice + '","' + wcStatus + '","' + date + '"\n';
             });
           }
@@ -512,13 +513,12 @@ const Reports: React.FC = () => {
         case 'users':
           response = await apiCall('/api/users');
           if (response.success && response.data) {
-            csvContent = 'ID,Emri,Email,Roli,Departamenti,Data\n';
+            csvContent = 'ID,Emri,Email,Roli,Data\n';
             response.data.forEach((user: any) => {
               const name = user.name || 'N/A';
               const role = user.role || 'N/A';
-              const department = user.department || 'N/A';
-              const date = new Date(user.created_at).toLocaleDateString('sq-AL');
-              csvContent += user.id + ',"' + name + '","' + user.email + '","' + role + '","' + department + '","' + date + '"\n';
+              const date = new Date(user.created_at).toISOString().split('T')[0];
+              csvContent += user.id + ',"' + name + '","' + user.email + '","' + role + '","' + date + '"\n';
             });
           }
           break;

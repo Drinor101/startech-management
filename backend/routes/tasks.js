@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -225,6 +226,16 @@ router.post('/', authenticateUser, async (req, res) => {
         user_name: userName,
         details: `Tasku "${data.title}" u krijua me prioritet ${data.priority}`
       });
+
+    // Log user activity
+    await logActivity(
+      userId,
+      userName,
+      `Krijoi ${data.type === 'ticket' ? 'tiket' : 'task'} ${data.id}`,
+      'tasks',
+      `Tasku "${data.title}" u krijua me prioritet ${data.priority}`,
+      req.ip
+    );
 
     res.status(201).json({
       success: true,

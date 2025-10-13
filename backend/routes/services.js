@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -258,6 +259,16 @@ router.post('/', authenticateUser, async (req, res) => {
         notes: `Shërbimi u krijua për klientin ${data.customer_id}`
       });
 
+    // Log user activity
+    await logActivity(
+      userId,
+      userName,
+      `Krijoi shërbimin ${data.id}`,
+      'services',
+      `Shërbimi u krijua për klientin ${data.customer_id}`,
+      req.ip
+    );
+
     res.status(201).json({
       success: true,
       data: {
@@ -387,6 +398,16 @@ router.put('/:id', authenticateUser, async (req, res) => {
         user_name: userName,
         notes: `Shërbimi u përditësua nga ${userName}`
       });
+
+    // Log user activity
+    await logActivity(
+      userId,
+      userName,
+      `Përditësoi shërbimin ${data.id}`,
+      'services',
+      `Shërbimi u përditësua nga ${userName}`,
+      req.ip
+    );
 
     // Transform response data to camelCase
     const transformedData = {

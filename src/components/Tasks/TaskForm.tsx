@@ -18,7 +18,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     assignedToId: task?.assignedTo?.id || task?.assignedToId || '',
     assignedToName: task?.assignedTo?.name || task?.assignedTo || task?.assigned_to || '',
     assignedBy: task?.assignedBy || task?.assigned_by || currentUser?.name || currentUser?.email || '',
-    department: task?.department || '',
     priority: task?.priority || 'medium',
     status: task?.status || 'todo',
     description: task?.description || ''
@@ -150,28 +149,6 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
               />
             </div>
 
-            {/* Departamenti */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Departamenti *</label>
-              <div className="relative">
-                <select
-                  name="department"
-                  value={formData.department}
-                  onChange={handleChange}
-                  className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm appearance-none cursor-pointer"
-                  required
-                >
-                  <option value="">Zgjidh Departamentin</option>
-                  <option value="IT">IT</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Sales">Shitje</option>
-                  <option value="Support">Mbështetje</option>
-                  <option value="Design">Dizajn</option>
-                  <option value="Management">Menaxhment</option>
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            </div>
 
             {/* Prioriteti */}
             <div className="relative">

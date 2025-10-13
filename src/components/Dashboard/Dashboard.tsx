@@ -172,102 +172,53 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         },
       ]);
 
-      // Set recent activities based on real data
-      const recentActivities = [];
-      
-      console.log('Dashboard Data:', {
-        services: servicesDataArray.length,
-        tasks: tasksDataArray.length,
-        tickets: ticketsDataArray.length,
-        orders: ordersDataArray.length
-      });
-      
-      // Add recent services (latest 2)
-      const recentServices = servicesDataArray
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 2);
-      
-      recentServices.forEach((service) => {
-        recentActivities.push({
-          id: `service-${service.id}`,
-          action: `Servis i ri u krijua: ${service.id}`,
-          user: service.createdBy || 'Sistemi',
-          time: new Date(service.createdAt).toLocaleString('sq-AL')
-        });
-      });
-      
-      // Add recent tasks (latest 2)
-      const recentTasks = tasksDataArray
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 2);
-      
-      recentTasks.forEach((task) => {
-        recentActivities.push({
-          id: `task-${task.id}`,
-          action: `Task i ri u krijua: ${task.title}`,
-          user: task.createdBy || 'Sistemi',
-          time: new Date(task.createdAt).toLocaleString('sq-AL')
-        });
-      });
-      
-      // Add recent tickets (latest 1)
-      const recentTickets = ticketsDataArray
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 1);
-      
-      recentTickets.forEach((ticket) => {
-        recentActivities.push({
-          id: `ticket-${ticket.id}`,
-          action: `Tiket i ri u krijua: ${ticket.id}`,
-          user: ticket.createdBy || 'Sistemi',
-          time: new Date(ticket.createdAt).toLocaleString('sq-AL')
-        });
-      });
-      
-      // Add recent orders (latest 1)
-      const recentOrders = ordersDataArray
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 1);
-      
-      recentOrders.forEach((order) => {
-        recentActivities.push({
-          id: `order-${order.id}`,
-          action: `Porosi e re u regjistrua: ${order.id}`,
-          user: 'Sistemi',
-          time: new Date(order.createdAt).toLocaleString('sq-AL')
-        });
-      });
-      
-      // Add recent products (latest 1)
-      const recentProducts = products
-        .sort((a, b) => new Date(b.lastSyncDate || b.createdAt) - new Date(a.lastSyncDate || a.createdAt))
-        .slice(0, 1);
-      
-      recentProducts.forEach((product) => {
-        recentActivities.push({
-          id: `product-${product.id}`,
-          action: `Produkt i ri u shtua: ${product.title}`,
-          user: 'WooCommerce',
-          time: new Date(product.lastSyncDate || product.createdAt).toLocaleString('sq-AL')
-        });
-      });
-      
-      // Sort by creation time and take latest 4
-      recentActivities.sort((a, b) => new Date(b.time) - new Date(a.time));
-      console.log('Recent Activities:', recentActivities);
-      
-      // If no activities, show a default message
-      if (recentActivities.length === 0) {
-        setRecentActivities([
-          {
-            id: 'no-activities',
-            action: 'Nuk ka aktivitete të reja',
-            user: 'Sistemi',
-            time: 'Tani'
+      // Fetch recent activities from activity logs API
+      try {
+        const activityResponse = await fetch(`${apiConfig.baseURL}/api/activity/activity-logs?limit=6`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
           }
-        ]);
-      } else {
-        setRecentActivities(recentActivities.slice(0, 4));
+        });
+        
+        if (activityResponse.ok) {
+          const activityData = await activityResponse.json();
+          if (activityData.success && activityData.data) {
+            const formattedActivities = activityData.data.map((activity: any) => ({
+              id: activity.id,
+              action: activity.action,
+              user: activity.user_name || 'Sistemi',
+              time: new Date(activity.timestamp).toLocaleString('sq-AL'),
+              module: activity.module
+            }));
+            setRecentActivities(formattedActivities);
+          } else {
+            // Fallback to old method if API fails
+            setRecentActivities([{
+              id: 'no-activity',
+              action: 'Nuk ka aktivitet të fundit',
+              user: 'Sistemi',
+              time: new Date().toLocaleString('sq-AL')
+            }]);
+          }
+        } else {
+          // Fallback to old method if API fails
+          setRecentActivities([{
+            id: 'no-activity',
+            action: 'Nuk ka aktivitet të fundit',
+            user: 'Sistemi',
+            time: new Date().toLocaleString('sq-AL')
+          }]);
+        }
+      } catch (error) {
+        console.error('Error fetching activity logs:', error);
+        // Fallback to old method if API fails
+        setRecentActivities([{
+          id: 'no-activity',
+          action: 'Nuk ka aktivitet të fundit',
+          user: 'Sistemi',
+          time: new Date().toLocaleString('sq-AL')
+        }]);
       }
 
     } catch (error) {
