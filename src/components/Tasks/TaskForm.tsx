@@ -43,9 +43,16 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
       const endpoint = task ? `/api/tasks/${task.id}` : '/api/tasks';
       const method = task ? 'PUT' : 'POST';
 
+      // Transform data for backend
+      const taskData = {
+        ...formData,
+        assignedToName: formData.assignedToName,
+        assignedToId: formData.assignedToId
+      };
+
       await apiCall(endpoint, {
         method,
-        body: JSON.stringify(formData)
+        body: JSON.stringify(taskData)
       });
 
       setNotification({

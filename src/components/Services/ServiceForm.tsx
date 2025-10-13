@@ -16,8 +16,8 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
   
   const [formData, setFormData] = useState({
     createdBy: service?.createdBy || currentUser?.name || currentUser?.email || '',
-    assignedToId: service?.assignedTo?.id || service?.assignedToId || '',
-    assignedToName: service?.assignedTo?.name || service?.assignedTo || '',
+    assignedToId: '', // We'll use this for the UserDropdown component
+    assignedToName: service?.assignedTo || '',
     customerId: service?.customer?.id || service?.customerId || '',
     customerName: service?.customer?.name || service?.customer || '',
     problem: service?.problemDescription || service?.problem || '',
@@ -45,9 +45,18 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
       const endpoint = service ? `/api/services/${service.id}` : '/api/services';
       const method = service ? 'PUT' : 'POST';
 
+      // Transform data for backend
+      const serviceData = {
+        ...formData,
+        assignedToName: formData.assignedToName
+      };
+
+      // Remove frontend-only fields
+      delete serviceData.assignedToId;
+
       await apiCall(endpoint, {
         method,
-        body: JSON.stringify(formData)
+        body: JSON.stringify(serviceData)
       });
 
       setNotification({

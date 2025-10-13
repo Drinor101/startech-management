@@ -47,12 +47,10 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
       const ticketData = {
         ...formData,
         assignedTo: formData.assignedToName, // Send name to backend
-        assigned_to: formData.assignedToName // Alternative field name
+        assigned_to: formData.assignedToName, // Alternative field name
+        assignedToId: formData.assignedToId,
+        assignedToName: formData.assignedToName
       };
-      
-      // Remove frontend-only fields
-      delete ticketData.assignedToId;
-      delete ticketData.assignedToName;
 
       await apiCall(endpoint, {
         method,
