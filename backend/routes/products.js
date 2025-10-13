@@ -130,7 +130,10 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit = 25, source, search, forceRefresh } = req.query;
+    const { page = 1, limit, source, search, forceRefresh } = req.query;
+    // If no limit is specified, get all products (no pagination)
+    const shouldPaginate = limit !== undefined;
+    const pageLimit = shouldPaginate ? parseInt(limit) : 10000; // Large number for "all"
 
     let allProducts = [];
 
@@ -214,23 +217,30 @@ router.get('/', authenticateUser, async (req, res) => {
       );
     }
 
-    // 5. Apply pagination
-    const startIndex = (parseInt(page) - 1) * parseInt(limit);
-    const endIndex = startIndex + parseInt(limit);
-    const paginatedProducts = allProducts.slice(startIndex, endIndex);
-
-    console.log(`Total products found: ${allProducts.length}, returning: ${paginatedProducts.length}`);
-
-    res.json({
-      success: true,
-      data: paginatedProducts,
-      pagination: {
+    // 5. Apply pagination only if limit is specified
+    let finalProducts = allProducts;
+    let paginationInfo = null;
+    
+    if (shouldPaginate) {
+      const startIndex = (parseInt(page) - 1) * parseInt(limit);
+      const endIndex = startIndex + parseInt(limit);
+      finalProducts = allProducts.slice(startIndex, endIndex);
+      
+      paginationInfo = {
         page: parseInt(page),
         limit: parseInt(limit),
         total: allProducts.length,
         pages: Math.ceil(allProducts.length / parseInt(limit))
-      },
-      message: `Found ${paginatedProducts.length} products (${allProducts.length} total)`
+      };
+    }
+
+    console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length}${shouldPaginate ? ' (paginated)' : ' (all)'}`);
+
+    res.json({
+      success: true,
+      data: finalProducts,
+      pagination: paginationInfo,
+      message: `Found ${finalProducts.length} products${shouldPaginate ? ` (${allProducts.length} total)` : ''}`
     });
 
   } catch (error) {
