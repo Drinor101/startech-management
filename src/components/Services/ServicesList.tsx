@@ -380,7 +380,9 @@ const ServicesList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="max-w-xs">
-                      <p className="text-sm text-gray-900 truncate">{service.problemDescription || 'N/A'}</p>
+                      <p className="text-sm text-gray-900 truncate">
+                        {service.problemDescription || service.problem_description || service.problem || 'Nuk ka përshkrim'}
+                      </p>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -456,20 +458,26 @@ const ServicesList: React.FC = () => {
         />
       ) : (
         <CalendarView
-          items={services.map(service => ({
-            id: service.id,
-            title: service.problemDescription || service.problem_description || service.problem || 'Servis',
-            description: service.problemDescription || service.problem_description || service.problem || 'N/A',
-            status: service.status,
-            type: 'service' as const,
-            assignedTo: service.assignedTo || service.assigned_to,
-            createdBy: service.createdBy || service.created_by,
-            createdAt: service.createdAt,
-            updatedAt: service.updatedAt,
-            completedAt: service.completedAt,
-            warrantyInfo: service.warrantyInfo || service.warranty_info || 'N/A',
-            customerName: service.customer?.name || service.customer || 'N/A'
-          }))}
+          items={services.map(service => {
+            // Get description with fallback logic
+            const description = service.problemDescription || service.problem_description || service.problem;
+            const displayDescription = description && description.trim() !== '' ? description : 'Nuk ka përshkrim';
+            
+            return {
+              id: service.id,
+              title: service.problemDescription || service.problem_description || service.problem || 'Servis',
+              description: displayDescription,
+              status: service.status,
+              type: 'service' as const,
+              assignedTo: service.assignedTo || service.assigned_to,
+              createdBy: service.createdBy || service.created_by,
+              createdAt: service.createdAt,
+              updatedAt: service.updatedAt,
+              completedAt: service.completedAt,
+              warrantyInfo: service.warrantyInfo || service.warranty_info || 'N/A',
+              customerName: service.customer?.name || service.customer || 'N/A'
+            };
+          })}
           onItemClick={handleViewService}
           onStatusChange={handleStatusChange}
           type="services"
@@ -506,7 +514,7 @@ const ServicesList: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
               <p className="text-sm text-gray-900">
-                {selectedService.problemDescription || selectedService.problem_description || selectedService.problem || 'N/A'}
+                {selectedService.problemDescription || selectedService.problem_description || selectedService.problem || 'Nuk ka përshkrim'}
               </p>
             </div>
 

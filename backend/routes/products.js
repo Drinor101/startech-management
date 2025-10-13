@@ -8,7 +8,7 @@ const router = express.Router();
 let productsCache = {
   data: [],
   timestamp: null,
-  expiry: 10 * 60 * 1000, // Increased back to 10 minutes for better stability
+  expiry: 2 * 60 * 1000, // Reduced to 2 minutes for testing
   loading: false, // Track if cache is being loaded
   loadingStartTime: null, // Track when loading started
   lastError: null, // Track last error
@@ -28,6 +28,19 @@ const getCachedProducts = async () => {
     console.log(`Using cached WooCommerce products (${productsCache.data.length} products)`);
     return productsCache.data;
   }
+
+  // Debug: Log cache status
+  console.log('Cache status:', {
+    hasTimestamp: !!productsCache.timestamp,
+    timestamp: productsCache.timestamp,
+    expiry: productsCache.expiry,
+    isValid: isCacheValid(),
+    hasData: productsCache.data.length > 0,
+    dataCount: productsCache.data.length,
+    loading: productsCache.loading,
+    errorCount: productsCache.errorCount,
+    lastError: productsCache.lastError
+  });
 
   // If cache is being loaded, wait a bit and return cached data if available
   if (productsCache.loading) {
@@ -117,7 +130,7 @@ router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit = 25, source, search } = req.query;
+    const { page = 1, limit = 25, source, search, forceRefresh } = req.query;
 
     let allProducts = [];
 
@@ -125,6 +138,18 @@ router.get('/', authenticateUser, async (req, res) => {
     if (!source || source === 'all' || source === 'WooCommerce') {
       try {
         console.log('Attempting to fetch WooCommerce products...');
+        
+        // Force refresh if requested
+        if (forceRefresh === 'true') {
+          console.log('Force refresh requested, clearing cache...');
+          productsCache.data = [];
+          productsCache.timestamp = null;
+          productsCache.loading = false;
+          productsCache.loadingStartTime = null;
+          productsCache.lastError = null;
+          productsCache.errorCount = 0;
+        }
+        
         const cachedProducts = await getCachedProducts();
         
         if (cachedProducts && cachedProducts.length > 0) {
@@ -418,6 +443,62 @@ router.get('/cache-status', authenticateUser, async (req, res) => {
   } catch (error) {
     console.error('Error getting cache status:', error);
     res.status(500).json({ success: false, error: 'Failed to get cache status' });
+  }
+});
+
+// Test WooCommerce API endpoint
+router.get('/test-woocommerce', authenticateUser, async (req, res) => {
+  try {
+    console.log('Testing WooCommerce API connection...');
+    
+    const wooCommerceConfig = {
+      url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+      consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+      consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+    };
+
+    // Test with a simple API call
+    const testUrl = `${wooCommerceConfig.url}/wp-json/wc/v3/products?per_page=1&page=1&status=publish`;
+    const auth = Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64');
+    
+    console.log('Testing URL:', testUrl);
+    
+    const response = await fetch(testUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const testProducts = await response.json();
+    
+    res.json({
+      success: true,
+      message: 'WooCommerce API is working',
+      data: {
+        url: testUrl,
+        status: response.status,
+        productsFound: testProducts.length,
+        sampleProduct: testProducts[0] || null,
+        config: {
+          url: wooCommerceConfig.url,
+          hasConsumerKey: !!wooCommerceConfig.consumerKey,
+          hasConsumerSecret: !!wooCommerceConfig.consumerSecret
+        }
+      }
+    });
+  } catch (error) {
+    console.error('WooCommerce API test failed:', error);
+    res.status(500).json({
+      success: false,
+      error: 'WooCommerce API test failed',
+      details: error.message
+    });
   }
 });
 
