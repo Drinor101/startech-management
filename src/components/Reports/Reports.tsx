@@ -440,20 +440,17 @@ const Reports: React.FC = () => {
       let csvContent = '';
       let response;
       
-      // Add BOM for Excel compatibility
-      csvContent = '\uFEFF';
-      
       switch (activeTab) {
         case 'services':
           response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID,Krijuar nga,Percaktuar për,Klienti,Problemi,Statusi,Garancioni,Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar per,Klienti,Problemi,Statusi,Garancioni,Data\n';
             response.data.forEach((service: any) => {
               const customerName = service.customer?.name || 'N/A';
               const problem = service.problem_description || service.problem || 'N/A';
               const warranty = service.warranty_info || 'N/A';
               const date = new Date(service.created_at).toLocaleDateString('en-US');
-              csvContent += service.id + ',"' + (service.created_by || 'N/A') + '","' + (service.assigned_to || 'N/A') + '","' + customerName + '","' + problem + '","' + service.status + '","' + warranty + '","' + date + '"\n';
+              csvContent += `"${service.id}","${service.created_by || 'N/A'}","${service.assigned_to || 'N/A'}","${customerName}","${problem}","${service.status}","${warranty}","${date}"\n`;
             });
           }
           break;
@@ -461,12 +458,12 @@ const Reports: React.FC = () => {
         case 'tasks':
           response = await apiCall('/api/reports/tasks?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID,Krijuar nga,Percaktuar për,Titulli,Prioriteti,Statusi,Data\n';
+            csvContent = 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             response.data.forEach((task: any) => {
               const title = task.title || 'N/A';
               const priority = task.priority || 'N/A';
               const date = new Date(task.created_at).toLocaleDateString('en-US');
-              csvContent += task.id + ',"' + (task.created_by || 'N/A') + '","' + (task.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
+              csvContent += `"${task.id}","${task.created_by || 'N/A'}","${task.assigned_to || 'N/A'}","${title}","${priority}","${task.status}","${date}"\n`;
             });
           }
           
@@ -474,12 +471,12 @@ const Reports: React.FC = () => {
           const ticketsResponse = await apiCall('/api/reports/tickets?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (ticketsResponse.success && ticketsResponse.data) {
             csvContent += '\n\nTIKETAT\n';
-            csvContent += 'ID,Krijuar nga,Percaktuar për,Titulli,Prioriteti,Statusi,Data\n';
+            csvContent += 'ID,Krijuar nga,Percaktuar per,Titulli,Prioriteti,Statusi,Data\n';
             ticketsResponse.data.forEach((ticket: any) => {
               const title = ticket.title || 'N/A';
               const priority = ticket.priority || 'N/A';
               const date = new Date(ticket.created_at).toLocaleDateString('en-US');
-              csvContent += ticket.id + ',"' + (ticket.created_by || 'N/A') + '","' + (ticket.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + ticket.status + '","' + date + '"\n';
+              csvContent += `"${ticket.id}","${ticket.created_by || 'N/A'}","${ticket.assigned_to || 'N/A'}","${title}","${priority}","${ticket.status}","${date}"\n`;
             });
           }
           break;
@@ -492,7 +489,7 @@ const Reports: React.FC = () => {
               const customerName = order.customer?.name || 'N/A';
               const total = order.total || 0;
               const date = new Date(order.created_at).toLocaleDateString('en-US');
-              csvContent += order.id + ',"' + customerName + '","' + order.status + '","' + total + '","' + date + '"\n';
+              csvContent += `"${order.id}","${customerName}","${order.status}","${total}","${date}"\n`;
             });
           }
           break;
@@ -500,7 +497,7 @@ const Reports: React.FC = () => {
         case 'products':
           response = await apiCall('/api/reports/products?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'ID,Titulli,Kategoria,Çmimi Bazë,Çmimi Final,Statusi WC,Data\n';
+            csvContent = 'ID,Titulli,Kategoria,Cmimi Baze,Cmimi Final,Statusi WC,Data\n';
             response.data.forEach((product: any) => {
               const title = product.title || 'N/A';
               const category = product.category || 'N/A';
@@ -508,7 +505,7 @@ const Reports: React.FC = () => {
               const finalPrice = product.final_price || 0;
               const wcStatus = product.woo_commerce_status || 'N/A';
               const date = new Date(product.created_at).toLocaleDateString('en-US');
-              csvContent += product.id + ',"' + title + '","' + category + '","' + basePrice + '","' + finalPrice + '","' + wcStatus + '","' + date + '"\n';
+              csvContent += `"${product.id}","${title}","${category}","${basePrice}","${finalPrice}","${wcStatus}","${date}"\n`;
             });
           }
           break;
@@ -521,7 +518,7 @@ const Reports: React.FC = () => {
               const name = user.name || 'N/A';
               const role = user.role || 'N/A';
               const date = new Date(user.created_at).toLocaleDateString('en-US');
-              csvContent += user.id + ',"' + name + '","' + user.email + '","' + role + '","' + date + '"\n';
+              csvContent += `"${user.id}","${name}","${user.email}","${role}","${date}"\n`;
             });
           }
           break;
@@ -531,7 +528,7 @@ const Reports: React.FC = () => {
       }
       
       // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], { type: 'text/csv' });
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
