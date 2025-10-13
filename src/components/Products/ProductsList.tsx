@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Package, Euro, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
+import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
@@ -203,24 +203,6 @@ const ProductsList: React.FC = () => {
           </button>
         </div>
       </div>
-
-      {/* Filter Summary */}
-      {selectedCategory !== 'all' && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-blue-600" />
-            <span className="text-sm text-blue-800">
-              Duke shfaqur produktet në kategorinë: <strong>{selectedCategory}</strong> ({products.length} produkte)
-            </span>
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className="ml-auto text-xs text-blue-600 hover:text-blue-800 underline"
-            >
-              Fshij filtrin
-            </button>
-          </div>
-        </div>
-      )}
 
       {wooCommerceSyncMutation.isSuccess && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
