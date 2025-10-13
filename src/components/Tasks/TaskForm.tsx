@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Save, AlertCircle, ChevronDown } from 'lucide-react';
-import { apiCall, getCurrentUser } from '../../config/api';
+import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
 
@@ -15,7 +15,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
   
   const [formData, setFormData] = useState({
     title: task?.title || '',
-    assignedToId: task?.assignedTo?.id || task?.assignedToId || '',
+    assignedToId: '', // Will be set when users are loaded
     assignedToName: task?.assignedTo?.name || task?.assignedTo || task?.assigned_to || '',
     assignedBy: task?.assignedBy || task?.assigned_by || currentUser?.name || currentUser?.email || '',
     priority: task?.priority || 'medium',
@@ -33,6 +33,37 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
     message: '',
     isVisible: false
   });
+
+  // Load users and find the correct assignedToId when editing
+  useEffect(() => {
+    const loadUsersAndSetAssignedTo = async () => {
+      if (task?.assignedTo || task?.assigned_to) {
+        try {
+          const response = await apiCall(apiConfig.endpoints.users);
+          const usersData = response.data || [];
+          
+          // Find the user by name
+          const assignedUser = usersData.find((user: any) => 
+            user.name === (task.assignedTo || task.assigned_to) || 
+            user.email === (task.assignedTo || task.assigned_to) ||
+            user.id === (task.assignedTo || task.assigned_to)
+          );
+          
+          if (assignedUser) {
+            setFormData(prev => ({
+              ...prev,
+              assignedToId: assignedUser.id,
+              assignedToName: assignedUser.name
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading users:', error);
+        }
+      }
+    };
+
+    loadUsersAndSetAssignedTo();
+  }, [task]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

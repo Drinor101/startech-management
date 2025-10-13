@@ -359,15 +359,23 @@ router.put('/:id', authenticateUser, async (req, res) => {
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status,
       assigned_to: req.body.assignedToName || req.body.assignedTo,
-      warranty_info: req.body.warranty || req.body.warrantyInfo,
-      customer_id: customerId,
       updated_at: new Date().toISOString()
     };
 
-    // Only add fields that exist in the database
+    // Add customer_id if we have it
+    if (customerId) {
+      updates.customer_id = customerId;
+    }
+
+    // Only add fields that might exist in the database
+    if (req.body.warranty || req.body.warrantyInfo) {
+      updates.warranty_info = req.body.warranty || req.body.warrantyInfo;
+    }
+    
     if (req.body.createdBy) {
       updates.created_by = req.body.createdBy;
     }
+    
     if (req.body.assignedToName || req.body.assignedTo) {
       updates.assigned_by = req.body.assignedToName || req.body.assignedTo || userName;
     }
@@ -380,42 +388,61 @@ router.put('/:id', authenticateUser, async (req, res) => {
     });
 
     console.log('Updating service with data:', updates);
+    console.log('Service ID:', id);
     
-    const { data, error } = await supabase
-      .from('services')
-      .update(updates)
-      .eq('id', id)
-      .select(`
-        *,
-        customer:customers(name, email, phone)
-      `)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .update(updates)
+        .eq('id', id)
+        .select(`
+          *,
+          customer:customers(name, email, phone)
+        `)
+        .single();
 
-    if (error) {
-      console.error('Supabase update error:', error);
-      throw error;
+      if (error) {
+        console.error('Supabase update error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+
+      console.log('Service updated successfully:', data);
+    } catch (updateError) {
+      console.error('Update failed:', updateError);
+      throw updateError;
     }
 
     // Add to history
-    await supabase
-      .from('service_history')
-      .insert({
-        service_id: data.id,
-        action: 'Shërbimi u përditësua',
-        user_id: userId,
-        user_name: userName,
-        notes: `Shërbimi u përditësua nga ${userName}`
-      });
+    try {
+      await supabase
+        .from('service_history')
+        .insert({
+          service_id: data.id,
+          action: 'Shërbimi u përditësua',
+          user_id: userId || null,
+          user_name: userName,
+          notes: `Shërbimi u përditësua nga ${userName}`
+        });
+    } catch (historyError) {
+      console.error('History insert error:', historyError);
+      // Don't throw here, just log the error
+    }
 
     // Log user activity
-    await logActivity(
-      userId,
-      userName,
-      `Përditësoi shërbimin ${data.id}`,
-      'services',
-      `Shërbimi u përditësua nga ${userName}`,
-      req.ip
-    );
+    try {
+      await logActivity(
+        userId,
+        userName,
+        `Përditësoi shërbimin ${data.id}`,
+        'services',
+        `Shërbimi u përditësua nga ${userName}`,
+        req.ip
+      );
+    } catch (logError) {
+      console.error('Log activity error:', logError);
+      // Don't throw here, just log the error
+    }
 
     // Transform response data to camelCase
     const transformedData = {

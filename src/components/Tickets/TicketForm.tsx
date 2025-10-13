@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save, AlertCircle, ChevronDown } from 'lucide-react';
-import { apiCall, getCurrentUser } from '../../config/api';
+import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
 
@@ -19,7 +19,7 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
     priority: ticket?.priority || 'medium',
     status: ticket?.status || 'open',
     description: ticket?.description || '',
-    assignedToId: ticket?.assignedTo?.id || ticket?.assignedToId || '',
+    assignedToId: '', // Will be set when users are loaded
     assignedToName: ticket?.assignedTo?.name || ticket?.assignedTo || ticket?.assigned_to || ''
   });
   const [loading, setLoading] = useState(false);
@@ -33,6 +33,37 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
     message: '',
     isVisible: false
   });
+
+  // Load users and find the correct assignedToId when editing
+  useEffect(() => {
+    const loadUsersAndSetAssignedTo = async () => {
+      if (ticket?.assignedTo || ticket?.assigned_to) {
+        try {
+          const response = await apiCall(apiConfig.endpoints.users);
+          const usersData = response.data || [];
+          
+          // Find the user by name
+          const assignedUser = usersData.find((user: any) => 
+            user.name === (ticket.assignedTo || ticket.assigned_to) || 
+            user.email === (ticket.assignedTo || ticket.assigned_to) ||
+            user.id === (ticket.assignedTo || ticket.assigned_to)
+          );
+          
+          if (assignedUser) {
+            setFormData(prev => ({
+              ...prev,
+              assignedToId: assignedUser.id,
+              assignedToName: assignedUser.name
+            }));
+          }
+        } catch (error) {
+          console.error('Error loading users:', error);
+        }
+      }
+    };
+
+    loadUsersAndSetAssignedTo();
+  }, [ticket]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -91,9 +91,21 @@ const ServicesList: React.FC = () => {
     });
   };
 
-  const handleViewService = (service: Service) => {
+  const handleViewService = (service: Service | any) => {
     console.log('Selected service data:', service);
-    setSelectedService(service);
+    
+    // If it's from CalendarView, find the original service
+    if (service.description && !service.problemDescription) {
+      const originalService = services.find(s => s.id === service.id);
+      if (originalService) {
+        setSelectedService(originalService);
+      } else {
+        setSelectedService(service);
+      }
+    } else {
+      setSelectedService(service);
+    }
+    
     setIsModalOpen(true);
   };
 
@@ -514,7 +526,7 @@ const ServicesList: React.FC = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Përshkrimi</label>
               <p className="text-sm text-gray-900">
-                {selectedService.problemDescription || 'Nuk ka përshkrim'}
+                {selectedService.problemDescription || selectedService.description || 'Nuk ka përshkrim'}
               </p>
             </div>
 
