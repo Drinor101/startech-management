@@ -29,7 +29,7 @@ const Reports: React.FC = () => {
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userActivity, setUserActivity] = useState<any[]>([]);
+  // const [userActivity, setUserActivity] = useState<any[]>([]); // COMMENTED OUT FOR NOW
   // const [selectedUser, setSelectedUser] = useState<string>('');
   // const [users, setUsers] = useState<any[]>([]);
 
@@ -88,34 +88,34 @@ const Reports: React.FC = () => {
   //   }
   // }, [activeTab]);
 
-  // Fetch user activity
-  useEffect(() => {
-    const fetchUserActivity = async () => {
-      try {
-        const params = new URLSearchParams();
-        params.append('limit', '50');
-        // if (selectedUser) {
-        //   params.append('userId', selectedUser);
-        // }
-        console.log('Fetching user activity with params:', params.toString());
-        const response = await apiCall(`/api/activity/activity-logs?${params.toString()}`);
-        console.log('User activity response:', response);
-        if (response.success) {
-          setUserActivity(response.data || []);
-        } else {
-          console.error('Failed to fetch user activity:', response.error);
-          setUserActivity([]);
-        }
-      } catch (err) {
-        console.error('Error fetching user activity:', err);
-        setUserActivity([]);
-      }
-    };
+  // Fetch user activity - COMMENTED OUT FOR NOW
+  // useEffect(() => {
+  //   const fetchUserActivity = async () => {
+  //     try {
+  //       const params = new URLSearchParams();
+  //       params.append('limit', '50');
+  //       // if (selectedUser) {
+  //       //   params.append('userId', selectedUser);
+  //       // }
+  //       console.log('Fetching user activity with params:', params.toString());
+  //       const response = await apiCall(`/api/activity/activity-logs?${params.toString()}`);
+  //       console.log('User activity response:', response);
+  //       if (response.success) {
+  //         setUserActivity(response.data || []);
+  //       } else {
+  //         console.error('Failed to fetch user activity:', response.error);
+  //         setUserActivity([]);
+  //       }
+  //     } catch (err) {
+  //       console.error('Error fetching user activity:', err);
+  //       setUserActivity([]);
+  //     }
+  //   };
 
-    if (activeTab === 'users') {
-      fetchUserActivity();
-    }
-  }, [activeTab]);
+  //   if (activeTab === 'users') {
+  //     fetchUserActivity();
+  //   }
+  // }, [activeTab]);
 
   const mockReportData = {
     services: {
@@ -481,7 +481,11 @@ const Reports: React.FC = () => {
       // Helper function to format dates safely
       const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('en-US');
+        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString('sq-AL', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        });
       };
       
       // Helper function to clean Albanian characters
@@ -823,13 +827,13 @@ const Reports: React.FC = () => {
           </div>
         </div>
 
-        {/* User Activity Reports */}
-        {activeTab === 'users' && (
+        {/* User Activity Reports - COMMENTED OUT FOR NOW */}
+        {/* {activeTab === 'users' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-medium text-gray-900">Aktiviteti i Përdoruesve</h3>
-                {/* <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
                   <label className="text-sm text-gray-600">Filtro sipas përdoruesit:</label>
                   <select
                     value={selectedUser}
@@ -847,7 +851,7 @@ const Reports: React.FC = () => {
                   {users.length === 0 && (
                     <span className="text-xs text-gray-400">Duke ngarkuar...</span>
                   )}
-                </div> */}
+                </div>
               </div>
               
               <div className="space-y-3">
@@ -896,7 +900,7 @@ const Reports: React.FC = () => {
             </div>
 
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );
