@@ -8,9 +8,11 @@ const router = express.Router();
 let productsCache = {
   data: [],
   timestamp: null,
-  expiry: 5 * 60 * 1000, // 5 minutes cache (reduced from 10 minutes)
+  expiry: 10 * 60 * 1000, // Increased back to 10 minutes for better stability
   loading: false, // Track if cache is being loaded
-  loadingStartTime: null // Track when loading started
+  loadingStartTime: null, // Track when loading started
+  lastError: null, // Track last error
+  errorCount: 0 // Track consecutive errors
 };
 
 // Check if cache is valid
@@ -21,25 +23,38 @@ const isCacheValid = () => {
 
 // Get cached products or fetch fresh ones
 const getCachedProducts = async () => {
-  if (isCacheValid()) {
-    console.log('Using cached WooCommerce products');
+  // If cache is valid and has data, return it
+  if (isCacheValid() && productsCache.data.length > 0) {
+    console.log(`Using cached WooCommerce products (${productsCache.data.length} products)`);
     return productsCache.data;
   }
 
-  // If cache is being loaded, check if it's been too long
+  // If cache is being loaded, wait a bit and return cached data if available
   if (productsCache.loading) {
     const loadingDuration = Date.now() - (productsCache.loadingStartTime || 0);
-    if (loadingDuration > 30000) { // Reduced from 60s to 30s timeout
+    if (loadingDuration > 60000) { // Increased to 60s timeout
       console.log('Cache loading timeout, resetting and trying again');
       productsCache.loading = false;
       productsCache.loadingStartTime = null;
+      productsCache.errorCount++;
     } else {
-      console.log('Cache is being loaded, returning empty array');
+      console.log('Cache is being loaded, returning cached data if available');
+      // Return cached data even if expired, if available
+      if (productsCache.data.length > 0) {
+        console.log(`Returning ${productsCache.data.length} cached products while loading`);
+        return productsCache.data;
+      }
       return [];
     }
   }
 
-  console.log('Cache expired, fetching fresh WooCommerce products...');
+  // If we have too many consecutive errors, use cached data even if expired
+  if (productsCache.errorCount >= 3 && productsCache.data.length > 0) {
+    console.log(`Too many errors (${productsCache.errorCount}), using expired cache`);
+    return productsCache.data;
+  }
+
+  console.log('Cache expired or empty, fetching fresh WooCommerce products...');
   productsCache.loading = true;
   productsCache.loadingStartTime = Date.now();
   
@@ -70,18 +85,26 @@ const getCachedProducts = async () => {
 
       productsCache.data = transformedProducts;
       productsCache.timestamp = Date.now();
-      console.log(`Cached ${transformedProducts.length} WooCommerce products`);
+      productsCache.lastError = null;
+      productsCache.errorCount = 0; // Reset error count on success
+      console.log(`Successfully cached ${transformedProducts.length} WooCommerce products`);
       return transformedProducts;
     }
     
+    console.log('No products returned from WooCommerce API');
     return [];
   } catch (error) {
     console.error('Error fetching WooCommerce products:', error);
+    productsCache.lastError = error.message;
+    productsCache.errorCount++;
+    
     // Return cached data if available, even if expired
     if (productsCache.data && productsCache.data.length > 0) {
-      console.log('Returning expired cache due to API error');
+      console.log(`Returning ${productsCache.data.length} expired cached products due to API error`);
       return productsCache.data;
     }
+    
+    console.log('No cached data available, returning empty array');
     return [];
   } finally {
     productsCache.loading = false;
@@ -359,11 +382,42 @@ router.post('/clear-cache', authenticateUser, requireAdmin, async (req, res) => 
   try {
     productsCache.data = [];
     productsCache.timestamp = null;
+    productsCache.loading = false;
+    productsCache.loadingStartTime = null;
+    productsCache.lastError = null;
+    productsCache.errorCount = 0;
     console.log('Products cache cleared');
     res.json({ success: true, message: 'Cache cleared successfully' });
   } catch (error) {
     console.error('Error clearing cache:', error);
     res.status(500).json({ success: false, error: 'Failed to clear cache' });
+  }
+});
+
+// Cache status endpoint
+router.get('/cache-status', authenticateUser, async (req, res) => {
+  try {
+    const cacheAge = productsCache.timestamp ? Date.now() - productsCache.timestamp : null;
+    const isValid = isCacheValid();
+    
+    res.json({
+      success: true,
+      data: {
+        hasData: productsCache.data.length > 0,
+        dataCount: productsCache.data.length,
+        isValid: isValid,
+        cacheAge: cacheAge,
+        expiry: productsCache.expiry,
+        loading: productsCache.loading,
+        loadingDuration: productsCache.loadingStartTime ? Date.now() - productsCache.loadingStartTime : null,
+        lastError: productsCache.lastError,
+        errorCount: productsCache.errorCount,
+        timestamp: productsCache.timestamp
+      }
+    });
+  } catch (error) {
+    console.error('Error getting cache status:', error);
+    res.status(500).json({ success: false, error: 'Failed to get cache status' });
   }
 });
 

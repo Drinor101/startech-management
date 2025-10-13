@@ -548,7 +548,7 @@ const OrdersList: React.FC = () => {
                       <p className="text-sm text-gray-600">{product?.category || 'N/A'}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">${(product?.finalPrice || 0).toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">€{(product?.finalPrice || 0).toFixed(2)}</p>
                       <p className="text-sm text-gray-500">Sasi: {product?.quantity || 0}</p>
                     </div>
                   </div>

@@ -22,6 +22,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [productSourceFilter, setProductSourceFilter] = useState<string>('all');
   const [openDropdowns, setOpenDropdowns] = useState<{ [key: number]: boolean }>({});
+  const [productSearchTerm, setProductSearchTerm] = useState<string>('');
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
@@ -43,24 +44,39 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     teamNotes: order?.teamNotes || ''
   });
 
-  // Fetch products from API
+  // Fetch products from API with caching
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
+        
+        // Check if we already have products cached
+        if (products.length > 0 && productSourceFilter === 'all') {
+          setLoading(false);
+          return;
+        }
+        
         const params = new URLSearchParams();
-        params.append('limit', '10000'); // Get all products
+        // Get all products without limit
         if (productSourceFilter !== 'all') {
           params.append('source', productSourceFilter);
         }
+        
+        console.log('Fetching products for OrderForm...');
         const response = await apiCall(`/api/products?${params.toString()}`);
         console.log('OrderForm Products API response:', response);
         
         // Handle the correct API response structure
         const data = response.success ? response.data : [];
         setProducts(data || []);
+        
+        console.log(`Loaded ${data?.length || 0} products for OrderForm`);
       } catch (err) {
         console.error('Error fetching products:', err);
+        // Keep existing products if API fails
+        if (products.length === 0) {
+          setProducts([]);
+        }
       } finally {
         setLoading(false);
       }
@@ -161,6 +177,11 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       ...prev,
       [index]: !prev[index]
     }));
+    
+    // Reset search when opening dropdown
+    if (!openDropdowns[index]) {
+      setProductSearchTerm('');
+    }
   };
 
   const selectProduct = (index: number, productId: string) => {
@@ -173,6 +194,26 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
 
   const getSelectedProduct = (productId: string) => {
     return products.find(p => p.id === productId);
+  };
+
+  // Filter products based on search term and source filter
+  const getFilteredProducts = () => {
+    let filtered = products;
+    
+    // Apply source filter
+    if (productSourceFilter !== 'all') {
+      filtered = filtered.filter(p => p.source === productSourceFilter);
+    }
+    
+    // Apply search filter
+    if (productSearchTerm) {
+      filtered = filtered.filter(p => 
+        p.title.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(productSearchTerm.toLowerCase())
+      );
+    }
+    
+    return filtered;
   };
 
   const addItem = () => {
@@ -248,7 +289,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                 >
                   <span className="truncate">
                     {item.productId ? 
-                      `${getSelectedProduct(item.productId)?.title || 'Produkt i zgjedhur'} - $${(getSelectedProduct(item.productId)?.finalPrice || 0).toFixed(2)}` 
+                      `${getSelectedProduct(item.productId)?.title || 'Produkt i zgjedhur'} - €${(getSelectedProduct(item.productId)?.finalPrice || 0).toFixed(2)}` 
                       : 'Zgjidh Produktin'
                     }
                   </span>
@@ -258,23 +299,49 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                 {openDropdowns[index] && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {loading ? (
-                      <div className="px-3 py-2 text-sm text-gray-500">Duke ngarkuar...</div>
+                      <div className="px-3 py-2 text-sm text-gray-500 flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        Duke ngarkuar produktet...
+                      </div>
                     ) : (
-                      products.map(product => (
-                        <button
-                          key={product.id}
-                          type="button"
-                          onClick={() => selectProduct(index, product.id)}
-                          className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0 flex items-center justify-between"
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium truncate">{product.title}</div>
-                            <div className="text-xs text-gray-500 truncate">
-                              {product.category} - ${(product.finalPrice || 0).toFixed(2)} ({product.source})
+                      <>
+                        {/* Search input */}
+                        <div className="p-2 border-b border-gray-200">
+                          <input
+                            type="text"
+                            placeholder="Kërko produktet..."
+                            value={productSearchTerm}
+                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        
+                        {/* Products list */}
+                        <div className="max-h-48 overflow-y-auto">
+                          {getFilteredProducts().length > 0 ? (
+                            getFilteredProducts().map(product => (
+                              <button
+                                key={product.id}
+                                type="button"
+                                onClick={() => selectProduct(index, product.id)}
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-blue-50 hover:text-blue-700 border-b border-gray-100 last:border-b-0 flex items-center justify-between"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{product.title}</div>
+                                  <div className="text-xs text-gray-500 truncate">
+                                    {product.category} - €{(product.finalPrice || 0).toFixed(2)} ({product.source})
+                                  </div>
+                                </div>
+                              </button>
+                            ))
+                          ) : (
+                            <div className="px-3 py-2 text-sm text-gray-500">
+                              {productSearchTerm ? 'Nuk u gjetën produkte që përputhen me kërkesën' : 'Nuk ka produkte të disponueshme'}
                             </div>
-                          </div>
-                        </button>
-                      ))
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
                 )}
