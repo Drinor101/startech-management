@@ -443,14 +443,13 @@ const Reports: React.FC = () => {
         case 'services':
           response = await apiCall('/api/reports/services?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'Service ID,Customer,Problem,Status,Category,Created Date,Warranty\n';
+            csvContent = 'ID,Krijuar nga,Përcaktuar për,Klienti,Problemi,Statusi,Garancioni,Data\n';
             response.data.forEach((service: any) => {
               const customerName = service.customer?.name || 'N/A';
-              const problem = service.problem || 'N/A';
-              const category = service.category || 'N/A';
-              const warranty = service.warranty ? 'Po' : 'Jo';
+              const problem = service.problem_description || service.problem || 'N/A';
+              const warranty = service.warranty_info || 'N/A';
               const date = new Date(service.created_at).toLocaleDateString('sq-AL');
-              csvContent += service.id + ',"' + customerName + '","' + problem + '","' + service.status + '","' + category + '","' + date + '","' + warranty + '"\n';
+              csvContent += service.id + ',"' + (service.created_by || 'N/A') + '","' + (service.assigned_to || 'N/A') + '","' + customerName + '","' + problem + '","' + service.status + '","' + warranty + '","' + date + '"\n';
             });
           }
           break;
@@ -458,12 +457,25 @@ const Reports: React.FC = () => {
         case 'tasks':
           response = await apiCall('/api/reports/tasks?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'Task ID,Type,Title,Priority,Status,Created Date\n';
+            csvContent = 'ID,Krijuar nga,Përcaktuar për,Titulli,Prioriteti,Statusi,Data\n';
             response.data.forEach((task: any) => {
               const title = task.title || 'N/A';
               const priority = task.priority || 'N/A';
               const date = new Date(task.created_at).toLocaleDateString('sq-AL');
-              csvContent += task.id + ',"' + task.type + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
+              csvContent += task.id + ',"' + (task.created_by || 'N/A') + '","' + (task.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + task.status + '","' + date + '"\n';
+            });
+          }
+          
+          // Add tickets to CSV
+          const ticketsResponse = await apiCall('/api/reports/tickets?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
+          if (ticketsResponse.success && ticketsResponse.data) {
+            csvContent += '\n\nTIKETAT\n';
+            csvContent += 'ID,Krijuar nga,Përcaktuar për,Titulli,Prioriteti,Statusi,Data\n';
+            ticketsResponse.data.forEach((ticket: any) => {
+              const title = ticket.title || 'N/A';
+              const priority = ticket.priority || 'N/A';
+              const date = new Date(ticket.created_at).toLocaleDateString('sq-AL');
+              csvContent += ticket.id + ',"' + (ticket.created_by || 'N/A') + '","' + (ticket.assigned_to || 'N/A') + '","' + title + '","' + priority + '","' + ticket.status + '","' + date + '"\n';
             });
           }
           break;
@@ -471,7 +483,7 @@ const Reports: React.FC = () => {
         case 'orders':
           response = await apiCall('/api/reports/orders?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'Order ID,Customer,Status,Total,Created Date\n';
+            csvContent = 'ID,Klienti,Statusi,Totali,Data\n';
             response.data.forEach((order: any) => {
               const customerName = order.customer?.name || 'N/A';
               const total = order.total || 0;
@@ -484,7 +496,7 @@ const Reports: React.FC = () => {
         case 'products':
           response = await apiCall('/api/reports/products?startDate=' + getDateRangeStart() + '&endDate=' + getDateRangeEnd());
           if (response.success && response.data) {
-            csvContent = 'Product ID,Title,Category,Base Price,Final Price,WC Status,Created Date\n';
+            csvContent = 'ID,Titulli,Kategoria,Çmimi Bazë,Çmimi Final,Statusi WC,Data\n';
             response.data.forEach((product: any) => {
               const title = product.title || 'N/A';
               const category = product.category || 'N/A';
@@ -500,7 +512,7 @@ const Reports: React.FC = () => {
         case 'users':
           response = await apiCall('/api/users');
           if (response.success && response.data) {
-            csvContent = 'User ID,Name,Email,Role,Department,Created Date\n';
+            csvContent = 'ID,Emri,Email,Roli,Departamenti,Data\n';
             response.data.forEach((user: any) => {
               const name = user.name || 'N/A';
               const role = user.role || 'N/A';

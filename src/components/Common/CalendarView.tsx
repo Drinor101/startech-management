@@ -15,6 +15,7 @@ interface CalendarItem {
   dueDate?: string;
   completedAt?: string;
   warrantyInfo?: string;
+  customerName?: string;
 }
 
 interface CalendarViewProps {
@@ -226,6 +227,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               {item.description}
                             </div>
                           )}
+                          {item.customerName && item.customerName !== 'N/A' && (
+                            <div className="text-xs text-blue-600 mt-1 truncate">
+                              Klienti: {item.customerName}
+                            </div>
+                          )}
                           {item.warrantyInfo && item.warrantyInfo !== 'N/A' && (
                             <div className="text-xs text-green-600 mt-1 truncate">
                               Garancioni: {item.warrantyInfo}
@@ -292,6 +298,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                               {item.description && (
                                 <div className="text-xs text-gray-700 mt-1 truncate">
                                   {item.description}
+                                </div>
+                              )}
+                              {item.customerName && item.customerName !== 'N/A' && (
+                                <div className="text-xs text-blue-600 mt-1 truncate">
+                                  Klienti: {item.customerName}
                                 </div>
                               )}
                               {item.warrantyInfo && item.warrantyInfo !== 'N/A' && (

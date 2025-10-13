@@ -462,12 +462,13 @@ const ServicesList: React.FC = () => {
             description: service.problemDescription || service.problem_description || service.problem || 'N/A',
             status: service.status,
             type: 'service' as const,
-            assignedTo: service.assignedTo,
-            createdBy: service.createdBy,
+            assignedTo: service.assignedTo || service.assigned_to,
+            createdBy: service.createdBy || service.created_by,
             createdAt: service.createdAt,
             updatedAt: service.updatedAt,
             completedAt: service.completedAt,
-            warrantyInfo: service.warrantyInfo || service.warranty_info || 'N/A'
+            warrantyInfo: service.warrantyInfo || service.warranty_info || 'N/A',
+            customerName: service.customer?.name || service.customer || 'N/A'
           }))}
           onItemClick={handleViewService}
           onStatusChange={handleStatusChange}
