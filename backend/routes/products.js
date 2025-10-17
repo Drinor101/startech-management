@@ -4,15 +4,17 @@ import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Cache system for WooCommerce products
+// Cache system for WooCommerce products with memory limits
 let productsCache = {
   data: [],
   timestamp: null,
-  expiry: 2 * 60 * 1000, // Reduced to 2 minutes for testing
-  loading: false, // Track if cache is being loaded
-  loadingStartTime: null, // Track when loading started
-  lastError: null, // Track last error
-  errorCount: 0 // Track consecutive errors
+  expiry: 5 * 60 * 1000, // 5 minutes cache
+  loading: false,
+  loadingStartTime: null,
+  lastError: null,
+  errorCount: 0,
+  maxCacheSize: 1000, // Limit cache to 1000 products max
+  totalProducts: 0 // Track total products available
 };
 
 // Check if cache is valid
@@ -80,29 +82,41 @@ const getCachedProducts = async () => {
 
     const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig);
     
-    if (freshProducts && freshProducts.length > 0) {
-      const transformedProducts = freshProducts.map(product => ({
-        id: product.id.toString(),
-        image: product.images && product.images.length > 0 ? product.images[0].src : '',
-        title: product.name || 'Untitled Product',
-        category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
-        basePrice: parseFloat(product.price || 0),
-        additionalCost: 0,
-        finalPrice: parseFloat(product.price || 0),
-        supplier: 'WooCommerce',
-        wooCommerceStatus: product.status || 'draft',
-        wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
-        lastSyncDate: new Date().toISOString(),
-        source: 'WooCommerce'
-      }));
+      if (freshProducts && freshProducts.length > 0) {
+        const transformedProducts = freshProducts.map(product => ({
+          id: product.id.toString(),
+          image: product.images && product.images.length > 0 ? product.images[0].src : '',
+          title: product.name || 'Untitled Product',
+          category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
+          basePrice: parseFloat(product.price || 0),
+          additionalCost: 0,
+          finalPrice: parseFloat(product.price || 0),
+          supplier: 'WooCommerce',
+          wooCommerceStatus: product.status || 'draft',
+          wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
+          lastSyncDate: new Date().toISOString(),
+          source: 'WooCommerce'
+        }));
 
-      productsCache.data = transformedProducts;
-      productsCache.timestamp = Date.now();
-      productsCache.lastError = null;
-      productsCache.errorCount = 0; // Reset error count on success
-      console.log(`Successfully cached ${transformedProducts.length} WooCommerce products`);
-      return transformedProducts;
-    }
+        // Limit cache size to prevent memory issues
+        const limitedProducts = transformedProducts.slice(0, productsCache.maxCacheSize);
+        
+        productsCache.data = limitedProducts;
+        productsCache.timestamp = Date.now();
+        productsCache.lastError = null;
+        productsCache.errorCount = 0; // Reset error count on success
+        productsCache.totalProducts = freshProducts.length; // Store total count
+        
+        console.log(`Successfully cached ${limitedProducts.length} WooCommerce products (${freshProducts.length} total available)`);
+        
+        // Force garbage collection after large data processing
+        if (global.gc && freshProducts.length > 1000) {
+          console.log('Triggering GC after large product transformation');
+          global.gc();
+        }
+        
+        return limitedProducts;
+      }
     
     console.log('No products returned from WooCommerce API');
     return [];
@@ -125,15 +139,20 @@ const getCachedProducts = async () => {
   }
 };
 
-// Merr të gjithë produktet (WooCommerce + Manual)
+// Merr të gjithë produktet (WooCommerce + Manual) with memory optimization
 router.get('/', authenticateUser, async (req, res) => {
   try {
     console.log('Fetching products from WooCommerce API and Manual DB...');
     
-    const { page = 1, limit, source, search, forceRefresh } = req.query;
-    // If no limit is specified, get all products (no pagination)
-    const shouldPaginate = limit !== undefined;
-    const pageLimit = shouldPaginate ? parseInt(limit) : 10000; // Large number for "all"
+    const { page = 1, limit = 25, source, search, forceRefresh } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    
+    // Enforce reasonable limits to prevent memory issues
+    const maxLimit = 100; // Maximum products per request
+    const safeLimit = Math.min(limitNum, maxLimit);
+    
+    console.log(`Request: page=${pageNum}, limit=${safeLimit}, source=${source || 'all'}`);
 
     let allProducts = [];
 
@@ -151,6 +170,7 @@ router.get('/', authenticateUser, async (req, res) => {
           productsCache.loadingStartTime = null;
           productsCache.lastError = null;
           productsCache.errorCount = 0;
+          productsCache.totalProducts = 0;
         }
         
         const cachedProducts = await getCachedProducts();
@@ -217,30 +237,31 @@ router.get('/', authenticateUser, async (req, res) => {
       );
     }
 
-    // 5. Apply pagination only if limit is specified
-    let finalProducts = allProducts;
-    let paginationInfo = null;
+    // 5. Apply pagination with memory-safe limits
+    const startIndex = (pageNum - 1) * safeLimit;
+    const endIndex = startIndex + safeLimit;
+    const finalProducts = allProducts.slice(startIndex, endIndex);
     
-    if (shouldPaginate) {
-      const startIndex = (parseInt(page) - 1) * parseInt(limit);
-      const endIndex = startIndex + parseInt(limit);
-      finalProducts = allProducts.slice(startIndex, endIndex);
-      
-      paginationInfo = {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: allProducts.length,
-        pages: Math.ceil(allProducts.length / parseInt(limit))
-      };
-    }
+    const paginationInfo = {
+      page: pageNum,
+      limit: safeLimit,
+      total: allProducts.length,
+      pages: Math.ceil(allProducts.length / safeLimit)
+    };
 
-    console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length}${shouldPaginate ? ' (paginated)' : ' (all)'}`);
+    console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length} (paginated)`);
+
+    // Force garbage collection if memory usage is high
+    if (global.gc && allProducts.length > 500) {
+      console.log('Triggering garbage collection due to large dataset');
+      global.gc();
+    }
 
     res.json({
       success: true,
       data: finalProducts,
       pagination: paginationInfo,
-      message: `Found ${finalProducts.length} products${shouldPaginate ? ` (${allProducts.length} total)` : ''}`
+      message: `Found ${finalProducts.length} products (${allProducts.length} total)`
     });
 
   } catch (error) {
@@ -564,22 +585,24 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
   }
 });
 
-// Fetch products from WooCommerce API with retry logic
+// Fetch products from WooCommerce API with memory optimization and limits
 async function fetchWooCommerceProducts(config, retryCount = 0) {
-  const maxRetries = 2; // Reduced from 3 to 2
-  const timeout = 15000; // Reduced from 30s to 15s
+  const maxRetries = 2;
+  const timeout = 10000; // Reduced to 10s
+  const maxProducts = 2000; // Limit total products to prevent memory issues
+  const perPage = 50; // Reduced from 100 to 50
   
   try {
-    console.log(`Fetching all products from WooCommerce... (attempt ${retryCount + 1})`);
+    console.log(`Fetching WooCommerce products with memory limits... (attempt ${retryCount + 1})`);
     const products = [];
     let page = 1;
-    const perPage = 100;
+    let totalFetched = 0;
     
-    while (true) {
+    while (totalFetched < maxProducts) {
       const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
       const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
       
-      console.log(`Fetching page ${page} from: ${url}`);
+      console.log(`Fetching page ${page} (${totalFetched}/${maxProducts} products)...`);
       
       // Create AbortController for timeout
       const controller = new AbortController();
@@ -604,24 +627,41 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
         const pageProducts = await response.json();
         
         if (pageProducts.length === 0) {
+          console.log('No more products available');
           break; // No more products
         }
         
+        // Add products with memory check
         products.push(...pageProducts);
+        totalFetched += pageProducts.length;
         page++;
         
-        // Safety limit to prevent infinite loops (reduced to 500 pages = 50,000 products)
-        if (page > 500) {
-          console.log('Reached page limit (500), stopping...');
+        // Memory management: force GC every 500 products
+        if (totalFetched % 500 === 0 && global.gc) {
+          console.log(`Memory management: processed ${totalFetched} products, triggering GC`);
+          global.gc();
+        }
+        
+        // Safety limit to prevent infinite loops
+        if (page > 50) { // Reduced from 500 to 50 pages
+          console.log('Reached page limit (50), stopping...');
           break;
         }
+        
+        // Small delay to prevent overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
       } catch (fetchError) {
         clearTimeout(timeoutId);
         throw fetchError;
       }
     }
     
-    console.log(`Fetched ${products.length} products from WooCommerce`);
+    console.log(`Fetched ${products.length} products from WooCommerce (limited to ${maxProducts})`);
+    
+    // Update cache with total count
+    productsCache.totalProducts = products.length;
+    
     return products;
     
   } catch (error) {
@@ -629,7 +669,7 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
     
     // Retry logic with shorter delays
     if (retryCount < maxRetries) {
-      const delay = Math.pow(2, retryCount) * 500; // Reduced delays: 500ms, 1s
+      const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s
       console.log(`Retrying in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return fetchWooCommerceProducts(config, retryCount + 1);

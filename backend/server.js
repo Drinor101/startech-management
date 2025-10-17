@@ -6,6 +6,32 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Enable garbage collection for memory management
+if (global.gc) {
+  console.log('Garbage collection is available');
+} else {
+  console.log('Garbage collection is not available. Start with --expose-gc flag for better memory management.');
+}
+
+// Memory monitoring function
+const logMemoryUsage = (label = 'Memory Usage') => {
+  const used = process.memoryUsage();
+  console.log(`${label}:`, {
+    rss: `${Math.round(used.rss / 1024 / 1024 * 100) / 100} MB`,
+    heapTotal: `${Math.round(used.heapTotal / 1024 / 1024 * 100) / 100} MB`,
+    heapUsed: `${Math.round(used.heapUsed / 1024 / 1024 * 100) / 100} MB`,
+    external: `${Math.round(used.external / 1024 / 1024 * 100) / 100} MB`
+  });
+  
+  // Warn if memory usage is high
+  if (used.heapUsed > 400 * 1024 * 1024) { // 400MB
+    console.warn('⚠️  HIGH MEMORY USAGE DETECTED! Consider optimizing or restarting the service.');
+  }
+};
+
+// Log initial memory usage
+logMemoryUsage('Initial Memory Usage');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -74,12 +100,23 @@ const setupRoutes = async () => {
 // Setup routes
 await setupRoutes();
 
-// Health check
+// Health check with memory monitoring
 app.get('/api/health', (req, res) => {
+  const used = process.memoryUsage();
+  const memoryInfo = {
+    rss: Math.round(used.rss / 1024 / 1024 * 100) / 100,
+    heapTotal: Math.round(used.heapTotal / 1024 / 1024 * 100) / 100,
+    heapUsed: Math.round(used.heapUsed / 1024 / 1024 * 100) / 100,
+    external: Math.round(used.external / 1024 / 1024 * 100) / 100,
+    unit: 'MB'
+  };
+  
   res.json({ 
     status: 'OK', 
     message: 'Startech Backend API is running',
     timestamp: new Date().toISOString(),
+    memory: memoryInfo,
+    uptime: process.uptime(),
     cors: {
       origin: req.headers.origin,
       allowedOrigins: [
@@ -133,7 +170,30 @@ app.use('*', (req, res) => {
   });
 });
 
+// Memory monitoring endpoint
+app.get('/api/memory', (req, res) => {
+  const used = process.memoryUsage();
+  const memoryInfo = {
+    rss: Math.round(used.rss / 1024 / 1024 * 100) / 100,
+    heapTotal: Math.round(used.heapTotal / 1024 / 1024 * 100) / 100,
+    heapUsed: Math.round(used.heapUsed / 1024 / 1024 * 100) / 100,
+    external: Math.round(used.external / 1024 / 1024 * 100) / 100,
+    unit: 'MB',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString()
+  };
+  
+  res.json(memoryInfo);
+});
+
+// Periodic memory monitoring (every 5 minutes)
+setInterval(() => {
+  logMemoryUsage('Periodic Memory Check');
+}, 5 * 60 * 1000);
+
 app.listen(PORT, () => {
   console.log(`🚀 Startech Backend API po funksionon në portin ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  console.log(`🧠 Memory monitoring: http://localhost:${PORT}/api/memory`);
+  logMemoryUsage('Server Started');
 });
