@@ -13,7 +13,7 @@ let productsCache = {
   loadingStartTime: null,
   lastError: null,
   errorCount: 0,
-  maxCacheSize: 2000, // Increased to 2000 products max
+  maxCacheSize: 10000, // Increased to 10000 products max
   totalProducts: 0, // Track total products available
   fallbackData: [], // Keep last successful data as fallback
   lastSuccessfulFetch: null, // Track last successful fetch time
@@ -115,12 +115,9 @@ const getCachedProducts = async () => {
           source: 'WooCommerce'
         }));
 
-        // Limit cache size to prevent memory issues
-        const limitedProducts = transformedProducts.slice(0, productsCache.maxCacheSize);
-        
-        // Update cache and fallback data
-        productsCache.data = limitedProducts;
-        productsCache.fallbackData = limitedProducts; // Keep as fallback
+        // Update cache and fallback data with all products
+        productsCache.data = transformedProducts;
+        productsCache.fallbackData = transformedProducts; // Keep as fallback
         productsCache.timestamp = Date.now();
         productsCache.lastSuccessfulFetch = Date.now();
         productsCache.lastError = null;
@@ -128,7 +125,7 @@ const getCachedProducts = async () => {
         productsCache.consecutiveFailures = 0; // Reset consecutive failures
         productsCache.totalProducts = freshProducts.length; // Store total count
         
-        console.log(`Successfully cached ${limitedProducts.length} WooCommerce products (${freshProducts.length} total available)`);
+        console.log(`Successfully cached ${transformedProducts.length} WooCommerce products`);
         
         // Force garbage collection after large data processing
         if (global.gc && freshProducts.length > 1000) {
@@ -136,7 +133,7 @@ const getCachedProducts = async () => {
           global.gc();
         }
         
-        return limitedProducts;
+        return transformedProducts;
       }
     
     console.log('No products returned from WooCommerce API');
@@ -664,7 +661,7 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
 async function fetchWooCommerceProducts(config, retryCount = 0) {
   const maxRetries = 2;
   const timeout = 10000; // Reduced to 10s
-  const maxProducts = 2000; // Limit total products to prevent memory issues
+  const maxProducts = 50000; // Increased limit to allow more products
   const perPage = 50; // Reduced from 100 to 50
   
   try {
@@ -718,8 +715,8 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
         }
         
         // Safety limit to prevent infinite loops
-        if (page > 50) { // Reduced from 500 to 50 pages
-          console.log('Reached page limit (50), stopping...');
+        if (page > 1000) { // Increased page limit to allow more products
+          console.log('Reached page limit (1000), stopping...');
           break;
         }
         
@@ -732,7 +729,7 @@ async function fetchWooCommerceProducts(config, retryCount = 0) {
       }
     }
     
-    console.log(`Fetched ${products.length} products from WooCommerce (limited to ${maxProducts})`);
+    console.log(`Fetched ${products.length} products from WooCommerce`);
     
     // Update cache with total count
     productsCache.totalProducts = products.length;
