@@ -19,6 +19,22 @@ const OrdersList: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const { canCreate, canEdit, canDelete } = usePermissions();
+
+  // Check if there's a selected order from search
+  useEffect(() => {
+    const selectedOrderId = sessionStorage.getItem('selectedOrderId');
+    if (selectedOrderId && orders.length > 0) {
+      const order = orders.find(o => o.id === selectedOrderId);
+      if (order) {
+        setSelectedOrder(order);
+        setIsEditMode(false);
+        setIsModalOpen(true);
+        // Clear the selected order ID from session storage
+        sessionStorage.removeItem('selectedOrderId');
+      }
+    }
+  }, [orders]);
+
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;

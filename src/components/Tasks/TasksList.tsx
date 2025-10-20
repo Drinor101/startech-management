@@ -21,6 +21,21 @@ const TasksList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Check if there's a selected task from search
+  useEffect(() => {
+    const selectedTaskId = sessionStorage.getItem('selectedTaskId');
+    if (selectedTaskId && allTasks.length > 0) {
+      const task = allTasks.find(t => t.id === selectedTaskId);
+      if (task) {
+        setSelectedTask(task);
+        setIsEditMode(false);
+        setIsModalOpen(true);
+        // Clear the selected task ID from session storage
+        sessionStorage.removeItem('selectedTaskId');
+      }
+    }
+  }, [allTasks]);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;

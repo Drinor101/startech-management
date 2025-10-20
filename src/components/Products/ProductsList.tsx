@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
@@ -15,6 +15,21 @@ const ProductsList: React.FC = () => {
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
+
+  // Check if there's a selected product from search
+  useEffect(() => {
+    const selectedProductId = sessionStorage.getItem('selectedProductId');
+    if (selectedProductId && products.length > 0) {
+      const product = products.find(p => p.id === selectedProductId);
+      if (product) {
+        setSelectedProduct(product);
+        setIsEditMode(false);
+        setIsFormOpen(true);
+        // Clear the selected product ID from session storage
+        sessionStorage.removeItem('selectedProductId');
+      }
+    }
+  }, [products]);
 
   // React Query hooks
   const { 

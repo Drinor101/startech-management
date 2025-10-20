@@ -188,21 +188,33 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
       switch (result.type) {
         case 'task':
           onModuleChange('tasks');
+          // Store the selected task ID for the tasks module to use
+          sessionStorage.setItem('selectedTaskId', result.id);
           break;
         case 'ticket':
           onModuleChange('tickets');
+          // Store the selected ticket ID for the tickets module to use
+          sessionStorage.setItem('selectedTicketId', result.id);
           break;
         case 'service':
           onModuleChange('services');
+          // Store the selected service ID for the services module to use
+          sessionStorage.setItem('selectedServiceId', result.id);
           break;
         case 'order':
           onModuleChange('orders');
+          // Store the selected order ID for the orders module to use
+          sessionStorage.setItem('selectedOrderId', result.id);
           break;
         case 'product':
           onModuleChange('products');
+          // Store the selected product ID for the products module to use
+          sessionStorage.setItem('selectedProductId', result.id);
           break;
         case 'customer':
           onModuleChange('customers');
+          // Store the selected customer ID for the customers module to use
+          sessionStorage.setItem('selectedCustomerId', result.id);
           break;
         default:
           console.log('Unknown type:', result.type);

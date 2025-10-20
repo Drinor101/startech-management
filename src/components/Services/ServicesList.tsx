@@ -21,6 +21,22 @@ const ServicesList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  // Check if there's a selected service from search
+  useEffect(() => {
+    const selectedServiceId = sessionStorage.getItem('selectedServiceId');
+    if (selectedServiceId && services.length > 0) {
+      const service = services.find(s => s.id === selectedServiceId);
+      if (service) {
+        setSelectedService(service);
+        setIsEditMode(false);
+        setIsModalOpen(true);
+        // Clear the selected service ID from session storage
+        sessionStorage.removeItem('selectedServiceId');
+      }
+    }
+  }, [services]);
+
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;

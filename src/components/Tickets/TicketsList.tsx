@@ -60,6 +60,21 @@ const TicketsList: React.FC = () => {
     fetchTickets();
   }, []);
 
+  // Check if there's a selected ticket from search
+  useEffect(() => {
+    const selectedTicketId = sessionStorage.getItem('selectedTicketId');
+    if (selectedTicketId && tickets.length > 0) {
+      const ticket = tickets.find(t => t.id === selectedTicketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+        setIsEditMode(false);
+        setIsModalOpen(true);
+        // Clear the selected ticket ID from session storage
+        sessionStorage.removeItem('selectedTicketId');
+      }
+    }
+  }, [tickets]);
+
   const fetchTickets = async () => {
     try {
       setLoading(true);

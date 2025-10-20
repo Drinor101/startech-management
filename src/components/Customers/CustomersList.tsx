@@ -16,6 +16,22 @@ const CustomersList: React.FC = () => {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Check if there's a selected customer from search
+  useEffect(() => {
+    const selectedCustomerId = sessionStorage.getItem('selectedCustomerId');
+    if (selectedCustomerId && customers.length > 0) {
+      const customer = customers.find(c => c.id === selectedCustomerId);
+      if (customer) {
+        setSelectedCustomer(customer);
+        setIsEditMode(false);
+        setIsCustomerModalOpen(true);
+        // Clear the selected customer ID from session storage
+        sessionStorage.removeItem('selectedCustomerId');
+      }
+    }
+  }, [customers]);
+
   const [confirmationModal, setConfirmationModal] = useState<{
     isOpen: boolean;
     customer: any | null;

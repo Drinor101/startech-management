@@ -50,6 +50,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   const [tasks, setTasks] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   
   // Modal states for forms
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -112,6 +113,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       setTasks(tasksDataArray);
       setTickets(ticketsDataArray);
       setOrders(ordersDataArray);
+      setCustomers(customers);
 
       // Update stats with real data
       const activeServices = servicesDataArray.filter((s: any) => s.status === 'in-progress');
