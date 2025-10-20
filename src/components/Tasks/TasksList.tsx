@@ -203,68 +203,76 @@ const TasksList: React.FC = () => {
       id: 'todo',
       title: 'Për të bërë',
       items: filteredTasks.filter(task => task.status === 'todo'),
-      color: 'bg-gray-400'
+      color: 'bg-gray-100 text-gray-800'
     },
     {
       id: 'in-progress',
       title: 'Në Progres',
       items: filteredTasks.filter(task => task.status === 'in-progress'),
-      color: 'bg-blue-400'
+      color: 'bg-blue-100 text-blue-800'
     },
     {
       id: 'review',
       title: 'Rishikim',
       items: filteredTasks.filter(task => task.status === 'review'),
-      color: 'bg-purple-400'
+      color: 'bg-purple-100 text-purple-800'
     },
     {
       id: 'done',
       title: 'Përfunduar',
       items: filteredTasks.filter(task => task.status === 'done'),
-      color: 'bg-green-400'
+      color: 'bg-green-100 text-green-800'
     }
   ];
 
   const renderTaskCard = (task: Task) => (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <h4 className="font-medium text-gray-900 text-sm">{task.title}</h4>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+            TSK
+          </span>
+          <span className="font-medium text-gray-900 text-sm">{task.id}</span>
+        </div>
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(task.priority)}`}>
           {translatePriority(task.priority)}
         </span>
       </div>
       
-      {task.description && (
-        <p className="text-sm text-gray-600 line-clamp-2">{task.description}</p>
-      )}
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-gray-900 mb-1">{task.title}</h4>
+        {task.description && (
+          <p className="text-xs text-gray-600 line-clamp-2">{task.description}</p>
+        )}
+      </div>
       
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
         <div className="flex items-center gap-1">
           <User className="w-3 h-3" />
-          <span>{task.assignedTo}</span>
+          <span>{task.assignedTo || 'N/A'}</span>
         </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          <span>{new Date(task.createdAt).toLocaleDateString()}</span>
+          <span>{new Date(task.createdAt).toLocaleDateString('sq-AL')}</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <span className="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-          Task
+      <div className="flex items-center justify-between">
+        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getStatusColor(task.status)}`}>
+          {translateStatus(task.status)}
         </span>
-        {task.status === 'done' && task.completedAt && (
-          <div className="flex items-center gap-1 text-xs text-gray-500">
-            <Calendar className="w-3 h-3" />
-            <span>Përfunduar: {formatCompletionTime(task.completedAt)}</span>
-          </div>
-        )}
-        <button
-          onClick={() => handleViewTask(task)}
-          className="ml-auto p-1 hover:bg-gray-100 rounded"
-        >
-          <Eye className="w-4 h-4 text-gray-400" />
-        </button>
+        <div className="flex items-center gap-1">
+          {task.dueDate && (
+            <Calendar className="w-3 h-3 text-orange-500" title={`Afati: ${new Date(task.dueDate).toLocaleDateString('sq-AL')}`} />
+          )}
+          <button
+            onClick={() => handleViewTask(task)}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Shiko detajet"
+          >
+            <Eye className="w-4 h-4 text-gray-400" />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -395,16 +403,26 @@ const TasksList: React.FC = () => {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">
-                          {task.assignedTo || task.assigned_to || 'N/A'}
-                        </span>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {task.assignedTo || task.assigned_to || 'N/A'}
+                          </div>
+                          {task.assignedTo && (
+                            <div className="text-xs text-gray-500">Përcaktuar</div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900">{task.title}</div>
+                      <div className="text-sm font-medium text-gray-900 mb-1">{task.title}</div>
                       {task.description && (
-                        <div className="text-sm text-gray-500 truncate max-w-xs">
+                        <div className="text-xs text-gray-500 line-clamp-2 max-w-xs">
                           {task.description}
+                        </div>
+                      )}
+                      {task.dueDate && (
+                        <div className="text-xs text-orange-600 mt-1">
+                          Afati: {new Date(task.dueDate).toLocaleDateString('sq-AL')}
                         </div>
                       )}
                     </td>
@@ -435,17 +453,27 @@ const TasksList: React.FC = () => {
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">
-                          {new Date(task.createdAt).toLocaleDateString('sq-AL')}
-                        </span>
+                        <div>
+                          <div className="text-sm text-gray-900">
+                            {new Date(task.createdAt).toLocaleDateString('sq-AL')}
+                          </div>
+                          {task.dueDate && (
+                            <div className="text-xs text-orange-600">
+                              Afati: {new Date(task.dueDate).toLocaleDateString('sq-AL')}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                       <div className="flex items-center gap-2">
+                        {task.dueDate && (
+                          <Calendar className="w-4 h-4 text-orange-500" title={`Afati: ${new Date(task.dueDate).toLocaleDateString('sq-AL')}`} />
+                        )}
                         <button
                           onClick={() => handleViewTask(task)}
                           className="text-blue-600 hover:text-blue-900 p-1"
-                          title="Shih"
+                          title="Shih detajet"
                         >
                           <Eye className="w-4 h-4" />
                         </button>

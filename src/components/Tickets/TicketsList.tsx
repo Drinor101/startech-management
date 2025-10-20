@@ -200,31 +200,31 @@ const TicketsList: React.FC = () => {
         id: 'open',
         title: 'Hapur',
         items: filteredTickets.filter(ticket => ticket.status === 'open'),
-        color: 'bg-blue-500'
+        color: 'bg-blue-100 text-blue-800'
       },
       {
         id: 'in-progress',
         title: 'Në progres',
         items: filteredTickets.filter(ticket => ticket.status === 'in-progress'),
-        color: 'bg-yellow-500'
+        color: 'bg-yellow-100 text-yellow-800'
       },
       {
         id: 'waiting-customer',
         title: 'Në pritje të klientit',
         items: filteredTickets.filter(ticket => ticket.status === 'waiting-customer'),
-        color: 'bg-orange-500'
+        color: 'bg-orange-100 text-orange-800'
       },
       {
         id: 'resolved',
         title: 'Zgjidhur',
         items: filteredTickets.filter(ticket => ticket.status === 'resolved'),
-        color: 'bg-green-500'
+        color: 'bg-green-100 text-green-800'
       },
       {
         id: 'closed',
         title: 'Mbyllur',
         items: filteredTickets.filter(ticket => ticket.status === 'closed'),
-        color: 'bg-gray-500'
+        color: 'bg-gray-100 text-gray-800'
       }
     ];
     return columns;
@@ -232,53 +232,53 @@ const TicketsList: React.FC = () => {
 
   // Render ticket card for kanban
   const renderTicketCard = (ticket: Ticket) => (
-    <div className="space-y-2">
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-gray-900 truncate">{ticket.title}</h4>
-          <p className="text-xs text-gray-500 mt-1">{ticket.id}</p>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+            TKT
+          </span>
+          <span className="font-medium text-gray-900 text-sm">{ticket.id}</span>
+        </div>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
+          {getPriorityText(ticket.priority)}
+        </span>
+      </div>
+      
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-gray-900 mb-1">{ticket.title}</h4>
+        {ticket.description && (
+          <p className="text-xs text-gray-600 line-clamp-2">{ticket.description}</p>
+        )}
+      </div>
+      
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+        <div className="flex items-center gap-1">
+          <User className="w-3 h-3" />
+          <span>{ticket.assignedTo || ticket.assigned_to || 'N/A'}</span>
         </div>
         <div className="flex items-center gap-1">
-          <AlertCircle className="w-3 h-3 text-gray-400" />
-          <span className={`inline-flex px-1.5 py-0.5 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
-            {getPriorityText(ticket.priority)}
-          </span>
+          <Clock className="w-3 h-3" />
+          <span>{new Date(ticket.createdAt).toLocaleDateString('sq-AL')}</span>
         </div>
       </div>
       
-      {ticket.description && (
-        <p className="text-xs text-gray-600 line-clamp-2">{ticket.description}</p>
-      )}
-      
-      <div className="flex items-center justify-between text-xs text-gray-500">
-        <span>{ticket.createdBy || 'N/A'}</span>
-        <span>{new Date(ticket.createdAt).toLocaleDateString('sq-AL')}</span>
-      </div>
-      
-      <div className="flex items-center gap-2 pt-2">
-        <button
-          onClick={() => handleViewTicket(ticket)}
-          className="text-blue-600 hover:text-blue-900 p-1"
-          title="Shih"
-        >
-          <Eye className="w-3 h-3" />
-        </button>
-        <button
-          onClick={() => handleEditTicket(ticket)}
-          className="text-green-600 hover:text-green-900 p-1"
-          title="Modifiko"
-        >
-          <Edit className="w-3 h-3" />
-        </button>
-        {canDelete('tickets') && (
+      <div className="flex items-center justify-between">
+        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getStatusColor(ticket.status)}`}>
+          {getStatusText(ticket.status)}
+        </span>
+        <div className="flex items-center gap-1">
+          {ticket.customer && (
+            <User className="w-3 h-3 text-blue-500" title={`Klienti: ${ticket.customer.name}`} />
+          )}
           <button
-            onClick={() => handleDeleteTicket(ticket)}
-            className="text-red-600 hover:text-red-900 p-1"
-            title="Fshij"
+            onClick={() => handleViewTicket(ticket)}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Shiko detajet"
           >
-            <Trash2 className="w-3 h-3" />
+            <Eye className="w-4 h-4 text-gray-400" />
           </button>
-        )}
+        </div>
       </div>
     </div>
   );

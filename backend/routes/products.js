@@ -228,6 +228,42 @@ router.get('/', authenticateUser, async (req, res) => {
             
             allProducts = [...allProducts, ...transformedProducts];
             console.log(`Added ${transformedProducts.length} WooCommerce products (page ${pageNum})`);
+            
+            // Get total count from WooCommerce API headers
+            try {
+              const totalCountUrl = `${wooCommerceConfig.url}/wp-json/wc/v3/products?per_page=1&page=1&status=publish`;
+              const auth = Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64');
+              const totalCountResponse = await fetch(totalCountUrl, {
+                method: 'GET',
+                headers: {
+                  'Authorization': `Basic ${auth}`,
+                  'Content-Type': 'application/json'
+                }
+              });
+              
+              if (totalCountResponse.ok) {
+                const totalCount = totalCountResponse.headers.get('X-WP-Total');
+                if (totalCount) {
+                  productsCache.totalProducts = parseInt(totalCount);
+                  console.log(`Total WooCommerce products: ${totalCount}`);
+                } else {
+                  // If no X-WP-Total header, try to get from response
+                  const totalPages = totalCountResponse.headers.get('X-WP-TotalPages');
+                  if (totalPages) {
+                    // Estimate total based on pages (assuming 100 per page max)
+                    productsCache.totalProducts = parseInt(totalPages) * 100;
+                    console.log(`Estimated total WooCommerce products: ${productsCache.totalProducts} (from ${totalPages} pages)`);
+                  } else {
+                    console.log('No total count available from WooCommerce API');
+                  }
+                }
+              } else {
+                console.log('Failed to get total count from WooCommerce API');
+              }
+            } catch (totalCountError) {
+              console.log('Could not fetch total count, will calculate dynamically:', totalCountError.message);
+              // Don't set any hardcoded number, let it be completely dynamic
+            }
           }
         } else {
           // For 'all' source, use cached products
@@ -306,11 +342,58 @@ router.get('/', authenticateUser, async (req, res) => {
     
     if (source === 'WooCommerce') {
       finalProducts = allProducts; // Already paginated from WooCommerce API
+      
+      // Calculate dynamic total based on current page and products
+      let dynamicTotal = productsCache.totalProducts;
+      if (!dynamicTotal) {
+        // If we don't have total count from API, calculate dynamically
+        if (allProducts.length === safeLimit) {
+          // If we got a full page, there might be more products
+          // Try to fetch next page to see if there are more products
+          try {
+            const nextPageUrl = `${wooCommerceConfig.url}/wp-json/wc/v3/products?per_page=1&page=${pageNum + 1}&status=publish`;
+            const auth = Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64');
+            const nextPageResponse = await fetch(nextPageUrl, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Basic ${auth}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            if (nextPageResponse.ok) {
+              const nextPageProducts = await nextPageResponse.json();
+              if (nextPageProducts.length > 0) {
+                // There are more products, estimate total
+                dynamicTotal = pageNum * safeLimit + 1; // At least one more
+                console.log(`Dynamic total estimated: ${dynamicTotal} (found more products on page ${pageNum + 1})`);
+              } else {
+                // No more products, this is the last page
+                dynamicTotal = (pageNum - 1) * safeLimit + allProducts.length;
+                console.log(`Dynamic total calculated: ${dynamicTotal} (last page)`);
+              }
+            } else {
+              // Can't check next page, assume this is the last page
+              dynamicTotal = (pageNum - 1) * safeLimit + allProducts.length;
+              console.log(`Dynamic total calculated: ${dynamicTotal} (can't check next page)`);
+            }
+          } catch (nextPageError) {
+            // Error checking next page, assume this is the last page
+            dynamicTotal = (pageNum - 1) * safeLimit + allProducts.length;
+            console.log(`Dynamic total calculated: ${dynamicTotal} (error checking next page)`);
+          }
+        } else {
+          // Partial page, this is the last page
+          dynamicTotal = (pageNum - 1) * safeLimit + allProducts.length;
+          console.log(`Dynamic total calculated: ${dynamicTotal} (partial page)`);
+        }
+      }
+      
       paginationInfo = {
         page: pageNum,
         limit: safeLimit,
-        total: allProducts.length, // This is just the current page count
-        pages: Math.ceil(allProducts.length / safeLimit)
+        total: dynamicTotal,
+        pages: Math.ceil(dynamicTotal / safeLimit)
       };
     } else {
       // For other sources, apply pagination
