@@ -13,7 +13,6 @@ import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
 import UsersList from './components/Users/UsersList';
 import CustomersList from './components/Customers/CustomersList';
-import CommentsList from './components/Comments/CommentsList';
 
 // New component for "Të gjitha" (All Tasks) - Uses real data like Dashboard
 const AllTasks: React.FC = () => {
@@ -324,8 +323,6 @@ const AppContent: React.FC = () => {
         return <UsersList />;
       case 'customers':
         return <CustomersList />;
-      case 'comments':
-        return <CommentsList onNavigate={setActiveModule} />;
       case 'settings':
         return (
           <div className="p-6">

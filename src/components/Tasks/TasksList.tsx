@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, Calendar, Filter, ChevronDown } from 'lucide-react';
+import { Grid3X3, List, Plus, Eye, Edit, Trash2, AlertCircle, Clock, User, Calendar, Filter, ChevronDown, MessageSquare } from 'lucide-react';
 import { Task, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import CalendarView from '../Common/CalendarView';
 import Modal from '../Common/Modal';
 import TaskForm from './TaskForm';
+import CommentModal from '../Common/CommentModal';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
@@ -21,6 +22,8 @@ const TasksList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [selectedTaskForComment, setSelectedTaskForComment] = useState<Task | null>(null);
 
   // Check if there's a selected task from search
   useEffect(() => {
@@ -151,6 +154,11 @@ const TasksList: React.FC = () => {
     });
   };
 
+  const handleOpenCommentModal = (task: Task) => {
+    setSelectedTaskForComment(task);
+    setIsCommentModalOpen(true);
+  };
+
 
   const confirmDeleteTask = async () => {
     if (!confirmationModal.task) return;
@@ -271,6 +279,13 @@ const TasksList: React.FC = () => {
             title="Shiko detajet"
           >
             <Eye className="w-4 h-4 text-gray-400" />
+          </button>
+          <button
+            onClick={() => handleOpenCommentModal(task)}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Shto Koment"
+          >
+            <MessageSquare className="w-4 h-4 text-blue-400" />
           </button>
         </div>
       </div>
@@ -484,6 +499,13 @@ const TasksList: React.FC = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => handleOpenCommentModal(task)}
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shto Koment"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
                         {canDelete('tasks') && (
                           <button
                             onClick={() => handleDeleteTask(task)}
@@ -692,6 +714,20 @@ const TasksList: React.FC = () => {
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
+
+      {/* Comment Modal */}
+      {selectedTaskForComment && (
+        <CommentModal
+          isOpen={isCommentModalOpen}
+          onClose={() => {
+            setIsCommentModalOpen(false);
+            setSelectedTaskForComment(null);
+          }}
+          entityType="task"
+          entityId={selectedTaskForComment.id}
+          entityTitle={selectedTaskForComment.title}
+        />
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

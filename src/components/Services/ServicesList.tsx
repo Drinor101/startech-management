@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Grid3X3, List, Eye, Edit, Trash2, AlertCircle, Clock, User, QrCode, Mail, Calendar } from 'lucide-react';
+import { Grid3X3, List, Eye, Edit, Trash2, AlertCircle, Clock, User, QrCode, Mail, Calendar, MessageSquare } from 'lucide-react';
 import { Service, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
 import KanbanBoard from '../Common/KanbanBoard';
 import CalendarView from '../Common/CalendarView';
 import Modal from '../Common/Modal';
 import ServiceForm from './ServiceForm';
+import CommentModal from '../Common/CommentModal';
 import { usePermissions } from '../../hooks/usePermissions';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
@@ -21,6 +22,8 @@ const ServicesList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [selectedServiceForComment, setSelectedServiceForComment] = useState<Service | null>(null);
 
   // Check if there's a selected service from search
   useEffect(() => {
@@ -169,6 +172,11 @@ const ServicesList: React.FC = () => {
     }
   };
 
+  const handleOpenCommentModal = (service: Service) => {
+    setSelectedServiceForComment(service);
+    setIsCommentModalOpen(true);
+  };
+
   const handleStatusChange = async (serviceId: string, newStatus: string) => {
     try {
       await apiCall(`${apiConfig.endpoints.services}/${serviceId}`, {
@@ -262,6 +270,13 @@ const ServicesList: React.FC = () => {
             title="Shiko detajet"
           >
             <Eye className="w-4 h-4 text-gray-400" />
+          </button>
+          <button
+            onClick={() => handleOpenCommentModal(service)}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Shto Koment"
+          >
+            <MessageSquare className="w-4 h-4 text-blue-400" />
           </button>
         </div>
       </div>
@@ -481,6 +496,13 @@ const ServicesList: React.FC = () => {
                           <Edit className="w-4 h-4" />
                         </button>
                       )}
+                      <button
+                        onClick={() => handleOpenCommentModal(service)}
+                        className="text-blue-600 hover:text-blue-900 p-1"
+                        title="Shto Koment"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </button>
                       {canDelete('services') && (
                         <button
                           onClick={() => handleDeleteService(service)}
@@ -695,6 +717,20 @@ const ServicesList: React.FC = () => {
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
+
+      {/* Comment Modal */}
+      {selectedServiceForComment && (
+        <CommentModal
+          isOpen={isCommentModalOpen}
+          onClose={() => {
+            setIsCommentModalOpen(false);
+            setSelectedServiceForComment(null);
+          }}
+          entityType="service"
+          entityId={selectedServiceForComment.id}
+          entityTitle={selectedServiceForComment.customer.name}
+        />
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

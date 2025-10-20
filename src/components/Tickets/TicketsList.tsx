@@ -15,7 +15,8 @@ import {
   Calendar,
   Filter,
   ChevronDown,
-  User
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { Ticket, ViewMode } from '../../types';
 import { apiCall, apiConfig } from '../../config/api';
@@ -23,6 +24,7 @@ import TicketForm from './TicketForm';
 import Modal from '../Common/Modal';
 import KanbanBoard from '../Common/KanbanBoard';
 import CalendarView from '../Common/CalendarView';
+import CommentModal from '../Common/CommentModal';
 import Notification from '../Common/Notification';
 import ConfirmationModal from '../Common/ConfirmationModal';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -39,6 +41,8 @@ const TicketsList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
+  const [selectedTicketForComment, setSelectedTicketForComment] = useState<Ticket | null>(null);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
@@ -278,6 +282,13 @@ const TicketsList: React.FC = () => {
           >
             <Eye className="w-4 h-4 text-gray-400" />
           </button>
+          <button
+            onClick={() => handleOpenCommentModal(ticket)}
+            className="p-1 hover:bg-gray-100 rounded"
+            title="Shto Koment"
+          >
+            <MessageSquare className="w-4 h-4 text-blue-400" />
+          </button>
         </div>
       </div>
     </div>
@@ -288,6 +299,11 @@ const TicketsList: React.FC = () => {
       isOpen: true,
       ticket: ticket
     });
+  };
+
+  const handleOpenCommentModal = (ticket: Ticket) => {
+    setSelectedTicketForComment(ticket);
+    setIsCommentModalOpen(true);
   };
 
   const confirmDeleteTicket = async () => {
@@ -537,6 +553,13 @@ const TicketsList: React.FC = () => {
                         >
                           <Edit className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => handleOpenCommentModal(ticket)}
+                          className="text-blue-600 hover:text-blue-900 p-1"
+                          title="Shto Koment"
+                        >
+                          <MessageSquare className="w-4 h-4" />
+                        </button>
                         {canDelete('tickets') && (
                           <button
                             onClick={() => handleDeleteTicket(ticket)}
@@ -732,6 +755,20 @@ const TicketsList: React.FC = () => {
         isVisible={notification.isVisible}
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
+
+      {/* Comment Modal */}
+      {selectedTicketForComment && (
+        <CommentModal
+          isOpen={isCommentModalOpen}
+          onClose={() => {
+            setIsCommentModalOpen(false);
+            setSelectedTicketForComment(null);
+          }}
+          entityType="ticket"
+          entityId={selectedTicketForComment.id}
+          entityTitle={selectedTicketForComment.title}
+        />
+      )}
 
       {/* Confirmation Modal */}
       <ConfirmationModal

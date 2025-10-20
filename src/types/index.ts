@@ -200,8 +200,7 @@ export const ROLE_PERMISSIONS = {
     reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     users: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },
   'Menaxher': {
     // Menaxher - Çasje e plotë përveç Users (vetëm view) dhe Reports (tash për tash)
@@ -212,8 +211,7 @@ export const ROLE_PERMISSIONS = {
     reports: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // Tash për tash
     users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // View only
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
   },
   'Agjent shitjeje': {
     // Agjent shitjeje - Tasks, Tiketat, Servisi, Porositë, Products, Customers

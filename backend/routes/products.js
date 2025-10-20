@@ -124,7 +124,8 @@ const getCachedProducts = async () => {
         productsCache.lastError = null;
         productsCache.errorCount = 0; // Reset error count on success
         productsCache.consecutiveFailures = 0; // Reset consecutive failures
-        productsCache.totalProducts = freshProducts.length; // Store total count
+        // Don't set totalProducts from cache - it will be set from API headers
+        // productsCache.totalProducts = freshProducts.length; // This was causing the 101 issue
         
         console.log(`Successfully cached ${transformedProducts.length} WooCommerce products`);
         
@@ -197,7 +198,8 @@ router.get('/', authenticateUser, async (req, res) => {
           productsCache.lastError = null;
           productsCache.errorCount = 0;
           productsCache.consecutiveFailures = 0;
-          productsCache.totalProducts = 0;
+          // Don't reset totalProducts on error - keep the last known value
+          // productsCache.totalProducts = 0; // This was causing the 101 issue
           // Keep fallback data for safety
         }
         
@@ -605,7 +607,8 @@ router.post('/clear-cache', authenticateUser, requireAdmin, async (req, res) => 
     productsCache.lastError = null;
     productsCache.errorCount = 0;
     productsCache.consecutiveFailures = 0;
-    productsCache.totalProducts = 0;
+    // Don't reset totalProducts when clearing cache - keep the last known value
+    // productsCache.totalProducts = 0; // This was causing the 101 issue
     // Keep fallback data for safety
     console.log('Products cache cleared (fallback data preserved)');
     res.json({ 
@@ -630,7 +633,8 @@ router.post('/force-refresh', authenticateUser, requireAdmin, async (req, res) =
     productsCache.lastError = null;
     productsCache.errorCount = 0;
     productsCache.consecutiveFailures = 0;
-    productsCache.totalProducts = 0;
+    // Don't reset totalProducts when force clearing - keep the last known value
+    // productsCache.totalProducts = 0; // This was causing the 101 issue
     productsCache.lastSuccessfulFetch = null;
     console.log('Products cache completely cleared (including fallback)');
     res.json({ 
