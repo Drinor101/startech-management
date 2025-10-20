@@ -190,60 +190,65 @@ const ServicesList: React.FC = () => {
       id: 'received',
       title: 'Marrë',
       items: services.filter(service => service.status === 'received'),
-      color: 'bg-gray-400'
+      color: 'bg-gray-100 text-gray-800'
     },
     {
       id: 'in-progress',
       title: 'Në Progres',
       items: services.filter(service => service.status === 'in-progress'),
-      color: 'bg-blue-400'
+      color: 'bg-blue-100 text-blue-800'
     },
     {
       id: 'waiting-parts',
       title: 'Duke Pritur Pjesët',
       items: services.filter(service => service.status === 'waiting-parts'),
-      color: 'bg-yellow-400'
+      color: 'bg-yellow-100 text-yellow-800'
     },
     {
       id: 'completed',
       title: 'Përfunduar',
       items: services.filter(service => service.status === 'completed'),
-      color: 'bg-green-400'
+      color: 'bg-green-100 text-green-800'
     },
     {
       id: 'delivered',
       title: 'Dërguar',
       items: services.filter(service => service.status === 'delivered'),
-      color: 'bg-purple-400'
+      color: 'bg-purple-100 text-purple-800'
     }
   ];
 
   const renderServiceCard = (service: Service) => (
-    <div className="space-y-3">
-      <div className="flex items-start justify-between">
-        <h4 className="font-medium text-gray-900 text-sm">{service.id}</h4>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+            SRV
+          </span>
+          <span className="font-medium text-gray-900 text-sm">{service.id}</span>
+        </div>
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(service.status)}`}>
           {translateStatus(service.status)}
         </span>
       </div>
       
-             <div>
-         <p className="text-sm font-medium text-gray-900">{service.customer.name}</p>
-         <p className="text-sm text-gray-600">{service.problemDescription || 'N/A'}</p>
-       </div>
+      <div className="mb-3">
+        <h4 className="text-sm font-medium text-gray-900 mb-1">{service.customer.name}</h4>
+        <p className="text-xs text-gray-600 line-clamp-2">{service.problemDescription || 'Nuk ka problem'}</p>
+      </div>
       
-      <div className="flex items-center justify-between text-xs text-gray-500">
-                 <div className="flex items-center gap-1">
-           <User className="w-3 h-3" />
-           <span>{service.assigned_to || 'N/A'}</span>
-         </div>
+      <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+        <div className="flex items-center gap-1">
+          <User className="w-3 h-3" />
+          <span>{service.assignedTo || service.assigned_to || 'N/A'}</span>
+        </div>
         <div className="flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          <span>{new Date(service.createdAt).toLocaleDateString()}</span>
+          <span>{new Date(service.createdAt).toLocaleDateString('sq-AL')}</span>
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between">
         <span className={`inline-flex px-2 py-1 text-xs rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
           {service.underWarranty ? 'Garanci' : 'Pa Garanci'}
         </span>
@@ -254,6 +259,7 @@ const ServicesList: React.FC = () => {
           <button
             onClick={() => handleViewService(service)}
             className="p-1 hover:bg-gray-100 rounded"
+            title="Shiko detajet"
           >
             <Eye className="w-4 h-4 text-gray-400" />
           </button>
@@ -392,9 +398,14 @@ const ServicesList: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span className="text-sm text-gray-900">
-                        {service.assignedTo || service.assigned_to || 'N/A'}
-                      </span>
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {service.assignedTo || service.assigned_to || 'N/A'}
+                        </div>
+                        {service.assignedTo && (
+                          <div className="text-xs text-gray-500">Përcaktuar</div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -408,9 +419,14 @@ const ServicesList: React.FC = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="max-w-xs">
-                      <p className="text-sm text-gray-900 truncate">
+                      <p className="text-sm text-gray-900 font-medium mb-1">
                         {service.problemDescription || 'Nuk ka problem'}
                       </p>
+                      {service.orderId && (
+                        <p className="text-xs text-gray-500">
+                          Porosia: {service.orderId}
+                        </p>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -430,8 +446,13 @@ const ServicesList: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="max-w-xs">
-                      <p className="text-sm text-gray-900 truncate">{service.warrantyInfo || 'N/A'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${service.underWarranty ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {service.underWarranty ? 'Garanci' : 'Pa Garanci'}
+                      </span>
+                      {service.emailNotificationsSent && (
+                        <Mail className="w-4 h-4 text-green-500" title="Email i dërguar" />
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">

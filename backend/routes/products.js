@@ -97,7 +97,7 @@ const getCachedProducts = async () => {
       consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
     };
 
-    const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+    const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100); // Only fetch first 100 products for initial load
     
       if (freshProducts && freshProducts.length > 0) {
         const transformedProducts = freshProducts.map(product => ({
@@ -200,13 +200,45 @@ router.get('/', authenticateUser, async (req, res) => {
           // Keep fallback data for safety
         }
         
-        const cachedProducts = await getCachedProducts();
-        
-        if (cachedProducts && cachedProducts.length > 0) {
-          allProducts = [...allProducts, ...cachedProducts];
-          console.log(`Added ${cachedProducts.length} cached WooCommerce products`);
+        // For WooCommerce, fetch only the requested page directly
+        if (source === 'WooCommerce') {
+          const wooCommerceConfig = {
+            url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+            consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+            consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+          };
+          
+          const wooProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, pageNum, safeLimit);
+          
+          if (wooProducts && wooProducts.length > 0) {
+            const transformedProducts = wooProducts.map(product => ({
+              id: product.id.toString(),
+              image: product.images && product.images.length > 0 ? product.images[0].src : '',
+              title: product.name || 'Untitled Product',
+              category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
+              basePrice: parseFloat(product.price || 0),
+              additionalCost: 0,
+              finalPrice: parseFloat(product.price || 0),
+              supplier: 'WooCommerce',
+              wooCommerceStatus: product.status || 'draft',
+              wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
+              lastSyncDate: product.date_modified || new Date().toISOString(),
+              source: 'WooCommerce'
+            }));
+            
+            allProducts = [...allProducts, ...transformedProducts];
+            console.log(`Added ${transformedProducts.length} WooCommerce products (page ${pageNum})`);
+          }
         } else {
-          console.log('No WooCommerce products available');
+          // For 'all' source, use cached products
+          const cachedProducts = await getCachedProducts();
+          
+          if (cachedProducts && cachedProducts.length > 0) {
+            allProducts = [...allProducts, ...cachedProducts];
+            console.log(`Added ${cachedProducts.length} cached WooCommerce products`);
+          } else {
+            console.log('No WooCommerce products available');
+          }
         }
       } catch (wooError) {
         console.error('Error fetching WooCommerce products:', wooError);
@@ -267,14 +299,29 @@ router.get('/', authenticateUser, async (req, res) => {
     // 5. Apply pagination with memory-safe limits
     const startIndex = (pageNum - 1) * safeLimit;
     const endIndex = startIndex + safeLimit;
-    const finalProducts = allProducts.slice(startIndex, endIndex);
     
-    const paginationInfo = {
-      page: pageNum,
-      limit: safeLimit,
-      total: allProducts.length,
-      pages: Math.ceil(allProducts.length / safeLimit)
-    };
+    // For WooCommerce source, we already have paginated data
+    let finalProducts;
+    let paginationInfo;
+    
+    if (source === 'WooCommerce') {
+      finalProducts = allProducts; // Already paginated from WooCommerce API
+      paginationInfo = {
+        page: pageNum,
+        limit: safeLimit,
+        total: allProducts.length, // This is just the current page count
+        pages: Math.ceil(allProducts.length / safeLimit)
+      };
+    } else {
+      // For other sources, apply pagination
+      finalProducts = allProducts.slice(startIndex, endIndex);
+      paginationInfo = {
+        page: pageNum,
+        limit: safeLimit,
+        total: allProducts.length,
+        pages: Math.ceil(allProducts.length / safeLimit)
+      };
+    }
 
     console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length} (paginated)`);
 
@@ -624,8 +671,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
       });
     }
 
-    // Fetch products from WooCommerce API for sync
-    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig);
+    // Fetch products from WooCommerce API for sync (only first 100 for initial sync)
+    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100);
     
     if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
       return res.status(404).json({
@@ -657,94 +704,58 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
   }
 });
 
-// Fetch products from WooCommerce API with memory optimization and limits
-async function fetchWooCommerceProducts(config, retryCount = 0) {
+// Fetch products from WooCommerce API with pagination and memory optimization
+async function fetchWooCommerceProducts(config, retryCount = 0, page = 1, limit = 100) {
   const maxRetries = 2;
-  const timeout = 10000; // Reduced to 10s
-  const maxProducts = 50000; // Increased limit to allow more products
-  const perPage = 50; // Reduced from 100 to 50
+  const timeout = 15000; // Increased to 15s for better reliability
+  const perPage = Math.min(limit, 100); // Max 100 per page
   
   try {
-    console.log(`Fetching WooCommerce products with memory limits... (attempt ${retryCount + 1})`);
-    const products = [];
-    let page = 1;
-    let totalFetched = 0;
+    console.log(`Fetching WooCommerce products page ${page} (${perPage} products)...`);
     
-    while (totalFetched < maxProducts) {
-      const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
-      const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
-      
-      console.log(`Fetching page ${page} (${totalFetched}/${maxProducts} products)...`);
-      
-      // Create AbortController for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      try {
-        const response = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${auth}`,
-            'Content-Type': 'application/json'
-          },
-          signal: controller.signal
-        });
+    const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
+    const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
 
-        clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
 
-        if (!response.ok) {
-          throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
-        }
-
-        const pageProducts = await response.json();
-        
-        if (pageProducts.length === 0) {
-          console.log('No more products available');
-          break; // No more products
-        }
-        
-        // Add products with memory check
-        products.push(...pageProducts);
-        totalFetched += pageProducts.length;
-        page++;
-        
-        // Memory management: force GC every 500 products
-        if (totalFetched % 500 === 0 && global.gc) {
-          console.log(`Memory management: processed ${totalFetched} products, triggering GC`);
-          global.gc();
-        }
-        
-        // Safety limit to prevent infinite loops
-        if (page > 1000) { // Increased page limit to allow more products
-          console.log('Reached page limit (1000), stopping...');
-          break;
-        }
-        
-        // Small delay to prevent overwhelming the API
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-      } catch (fetchError) {
-        clearTimeout(timeoutId);
-        throw fetchError;
+      if (!response.ok) {
+        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
       }
+
+      const products = await response.json();
+      
+      console.log(`Fetched ${products.length} products from WooCommerce page ${page}`);
+      
+      return products;
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
     
-    console.log(`Fetched ${products.length} products from WooCommerce`);
-    
-    // Update cache with total count
-    productsCache.totalProducts = products.length;
-    
-    return products;
-    
   } catch (error) {
-    console.error(`Error fetching WooCommerce products (attempt ${retryCount + 1}):`, error);
+    console.error(`Error fetching WooCommerce products page ${page} (attempt ${retryCount + 1}):`, error);
     
     // Retry logic with shorter delays
     if (retryCount < maxRetries) {
       const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s
-      console.log(`Retrying in ${delay}ms...`);
+      console.log(`Retrying page ${page} in ${delay}ms...`);
       await new Promise(resolve => setTimeout(resolve, delay));
-      return fetchWooCommerceProducts(config, retryCount + 1);
+      return fetchWooCommerceProducts(config, retryCount + 1, page, limit);
     }
     
     throw error;

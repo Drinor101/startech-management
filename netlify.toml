@@ -10,3 +10,9 @@
 # Create dist directory if it doesn't exist
 [build.processing]
   skip_processing = false
+
+# Redirect all routes to index.html for SPA
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
