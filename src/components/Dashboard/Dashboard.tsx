@@ -84,7 +84,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         fetch(`${apiUrl}/api/tickets`, { headers }),
         fetch(`${apiUrl}/api/orders`, { headers }),
         fetch(`${apiUrl}/api/customers`, { headers }),
-        fetch(`${apiUrl}/api/products`, { headers })
+        fetch(`${apiUrl}/api/products?source=Manual`, { headers }) // Only fetch manual products for dashboard
       ]);
 
       const [servicesData, tasksData, ticketsData, ordersData, customersData, productsData] = await Promise.all([

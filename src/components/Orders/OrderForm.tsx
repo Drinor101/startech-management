@@ -20,7 +20,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [productSourceFilter, setProductSourceFilter] = useState<string>('all');
+  const [productSourceFilter, setProductSourceFilter] = useState<string>('Manual'); // Only show manual products for orders
   const [openDropdowns, setOpenDropdowns] = useState<{ [key: number]: boolean }>({});
   const [productSearchTerm, setProductSearchTerm] = useState<string>('');
   const [notification, setNotification] = useState<{

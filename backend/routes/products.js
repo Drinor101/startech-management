@@ -4,7 +4,7 @@ import { authenticateUser, requireAdmin } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Cache system for WooCommerce products with memory limits
+// Enhanced cache system for WooCommerce products with robust fallback
 let productsCache = {
   data: [],
   timestamp: null,
@@ -13,8 +13,11 @@ let productsCache = {
   loadingStartTime: null,
   lastError: null,
   errorCount: 0,
-  maxCacheSize: 1000, // Limit cache to 1000 products max
-  totalProducts: 0 // Track total products available
+  maxCacheSize: 2000, // Increased to 2000 products max
+  totalProducts: 0, // Track total products available
+  fallbackData: [], // Keep last successful data as fallback
+  lastSuccessfulFetch: null, // Track last successful fetch time
+  consecutiveFailures: 0 // Track consecutive API failures
 };
 
 // Check if cache is valid
@@ -23,8 +26,10 @@ const isCacheValid = () => {
   return (Date.now() - productsCache.timestamp) < productsCache.expiry;
 };
 
-// Get cached products or fetch fresh ones
+// Enhanced cached products function with robust fallback
 const getCachedProducts = async () => {
+  const now = Date.now();
+  
   // If cache is valid and has data, return it
   if (isCacheValid() && productsCache.data.length > 0) {
     console.log(`Using cached WooCommerce products (${productsCache.data.length} products)`);
@@ -41,20 +46,26 @@ const getCachedProducts = async () => {
     dataCount: productsCache.data.length,
     loading: productsCache.loading,
     errorCount: productsCache.errorCount,
-    lastError: productsCache.lastError
+    lastError: productsCache.lastError,
+    consecutiveFailures: productsCache.consecutiveFailures,
+    hasFallbackData: productsCache.fallbackData.length > 0
   });
 
-  // If cache is being loaded, wait a bit and return cached data if available
+  // If cache is being loaded, return fallback data or cached data
   if (productsCache.loading) {
-    const loadingDuration = Date.now() - (productsCache.loadingStartTime || 0);
-    if (loadingDuration > 60000) { // Increased to 60s timeout
+    const loadingDuration = now - (productsCache.loadingStartTime || 0);
+    if (loadingDuration > 30000) { // 30s timeout
       console.log('Cache loading timeout, resetting and trying again');
       productsCache.loading = false;
       productsCache.loadingStartTime = null;
-      productsCache.errorCount++;
+      productsCache.consecutiveFailures++;
     } else {
-      console.log('Cache is being loaded, returning cached data if available');
-      // Return cached data even if expired, if available
+      console.log('Cache is being loaded, returning fallback data if available');
+      // Return fallback data if available, otherwise cached data
+      if (productsCache.fallbackData.length > 0) {
+        console.log(`Returning ${productsCache.fallbackData.length} fallback products while loading`);
+        return productsCache.fallbackData;
+      }
       if (productsCache.data.length > 0) {
         console.log(`Returning ${productsCache.data.length} cached products while loading`);
         return productsCache.data;
@@ -63,15 +74,21 @@ const getCachedProducts = async () => {
     }
   }
 
-  // If we have too many consecutive errors, use cached data even if expired
-  if (productsCache.errorCount >= 3 && productsCache.data.length > 0) {
-    console.log(`Too many errors (${productsCache.errorCount}), using expired cache`);
+  // If we have too many consecutive failures, use fallback data
+  if (productsCache.consecutiveFailures >= 3 && productsCache.fallbackData.length > 0) {
+    console.log(`Too many consecutive failures (${productsCache.consecutiveFailures}), using fallback data`);
+    return productsCache.fallbackData;
+  }
+
+  // If we have old cached data and recent failures, use it as fallback
+  if (productsCache.data.length > 0 && productsCache.consecutiveFailures >= 2) {
+    console.log(`Recent failures detected, using cached data as fallback`);
     return productsCache.data;
   }
 
   console.log('Cache expired or empty, fetching fresh WooCommerce products...');
   productsCache.loading = true;
-  productsCache.loadingStartTime = Date.now();
+  productsCache.loadingStartTime = now;
   
   try {
     const wooCommerceConfig = {
@@ -101,10 +118,14 @@ const getCachedProducts = async () => {
         // Limit cache size to prevent memory issues
         const limitedProducts = transformedProducts.slice(0, productsCache.maxCacheSize);
         
+        // Update cache and fallback data
         productsCache.data = limitedProducts;
+        productsCache.fallbackData = limitedProducts; // Keep as fallback
         productsCache.timestamp = Date.now();
+        productsCache.lastSuccessfulFetch = Date.now();
         productsCache.lastError = null;
         productsCache.errorCount = 0; // Reset error count on success
+        productsCache.consecutiveFailures = 0; // Reset consecutive failures
         productsCache.totalProducts = freshProducts.length; // Store total count
         
         console.log(`Successfully cached ${limitedProducts.length} WooCommerce products (${freshProducts.length} total available)`);
@@ -124,6 +145,13 @@ const getCachedProducts = async () => {
     console.error('Error fetching WooCommerce products:', error);
     productsCache.lastError = error.message;
     productsCache.errorCount++;
+    productsCache.consecutiveFailures++;
+    
+    // Return fallback data if available, even if expired
+    if (productsCache.fallbackData && productsCache.fallbackData.length > 0) {
+      console.log(`Returning ${productsCache.fallbackData.length} fallback products due to API error`);
+      return productsCache.fallbackData;
+    }
     
     // Return cached data if available, even if expired
     if (productsCache.data && productsCache.data.length > 0) {
@@ -131,7 +159,7 @@ const getCachedProducts = async () => {
       return productsCache.data;
     }
     
-    console.log('No cached data available, returning empty array');
+    console.log('No fallback data available, returning empty array');
     return [];
   } finally {
     productsCache.loading = false;
@@ -170,7 +198,9 @@ router.get('/', authenticateUser, async (req, res) => {
           productsCache.loadingStartTime = null;
           productsCache.lastError = null;
           productsCache.errorCount = 0;
+          productsCache.consecutiveFailures = 0;
           productsCache.totalProducts = 0;
+          // Keep fallback data for safety
         }
         
         const cachedProducts = await getCachedProducts();
@@ -433,7 +463,7 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
   }
 });
 
-// Clear products cache endpoint
+// Enhanced cache invalidation endpoint
 router.post('/clear-cache', authenticateUser, requireAdmin, async (req, res) => {
   try {
     productsCache.data = [];
@@ -442,18 +472,50 @@ router.post('/clear-cache', authenticateUser, requireAdmin, async (req, res) => 
     productsCache.loadingStartTime = null;
     productsCache.lastError = null;
     productsCache.errorCount = 0;
-    console.log('Products cache cleared');
-    res.json({ success: true, message: 'Cache cleared successfully' });
+    productsCache.consecutiveFailures = 0;
+    productsCache.totalProducts = 0;
+    // Keep fallback data for safety
+    console.log('Products cache cleared (fallback data preserved)');
+    res.json({ 
+      success: true, 
+      message: 'Cache cleared successfully',
+      fallbackDataPreserved: productsCache.fallbackData.length > 0
+    });
   } catch (error) {
     console.error('Error clearing cache:', error);
     res.status(500).json({ success: false, error: 'Failed to clear cache' });
   }
 });
 
-// Cache status endpoint
+// Force refresh endpoint - clears everything including fallback
+router.post('/force-refresh', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    productsCache.data = [];
+    productsCache.fallbackData = [];
+    productsCache.timestamp = null;
+    productsCache.loading = false;
+    productsCache.loadingStartTime = null;
+    productsCache.lastError = null;
+    productsCache.errorCount = 0;
+    productsCache.consecutiveFailures = 0;
+    productsCache.totalProducts = 0;
+    productsCache.lastSuccessfulFetch = null;
+    console.log('Products cache completely cleared (including fallback)');
+    res.json({ 
+      success: true, 
+      message: 'Cache completely cleared - next request will fetch fresh data'
+    });
+  } catch (error) {
+    console.error('Error force refreshing cache:', error);
+    res.status(500).json({ success: false, error: 'Failed to force refresh cache' });
+  }
+});
+
+// Enhanced cache status endpoint
 router.get('/cache-status', authenticateUser, async (req, res) => {
   try {
     const cacheAge = productsCache.timestamp ? Date.now() - productsCache.timestamp : null;
+    const fallbackAge = productsCache.lastSuccessfulFetch ? Date.now() - productsCache.lastSuccessfulFetch : null;
     const isValid = isCacheValid();
     
     res.json({
@@ -468,7 +530,20 @@ router.get('/cache-status', authenticateUser, async (req, res) => {
         loadingDuration: productsCache.loadingStartTime ? Date.now() - productsCache.loadingStartTime : null,
         lastError: productsCache.lastError,
         errorCount: productsCache.errorCount,
-        timestamp: productsCache.timestamp
+        consecutiveFailures: productsCache.consecutiveFailures,
+        timestamp: productsCache.timestamp,
+        fallbackData: {
+          hasData: productsCache.fallbackData.length > 0,
+          dataCount: productsCache.fallbackData.length,
+          age: fallbackAge,
+          lastSuccessfulFetch: productsCache.lastSuccessfulFetch
+        },
+        health: {
+          status: productsCache.consecutiveFailures >= 3 ? 'degraded' : 
+                 productsCache.consecutiveFailures >= 1 ? 'warning' : 'healthy',
+          message: productsCache.consecutiveFailures >= 3 ? 'Multiple consecutive failures - using fallback data' :
+                   productsCache.consecutiveFailures >= 1 ? 'Some failures detected - monitoring' : 'All systems operational'
+        }
       }
     });
   } catch (error) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
 import { Product } from '../../types';
-import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
+import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct, useClearCache, useForceRefresh } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
 import ProductForm from './ProductForm';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -33,6 +33,8 @@ const ProductsList: React.FC = () => {
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
   const deleteProductMutation = useDeleteProduct();
+  const clearCacheMutation = useClearCache();
+  const forceRefreshMutation = useForceRefresh();
 
   // Extract data from query result
   const products = productsData?.data || [];
@@ -44,6 +46,20 @@ const ProductsList: React.FC = () => {
   // Handle WooCommerce sync
   const handleWooCommerceSync = async () => {
     await wooCommerceSyncMutation.mutateAsync();
+  };
+
+  // Handle cache clearing
+  const handleClearCache = async () => {
+    if (window.confirm('A jeni të sigurt që dëshironi të pastroni cache-n? Kjo do të rifreskojë produktet.')) {
+      await clearCacheMutation.mutateAsync();
+    }
+  };
+
+  // Handle force refresh
+  const handleForceRefresh = async () => {
+    if (window.confirm('A jeni të sigurt që dëshironi të rifreskoni plotësisht produktet? Kjo do të fshijë të gjitha të dhënat e cache-t.')) {
+      await forceRefreshMutation.mutateAsync();
+    }
   };
 
   // Handle product creation
@@ -183,17 +199,39 @@ const ProductsList: React.FC = () => {
               Shto Produkt
             </button>
           )}
-          <button 
-            onClick={handleWooCommerceSync}
-            disabled={wooCommerceSyncMutation.isPending}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Sync className={`w-4 h-4 ${wooCommerceSyncMutation.isPending ? 'animate-spin' : ''}`} />
-            {wooCommerceSyncMutation.isPending ? 'Duke sinkronizuar...' : 
-             wooCommerceSyncMutation.isSuccess ? 'Sinkronizimi u përfundua!' :
-             wooCommerceSyncMutation.isError ? 'Gabim në sinkronizim' :
-             'Sinkronizo me WooCommerce'}
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handleWooCommerceSync}
+              disabled={wooCommerceSyncMutation.isPending}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Sync className={`w-4 h-4 ${wooCommerceSyncMutation.isPending ? 'animate-spin' : ''}`} />
+              {wooCommerceSyncMutation.isPending ? 'Duke sinkronizuar...' : 
+               wooCommerceSyncMutation.isSuccess ? 'Sinkronizimi u përfundua!' :
+               wooCommerceSyncMutation.isError ? 'Gabim në sinkronizim' :
+               'Sinkronizo me WooCommerce'}
+            </button>
+            
+            <button 
+              onClick={handleClearCache}
+              disabled={clearCacheMutation.isPending}
+              className="bg-yellow-600 text-white px-3 py-2 rounded-lg hover:bg-yellow-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              title="Pastron cache-n dhe rifreskon produktet"
+            >
+              <Clock className="w-4 h-4" />
+              Pastro Cache
+            </button>
+            
+            <button 
+              onClick={handleForceRefresh}
+              disabled={forceRefreshMutation.isPending}
+              className="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              title="Rifreskon plotësisht të gjitha të dhënat"
+            >
+              <Sync className={`w-4 h-4 ${forceRefreshMutation.isPending ? 'animate-spin' : ''}`} />
+              Rifresko Plotësisht
+            </button>
+          </div>
         </div>
       </div>
 
@@ -211,6 +249,28 @@ const ProductsList: React.FC = () => {
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600" />
             <span className="text-sm text-red-800">Error synchronizing products. Please try again.</span>
+          </div>
+        </div>
+      )}
+
+      {(clearCacheMutation.isSuccess || forceRefreshMutation.isSuccess) && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-green-600" />
+            <span className="text-sm text-green-800">
+              {clearCacheMutation.isSuccess ? 'Cache cleared successfully!' : 'Products refreshed successfully!'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {(clearCacheMutation.isError || forceRefreshMutation.isError) && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-600" />
+            <span className="text-sm text-red-800">
+              {clearCacheMutation.isError ? 'Error clearing cache. Please try again.' : 'Error refreshing products. Please try again.'}
+            </span>
           </div>
         </div>
       )}

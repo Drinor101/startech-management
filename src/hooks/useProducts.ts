@@ -36,7 +36,7 @@ interface UseProductsParams {
   search?: string;
 }
 
-// Fetch products with React Query
+// Enhanced products fetch with React Query for better stability
 export const useProducts = (params: UseProductsParams = {}) => {
   const {
     page = 1,
@@ -64,14 +64,18 @@ export const useProducts = (params: UseProductsParams = {}) => {
       const response = await apiCall(`${apiConfig.endpoints.products}?${queryParams.toString()}`);
       return response as ProductsResponse;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    retry: 2,
-    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - data stays fresh
+    gcTime: 15 * 60 * 1000, // 15 minutes - keep in cache longer
+    retry: 3, // Retry 3 times on failure
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    refetchOnWindowFocus: false, // Don't refetch on window focus
+    refetchOnReconnect: true, // Refetch when reconnecting
+    refetchOnMount: true, // Always refetch on component mount
+    networkMode: 'online', // Only run when online
   });
 };
 
-// WooCommerce sync mutation
+// Enhanced WooCommerce sync mutation with better error handling
 export const useWooCommerceSync = () => {
   const queryClient = useQueryClient();
 
@@ -86,6 +90,11 @@ export const useWooCommerceSync = () => {
       // Invalidate and refetch products queries
       queryClient.invalidateQueries({ queryKey: ['products'] });
     },
+    onError: (error) => {
+      console.error('WooCommerce sync failed:', error);
+    },
+    retry: 2, // Retry sync on failure
+    retryDelay: 2000, // 2 second delay between retries
   });
 };
 
@@ -96,6 +105,24 @@ export const useClearCache = () => {
   return useMutation({
     mutationFn: async () => {
       const response = await apiCall('/api/products/clear-cache', {
+        method: 'POST'
+      });
+      return response;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch products queries
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
+  });
+};
+
+// Force refresh mutation
+export const useForceRefresh = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiCall('/api/products/force-refresh', {
         method: 'POST'
       });
       return response;
