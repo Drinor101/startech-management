@@ -3,6 +3,7 @@ import { Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
+import CommentsSection from '../Common/CommentsSection';
 
 interface TicketFormProps {
   onClose: () => void;
@@ -288,6 +289,21 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
             </button>
           </div>
         </form>
+
+      {/* Comments Section - Only show for existing tickets */}
+      {ticket && ticket.id && (
+        <div className="border-t border-gray-200 p-4 mt-4">
+          <CommentsSection
+            entityType="ticket"
+            entityId={ticket.id}
+            currentUser={{
+              id: currentUser?.id || '',
+              name: currentUser?.name || currentUser?.email || 'Përdorues',
+              avatar: currentUser?.avatar_url
+            }}
+          />
+        </div>
+      )}
 
       {/* Notification */}
       <Notification

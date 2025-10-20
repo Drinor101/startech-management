@@ -3,6 +3,7 @@ import { X, Save, AlertCircle, ChevronDown } from 'lucide-react';
 import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import UserDropdown from '../Common/UserDropdown';
+import CommentsSection from '../Common/CommentsSection';
 
 interface TaskFormProps {
   onClose: () => void;
@@ -273,6 +274,21 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
           </div>
         </form>
       </div>
+
+      {/* Comments Section - Only show for existing tasks */}
+      {task && task.id && (
+        <div className="border-t border-gray-200 p-4">
+          <CommentsSection
+            entityType="task"
+            entityId={task.id}
+            currentUser={{
+              id: currentUser?.id || '',
+              name: currentUser?.name || currentUser?.email || 'Përdorues',
+              avatar: currentUser?.avatar_url
+            }}
+          />
+        </div>
+      )}
 
       {/* Notification */}
       <Notification
