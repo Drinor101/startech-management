@@ -290,30 +290,30 @@ const TicketForm: React.FC<TicketFormProps> = ({ onClose, onSuccess, ticket }) =
           </div>
         </form>
 
-      {/* Comments Section - Only show for existing tickets */}
-      {ticket && ticket.id && (
-        <div className="border-t border-gray-200 p-4 mt-4">
-          <CommentsSection
-            entityType="ticket"
-            entityId={ticket.id}
-            currentUser={{
-              id: currentUser?.id || '',
-              name: currentUser?.name || currentUser?.email || 'Përdorues',
-              avatar: currentUser?.avatar_url
-            }}
-          />
-        </div>
-      )}
+        {/* Comments Section - Only show for existing tickets */}
+        {ticket && ticket.id && (
+          <div className="border-t border-gray-200 p-4 mt-4">
+            <CommentsSection
+              entityType="ticket"
+              entityId={ticket.id}
+              currentUser={{
+                id: currentUser?.id || '',
+                name: currentUser?.name || currentUser?.email || 'Përdorues',
+                avatar: currentUser?.avatar_url
+              }}
+            />
+          </div>
+        )}
 
-      {/* Notification */}
-      <Notification
-        type={notification.type}
-        message={notification.message}
-        isVisible={notification.isVisible}
-        onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
-      />
-    </>
-  );
+        {/* Notification */}
+        <Notification
+          type={notification.type}
+          message={notification.message}
+          isVisible={notification.isVisible}
+          onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
+        />
+      </>
+    );
 };
 
 export default TicketForm;

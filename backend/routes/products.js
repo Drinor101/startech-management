@@ -97,7 +97,8 @@ const getCachedProducts = async () => {
       consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
     };
 
-    const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100); // Only fetch first 100 products for initial load
+    // Fetch all WooCommerce products by making multiple requests
+    const freshProducts = await fetchAllWooCommerceProducts(wooCommerceConfig);
     
       if (freshProducts && freshProducts.length > 0) {
         const transformedProducts = freshProducts.map(product => ({
@@ -764,8 +765,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
       });
     }
 
-    // Fetch products from WooCommerce API for sync (only first 100 for initial sync)
-    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100);
+    // Fetch products from WooCommerce API for sync (get all products)
+    const wooCommerceProducts = await fetchAllWooCommerceProducts(wooCommerceConfig);
     
     if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
       return res.status(404).json({
@@ -796,6 +797,66 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
     });
   }
 });
+
+// Fetch ALL WooCommerce products by making multiple requests
+async function fetchAllWooCommerceProducts(config) {
+  try {
+    console.log('Fetching ALL WooCommerce products...');
+    
+    // First, get total count
+    const totalCountUrl = `${config.url}/wp-json/wc/v3/products?per_page=1&page=1&status=publish`;
+    const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+    
+    const totalCountResponse = await fetch(totalCountUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (!totalCountResponse.ok) {
+      throw new Error(`Failed to get total count: ${totalCountResponse.status}`);
+    }
+    
+    const totalCount = totalCountResponse.headers.get('X-WP-Total');
+    if (!totalCount) {
+      throw new Error('Could not get total product count from WooCommerce API');
+    }
+    
+    const totalProducts = parseInt(totalCount);
+    console.log(`Total WooCommerce products: ${totalProducts}`);
+    
+    // Calculate how many pages we need (100 products per page max)
+    const productsPerPage = 100;
+    const totalPages = Math.ceil(totalProducts / productsPerPage);
+    console.log(`Need to fetch ${totalPages} pages (${productsPerPage} products per page)`);
+    
+    // Fetch all pages
+    const allProducts = [];
+    for (let page = 1; page <= totalPages; page++) {
+      console.log(`Fetching page ${page}/${totalPages}...`);
+      
+      const pageProducts = await fetchWooCommerceProducts(config, 0, page, productsPerPage);
+      if (pageProducts && pageProducts.length > 0) {
+        allProducts.push(...pageProducts);
+        console.log(`Page ${page}: Got ${pageProducts.length} products (Total so far: ${allProducts.length})`);
+      }
+      
+      // Small delay between requests to avoid overwhelming the API
+      if (page < totalPages) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+    }
+    
+    console.log(`Successfully fetched ALL ${allProducts.length} WooCommerce products`);
+    return allProducts;
+    
+  } catch (error) {
+    console.error('Error fetching all WooCommerce products:', error);
+    throw error;
+  }
+}
 
 // Fetch products from WooCommerce API with pagination and memory optimization
 async function fetchWooCommerceProducts(config, retryCount = 0, page = 1, limit = 100) {

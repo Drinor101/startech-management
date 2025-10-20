@@ -263,22 +263,22 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
             </button>
           </div>
         </form>
-      </div>
 
-      {/* Comments Section - Only show for existing services */}
-      {service && service.id && (
-        <div className="border-t border-gray-200 p-4">
-          <CommentsSection
-            entityType="service"
-            entityId={service.id}
-            currentUser={{
-              id: currentUser?.id || '',
-              name: currentUser?.name || currentUser?.email || 'Përdorues',
-              avatar: currentUser?.avatar_url
-            }}
-          />
-        </div>
-      )}
+        {/* Comments Section - Only show for existing services */}
+        {service && service.id && (
+          <div className="border-t border-gray-200 p-4">
+            <CommentsSection
+              entityType="service"
+              entityId={service.id}
+              currentUser={{
+                id: currentUser?.id || '',
+                name: currentUser?.name || currentUser?.email || 'Përdorues',
+                avatar: currentUser?.avatar_url
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Notification */}
       <Notification

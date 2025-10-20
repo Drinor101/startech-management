@@ -273,22 +273,22 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onSuccess, task }) => {
             </button>
           </div>
         </form>
-      </div>
 
-      {/* Comments Section - Only show for existing tasks */}
-      {task && task.id && (
-        <div className="border-t border-gray-200 p-4">
-          <CommentsSection
-            entityType="task"
-            entityId={task.id}
-            currentUser={{
-              id: currentUser?.id || '',
-              name: currentUser?.name || currentUser?.email || 'Përdorues',
-              avatar: currentUser?.avatar_url
-            }}
-          />
-        </div>
-      )}
+        {/* Comments Section - Only show for existing tasks */}
+        {task && task.id && (
+          <div className="border-t border-gray-200 p-4">
+            <CommentsSection
+              entityType="task"
+              entityId={task.id}
+              currentUser={{
+                id: currentUser?.id || '',
+                name: currentUser?.name || currentUser?.email || 'Përdorues',
+                avatar: currentUser?.avatar_url
+              }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Notification */}
       <Notification

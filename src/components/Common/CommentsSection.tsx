@@ -34,7 +34,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ entityType, entityId,
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [sortBy, setSortBy] = useState<'recent' | 'oldest' | 'popular'>('recent');
-  const [showFormatting, setShowFormatting] = useState(false);
 
   // Fetch comments
   useEffect(() => {
@@ -251,38 +250,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ entityType, entityId,
           />
         </div>
 
-        {/* Formatting Toolbar */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => setShowFormatting(!showFormatting)}
-              className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded"
-            >
-              <strong>B</strong>
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              <em>I</em>
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              <u>U</u>
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              🔗
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              {'</>'}
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              • Lista
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              1. Lista
-            </button>
-            <button className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded">
-              " Citim
-            </button>
-          </div>
-          
+        {/* Submit Button */}
+        <div className="flex justify-end mb-4">
           <button
             onClick={handleSubmitComment}
             disabled={!newComment.trim()}
