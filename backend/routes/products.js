@@ -97,8 +97,8 @@ const getCachedProducts = async () => {
       consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
     };
 
-    // Fetch all WooCommerce products by making multiple requests
-    const freshProducts = await fetchAllWooCommerceProducts(wooCommerceConfig);
+    // For initial cache load, only fetch first 100 products for speed
+    const freshProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100);
     
       if (freshProducts && freshProducts.length > 0) {
         const transformedProducts = freshProducts.map(product => ({
@@ -230,7 +230,7 @@ router.get('/', authenticateUser, async (req, res) => {
             allProducts = [...allProducts, ...transformedProducts];
             console.log(`Added ${transformedProducts.length} WooCommerce products (page ${pageNum})`);
             
-            // Get total count from WooCommerce API headers - CHECK RESPONSE HEADERS
+            // Get total count from WooCommerce API headers for pagination
             try {
               const totalCountUrl = `${wooCommerceConfig.url}/wp-json/wc/v3/products?per_page=1&page=1&status=publish`;
               const auth = Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64');
@@ -243,12 +243,6 @@ router.get('/', authenticateUser, async (req, res) => {
               });
               
               if (totalCountResponse.ok) {
-                // Log all headers for debugging
-                console.log('WooCommerce API Response Headers:');
-                for (const [key, value] of totalCountResponse.headers.entries()) {
-                  console.log(`  ${key}: ${value}`);
-                }
-                
                 const totalCount = totalCountResponse.headers.get('X-WP-Total') || 
                                   totalCountResponse.headers.get('x-wp-total');
                 const totalPages = totalCountResponse.headers.get('X-WP-TotalPages') || 
@@ -256,24 +250,22 @@ router.get('/', authenticateUser, async (req, res) => {
                 
                 if (totalCount) {
                   productsCache.totalProducts = parseInt(totalCount);
-                  console.log(`✅ Total WooCommerce products from X-WP-Total: ${totalCount}`);
+                  console.log(`✅ Total WooCommerce products: ${totalCount}`);
                 } else if (totalPages) {
                   // Calculate total based on total pages
-                  // Assuming max 100 per page (WooCommerce default max)
                   productsCache.totalProducts = parseInt(totalPages) * 100;
-                  console.log(`⚠️ Estimated total WooCommerce products: ${productsCache.totalProducts} (from ${totalPages} pages x 100)`);
+                  console.log(`⚠️ Estimated total WooCommerce products: ${productsCache.totalProducts} (from ${totalPages} pages)`);
                 } else {
-                  console.log('⚠️ No X-WP-Total or X-WP-TotalPages header found, will use dynamic calculation');
-                  // Set to a large number to allow pagination to work
+                  console.log('⚠️ No total count header found, using dynamic calculation');
                   productsCache.totalProducts = 999999;
                 }
               } else {
-                console.log('❌ Failed to get total count from WooCommerce API, status:', totalCountResponse.status);
-                productsCache.totalProducts = 999999; // Allow unlimited pagination
+                console.log('❌ Failed to get total count, using dynamic calculation');
+                productsCache.totalProducts = 999999;
               }
             } catch (totalCountError) {
               console.log('❌ Error fetching total count:', totalCountError.message);
-              productsCache.totalProducts = 999999; // Allow unlimited pagination
+              productsCache.totalProducts = 999999;
             }
           }
         } else {
@@ -765,8 +757,8 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
       });
     }
 
-    // Fetch products from WooCommerce API for sync (get all products)
-    const wooCommerceProducts = await fetchAllWooCommerceProducts(wooCommerceConfig);
+    // Fetch products from WooCommerce API for sync (only first 100 for initial sync)
+    const wooCommerceProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, 1, 100);
     
     if (!wooCommerceProducts || wooCommerceProducts.length === 0) {
       return res.status(404).json({
@@ -797,66 +789,6 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
     });
   }
 });
-
-// Fetch ALL WooCommerce products by making multiple requests
-async function fetchAllWooCommerceProducts(config) {
-  try {
-    console.log('Fetching ALL WooCommerce products...');
-    
-    // First, get total count
-    const totalCountUrl = `${config.url}/wp-json/wc/v3/products?per_page=1&page=1&status=publish`;
-    const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
-    
-    const totalCountResponse = await fetch(totalCountUrl, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    if (!totalCountResponse.ok) {
-      throw new Error(`Failed to get total count: ${totalCountResponse.status}`);
-    }
-    
-    const totalCount = totalCountResponse.headers.get('X-WP-Total');
-    if (!totalCount) {
-      throw new Error('Could not get total product count from WooCommerce API');
-    }
-    
-    const totalProducts = parseInt(totalCount);
-    console.log(`Total WooCommerce products: ${totalProducts}`);
-    
-    // Calculate how many pages we need (100 products per page max)
-    const productsPerPage = 100;
-    const totalPages = Math.ceil(totalProducts / productsPerPage);
-    console.log(`Need to fetch ${totalPages} pages (${productsPerPage} products per page)`);
-    
-    // Fetch all pages
-    const allProducts = [];
-    for (let page = 1; page <= totalPages; page++) {
-      console.log(`Fetching page ${page}/${totalPages}...`);
-      
-      const pageProducts = await fetchWooCommerceProducts(config, 0, page, productsPerPage);
-      if (pageProducts && pageProducts.length > 0) {
-        allProducts.push(...pageProducts);
-        console.log(`Page ${page}: Got ${pageProducts.length} products (Total so far: ${allProducts.length})`);
-      }
-      
-      // Small delay between requests to avoid overwhelming the API
-      if (page < totalPages) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-    }
-    
-    console.log(`Successfully fetched ALL ${allProducts.length} WooCommerce products`);
-    return allProducts;
-    
-  } catch (error) {
-    console.error('Error fetching all WooCommerce products:', error);
-    throw error;
-  }
-}
 
 // Fetch products from WooCommerce API with pagination and memory optimization
 async function fetchWooCommerceProducts(config, retryCount = 0, page = 1, limit = 100) {
