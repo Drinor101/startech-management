@@ -16,21 +16,6 @@ const ProductsList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
 
-  // Check if there's a selected product from search
-  useEffect(() => {
-    const selectedProductId = sessionStorage.getItem('selectedProductId');
-    if (selectedProductId && products.length > 0) {
-      const product = products.find(p => p.id === selectedProductId);
-      if (product) {
-        setSelectedProduct(product);
-        setIsEditMode(false);
-        setIsFormOpen(true);
-        // Clear the selected product ID from session storage
-        sessionStorage.removeItem('selectedProductId');
-      }
-    }
-  }, [products]);
-
   // React Query hooks
   const { 
     data: productsData, 
@@ -51,6 +36,21 @@ const ProductsList: React.FC = () => {
 
   // Extract data from query result
   const products = productsData?.data || [];
+
+  // Check if there's a selected product from search
+  useEffect(() => {
+    const selectedProductId = sessionStorage.getItem('selectedProductId');
+    if (selectedProductId && products.length > 0) {
+      const product = products.find(p => p.id === selectedProductId);
+      if (product) {
+        setSelectedProduct(product);
+        setIsEditMode(false);
+        setIsFormOpen(true);
+        // Clear the selected product ID from session storage
+        sessionStorage.removeItem('selectedProductId');
+      }
+    }
+  }, [products]);
   const totalProducts = productsData?.pagination?.total || 0;
   const totalPages = productsData?.pagination?.pages || 1;
   const lastSync = productsData?.data?.[0]?.lastSyncDate || '';

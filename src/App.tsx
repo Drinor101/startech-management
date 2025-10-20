@@ -220,9 +220,21 @@ const AllTasks: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const [activeModule, setActiveModule] = useState('dashboard');
+  const [activeModule, setActiveModule] = useState(() => {
+    // Get the current module from URL or localStorage, default to dashboard
+    const urlModule = window.location.pathname.replace('/', '') || 'dashboard';
+    const savedModule = localStorage.getItem('activeModule') || 'dashboard';
+    return urlModule !== 'dashboard' ? urlModule : savedModule;
+  });
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, loading } = useAuth();
+
+  // Save active module to localStorage and update URL
+  useEffect(() => {
+    localStorage.setItem('activeModule', activeModule);
+    // Update URL without causing a page reload
+    window.history.replaceState({}, '', `/${activeModule}`);
+  }, [activeModule]);
 
   console.log('AppContent render:', { 
     user: user?.id, 
