@@ -14,7 +14,8 @@ import {
   Wrench,
   MessageSquare,
   List,
-  LogOut
+  LogOut,
+  MessageCircle
 } from 'lucide-react';
 import { User } from '../../types';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -44,6 +45,7 @@ const menuItems = [
   { id: 'orders', label: 'Porositë', icon: ShoppingCart, module: 'orders' },
   { id: 'products', label: 'Produktet', icon: Package, module: 'products' },
   { id: 'customers', label: 'Klientët', icon: Users, module: 'customers' },
+  { id: 'comments', label: 'Komentet', icon: MessageCircle, module: 'comments' },
   { id: 'reports', label: 'Raportet', icon: BarChart3, module: 'reports' },
   { id: 'users', label: 'Përdoruesit', icon: Users, module: 'users' },
   { id: 'settings', label: 'Cilësimet', icon: Settings, module: 'settings' },

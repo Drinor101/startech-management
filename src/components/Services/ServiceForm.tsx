@@ -4,7 +4,6 @@ import { apiCall, getCurrentUser, apiConfig } from '../../config/api';
 import Notification from '../Common/Notification';
 import CustomerDropdown from '../Common/CustomerDropdown';
 import UserDropdown from '../Common/UserDropdown';
-import CommentsSection from '../Common/CommentsSection';
 
 interface ServiceFormProps {
   onClose: () => void;
@@ -264,20 +263,6 @@ const ServiceForm: React.FC<ServiceFormProps> = ({ onClose, onSuccess, service }
           </div>
         </form>
 
-        {/* Comments Section - Only show for existing services */}
-        {service && service.id && (
-          <div className="border-t border-gray-200 p-4">
-            <CommentsSection
-              entityType="service"
-              entityId={service.id}
-              currentUser={{
-                id: currentUser?.id || '',
-                name: currentUser?.name || currentUser?.email || 'Përdorues',
-                avatar: currentUser?.avatar_url
-              }}
-            />
-          </div>
-        )}
       </div>
 
       {/* Notification */}

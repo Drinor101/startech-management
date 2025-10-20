@@ -348,7 +348,8 @@ router.get('/', authenticateUser, async (req, res) => {
       
       // Calculate dynamic total based on current page and products
       let dynamicTotal = productsCache.totalProducts;
-      if (!dynamicTotal) {
+      console.log(`🔍 Current productsCache.totalProducts: ${productsCache.totalProducts}`);
+      if (!dynamicTotal || dynamicTotal === 0) {
         // If we don't have total count from API, calculate dynamically
         if (allProducts.length === safeLimit) {
           // If we got a full page, there might be more products
@@ -392,6 +393,7 @@ router.get('/', authenticateUser, async (req, res) => {
         }
       }
       
+      console.log(`📊 Final dynamicTotal for pagination: ${dynamicTotal}`);
       paginationInfo = {
         page: pageNum,
         limit: safeLimit,
