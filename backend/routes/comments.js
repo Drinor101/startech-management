@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import { authenticateUser } from '../middleware/auth.js';
+import { supabase } from '../config/supabase.js';
+
 const router = express.Router();
-const { authenticateUser } = require('../middleware/auth');
-const { supabase } = require('../config/supabase');
 
 // Get comments for a specific entity
 router.get('/', authenticateUser, async (req, res) => {
@@ -501,4 +502,4 @@ async function updateCommentVoteCount(commentId, voteType, change) {
   }
 }
 
-module.exports = router;
+export default router;
