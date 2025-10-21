@@ -240,7 +240,6 @@ router.post('/', authenticateUser, async (req, res) => {
       }
     }
     
-    console.log('=== ORDER DATA PARSED ===');
     console.log('Order data parsed:', {
       customerId,
       customerName,
@@ -253,13 +252,9 @@ router.post('/', authenticateUser, async (req, res) => {
       notes,
       teamNotes
     });
-    console.log('=== END ORDER DATA PARSED ===');
     
     // Generate PRS-YYYY-NNN ID
-    console.log('=== GENERATING ORDER ID ===');
     const currentYear = new Date().getFullYear();
-    console.log(`Current year: ${currentYear}`);
-    
     const { data: lastOrder } = await supabase
       .from('orders')
       .select('id')
@@ -268,67 +263,35 @@ router.post('/', authenticateUser, async (req, res) => {
       .limit(1)
       .single();
     
-    console.log(`Last order found:`, lastOrder);
-    
     let orderNumber = 1;
     if (lastOrder?.id) {
       const lastNumber = parseInt(lastOrder.id.split('-')[2]);
       orderNumber = lastNumber + 1;
-      console.log(`Last order number: ${lastNumber}, new number: ${orderNumber}`);
-    } else {
-      console.log(`No previous orders found, starting with: ${orderNumber}`);
     }
     
     const orderId = `PRS-${currentYear}-${orderNumber.toString().padStart(3, '0')}`;
-    console.log(`Generated order ID: ${orderId}`);
-    console.log('=== END ORDER ID GENERATION ===');
     
     // Use customerId if provided, otherwise create or find customer by name
-    console.log('=== CUSTOMER VALIDATION START ===');
     let finalCustomerId;
     
     if (customerId) {
       // Validate that customer exists
-      console.log(`=== VALIDATING CUSTOMER ${customerId} ===`);
-      console.log(`CustomerId type: ${typeof customerId}`);
-      console.log(`CustomerId value: ${customerId}`);
-      console.log(`CustomerId length: ${customerId?.length}`);
-      
-      console.log(`🔍 Trying to find customer with ID: ${customerId}`);
       const { data: existingCustomerById, error: customerByIdError } = await supabase
         .from('customers')
         .select('id, name')
         .eq('id', customerId)
         .single();
       
-      console.log(`Supabase customer query result:`, {
-        data: existingCustomerById,
-        error: customerByIdError,
-        hasData: !!existingCustomerById,
-        hasError: !!customerByIdError
-      });
-      
       if (customerByIdError || !existingCustomerById) {
-        console.error(`❌ Customer with ID ${customerId} not found:`, customerByIdError);
-        console.error(`CustomerError details:`, {
-          message: customerByIdError?.message,
-          code: customerByIdError?.code,
-          details: customerByIdError?.details,
-          hint: customerByIdError?.hint
-        });
         return res.status(400).json({
           success: false,
           error: 'Klienti nuk u gjet',
-          details: `Customer with ID ${customerId} does not exist`,
-          customerError: customerByIdError?.message
+          details: `Customer with ID ${customerId} does not exist`
         });
       }
       
       finalCustomerId = customerId;
-      console.log(`✅ Using provided customerId: ${finalCustomerId} (${existingCustomerById.name})`);
-      console.log(`=== END CUSTOMER VALIDATION ===`);
     } else {
-      console.log(`=== CREATING/FINDING CUSTOMER BY NAME ===`);
       // Fallback to old logic for backward compatibility
       const finalCustomerName = customerName || customer;
       const { data: existingCustomer } = await supabase
@@ -358,18 +321,13 @@ router.post('/', authenticateUser, async (req, res) => {
       }
     }
     
-    console.log(`=== FINAL CUSTOMER ID: ${finalCustomerId} ===`);
-    
     // Use the validated products from earlier validation
-    console.log('=== USING VALIDATED PRODUCTS ===');
     const productDetails = [];
     let hasWooCommerceProducts = false;
     
     // We already validated products above, so we can use that data
     for (const item of items) {
       try {
-        console.log(`Processing validated product ${item.productId}...`);
-        
         // Get the product we already validated (could be by ID or WooCommerce ID)
         let validatedProduct, validatedError;
         
@@ -383,10 +341,8 @@ router.post('/', authenticateUser, async (req, res) => {
         if (exactMatch && !exactError) {
           validatedProduct = exactMatch;
           validatedError = null;
-          console.log(`✅ Found product by exact ID match`);
         } else {
           // If not found by exact match, try to find by WooCommerce ID
-          console.log(`❌ Product not found by exact ID, trying WooCommerce ID...`);
           const { data: wooMatch, error: wooError } = await supabase
             .from('products')
             .select('*')
@@ -396,35 +352,16 @@ router.post('/', authenticateUser, async (req, res) => {
           if (wooMatch && !wooError) {
             validatedProduct = wooMatch;
             validatedError = null;
-            console.log(`✅ Found product by WooCommerce ID match`);
           } else {
             validatedProduct = null;
             validatedError = wooError || exactError;
-            console.log(`❌ Product not found by WooCommerce ID either`);
           }
         }
         
         if (validatedProduct && !validatedError) {
-          console.log(`✅ Product ${item.productId} found in database:`, {
-            id: validatedProduct.id,
-            title: validatedProduct.title,
-            final_price: validatedProduct.final_price,
-            source: validatedProduct.source,
-            woo_commerce_id: validatedProduct.woo_commerce_id
-          });
-          
           // Check if this is a WooCommerce product
-          console.log(`Checking if product ${item.productId} is WooCommerce:`);
-          console.log(`- source: ${validatedProduct.source}`);
-          console.log(`- woo_commerce_id: ${validatedProduct.woo_commerce_id}`);
-          console.log(`- source === 'WooCommerce': ${validatedProduct.source === 'WooCommerce'}`);
-          console.log(`- woo_commerce_id exists: ${!!validatedProduct.woo_commerce_id}`);
-          
           if (validatedProduct.source === 'WooCommerce' || validatedProduct.source === 'Woo' || validatedProduct.woo_commerce_id) {
             hasWooCommerceProducts = true;
-            console.log(`✅ Product ${item.productId} is a WooCommerce product - setting hasWooCommerceProducts = true`);
-          } else {
-            console.log(`❌ Product ${item.productId} is NOT a WooCommerce product`);
           }
           
           productDetails.push({
@@ -434,8 +371,6 @@ router.post('/', authenticateUser, async (req, res) => {
           });
         } else {
           // Product not found in database - try to fetch from WooCommerce API
-          console.log(`❌ Product ${item.productId} not found in database, trying WooCommerce API...`);
-          
           try {
             const wooCommerceConfig = {
               url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
@@ -443,7 +378,6 @@ router.post('/', authenticateUser, async (req, res) => {
               consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
             };
             
-            console.log(`🔍 Fetching product ${item.productId} from WooCommerce API...`);
             const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
               method: 'GET',
               headers: {
@@ -452,15 +386,8 @@ router.post('/', authenticateUser, async (req, res) => {
               }
             });
             
-            console.log(`WooCommerce API response: ${response.status} ${response.statusText}`);
-            
             if (response.ok) {
               const wooProduct = await response.json();
-              console.log(`✅ Product ${item.productId} fetched from WooCommerce:`, {
-                id: wooProduct.id,
-                name: wooProduct.name,
-                price: wooProduct.price
-              });
               
               // Add to productDetails for order creation
               productDetails.push({
@@ -470,18 +397,14 @@ router.post('/', authenticateUser, async (req, res) => {
               });
               
               hasWooCommerceProducts = true;
-              console.log(`✅ Product ${item.productId} added to order from WooCommerce API`);
             } else {
-              console.error(`❌ Failed to fetch product ${item.productId} from WooCommerce: ${response.status}`);
               return res.status(400).json({
                 success: false,
                 error: 'Produkti nuk u gjet',
-                details: `Product with ID ${item.productId} not found in database or WooCommerce`,
-                suggestion: 'Please check if the product exists in WooCommerce'
+                details: `Product with ID ${item.productId} not found in database or WooCommerce`
               });
             }
           } catch (wooError) {
-            console.error(`❌ Error fetching product ${item.productId} from WooCommerce:`, wooError);
             return res.status(400).json({
               success: false,
               error: 'Gabim në marrjen e produktit',
@@ -495,17 +418,10 @@ router.post('/', authenticateUser, async (req, res) => {
       }
     }
     
-    console.log('=== WOOCOMMERCE API CALL COMPLETED ===');
-    console.log('Final product details:', JSON.stringify(productDetails, null, 2));
-    
     const total = items.reduce((sum, item) => {
       const product = productDetails.find(p => p.id === item.productId);
       return sum + (product ? product.price * item.quantity : 0);
     }, 0);
-
-    console.log('=== FINAL ORDER SOURCE DETERMINATION ===');
-    console.log(`hasWooCommerceProducts: ${hasWooCommerceProducts}`);
-    console.log(`Final order source will be: ${hasWooCommerceProducts ? 'WooCommerce' : 'Manual'}`);
 
     const orderData = {
       id: orderId,
@@ -524,10 +440,6 @@ router.post('/', authenticateUser, async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    console.log('Order data to insert:', orderData);
-    console.log('Total calculated:', total);
-    console.log('Customer ID:', customerId);
-
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert(orderData)
@@ -535,24 +447,16 @@ router.post('/', authenticateUser, async (req, res) => {
       .single();
 
     if (orderError) {
-      console.error('Database error inserting order:', orderError);
       throw orderError;
     }
 
-    console.log('Order inserted successfully:', order);
-
     // Insert order products - sync products to database if not found
     const orderProducts = [];
-    console.log('Processing order items:', items);
-    console.log('Product details from WooCommerce:', productDetails);
     
     for (const item of items) {
-      console.log(`Processing item: ${item.productId}, quantity: ${item.quantity}`);
       const product = productDetails.find(p => p.id === item.productId);
-      console.log(`Found product in WooCommerce details:`, product);
       
       // Find the product UUID in our database by WooCommerce ID
-      console.log(`Looking for product ${item.productId} in database...`);
       let { data: dbProduct, error: dbError } = await supabase
         .from('products')
         .select('id')
@@ -563,8 +467,6 @@ router.post('/', authenticateUser, async (req, res) => {
       
       // If product not found in database, create it
       if (!dbProduct) {
-        console.log(`Product ${item.productId} not found in database, creating it...`);
-        
         const productData = {
           title: product ? product.name : `Product ${item.productId}`,
           image: '',
@@ -582,29 +484,17 @@ router.post('/', authenticateUser, async (req, res) => {
           updated_at: new Date().toISOString()
         };
         
-        console.log(`Creating product with data:`, productData);
-        
         const { data: newProduct, error: insertError } = await supabase
           .from('products')
           .insert(productData)
           .select('id')
           .single();
         
-        console.log(`Product creation result:`, { newProduct, insertError });
-        
         if (insertError) {
-          console.error(`Error creating product ${item.productId}:`, insertError);
-          console.error(`Insert error details:`, {
-            message: insertError.message,
-            details: insertError.details,
-            hint: insertError.hint,
-            code: insertError.code
-          });
-          continue;
+          throw insertError;
         }
         
         dbProduct = newProduct;
-        console.log(`Product ${item.productId} created in database with UUID: ${dbProduct.id}`);
       }
       
       if (dbProduct) {

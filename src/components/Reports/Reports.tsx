@@ -766,7 +766,7 @@ const Reports: React.FC = () => {
                 <p className="text-2xl font-bold text-blue-600 mt-1">${currentData.averageValue}</p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                <h3 className="text-sm font-medium text-gray-500">Dërguar</h3>
+                <h3 className="text-sm font-medium text-gray-500">Dorezuar</h3>
                 <p className="text-2xl font-bold text-purple-600 mt-1">{currentData.delivered}</p>
               </div>
             </>
