@@ -484,15 +484,40 @@ router.get('/:id', authenticateUser, async (req, res) => {
 // Krijon një produkt të ri (vetëm admin)
 router.post('/', authenticateUser, requireAdmin, async (req, res) => {
   try {
+    // Validate required fields
+    if (!req.body.title || req.body.title.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Titulli është i detyrueshëm',
+        details: 'Title field is required and cannot be empty'
+      });
+    }
+
+    if (!req.body.category || req.body.category.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        error: 'Kategoria është e detyrueshme',
+        details: 'Category field is required and cannot be empty'
+      });
+    }
+
+    if (!req.body.basePrice || req.body.basePrice <= 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Çmimi bazë duhet të jetë më i madh se 0',
+        details: 'Base price must be greater than 0'
+      });
+    }
+
     const productData = {
-      title: req.body.title,
-      category: req.body.category,
-      base_price: req.body.basePrice,
-      additional_cost: req.body.additionalCost,
-      final_price: req.body.finalPrice,
-      supplier: req.body.supplier,
-      image: req.body.image,
-      woo_commerce_category: req.body.wooCommerceCategory,
+      title: req.body.title.trim(),
+      category: req.body.category.trim(),
+      base_price: parseFloat(req.body.basePrice),
+      additional_cost: parseFloat(req.body.additionalCost) || 0,
+      final_price: parseFloat(req.body.finalPrice) || parseFloat(req.body.basePrice),
+      supplier: req.body.supplier || '',
+      image: req.body.image || '',
+      woo_commerce_category: req.body.wooCommerceCategory || '',
       woo_commerce_status: req.body.wooCommerceStatus || 'active',
       source: req.body.source || 'Manual',
       last_sync_date: req.body.lastSyncDate || new Date().toISOString(),
@@ -529,14 +554,50 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
 router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    
+    // Validate required fields if they are being updated
+    if (req.body.title !== undefined && (!req.body.title || req.body.title.trim() === '')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Titulli është i detyrueshëm',
+        details: 'Title field is required and cannot be empty'
+      });
+    }
+
+    if (req.body.category !== undefined && (!req.body.category || req.body.category.trim() === '')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Kategoria është e detyrueshme',
+        details: 'Category field is required and cannot be empty'
+      });
+    }
+
+    if (req.body.basePrice !== undefined && (!req.body.basePrice || req.body.basePrice <= 0)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Çmimi bazë duhet të jetë më i madh se 0',
+        details: 'Base price must be greater than 0'
+      });
+    }
+
     const updates = {
       ...req.body,
       updated_at: new Date().toISOString()
     };
 
+    // Clean and validate data
+    if (updates.title) updates.title = updates.title.trim();
+    if (updates.category) updates.category = updates.category.trim();
+    if (updates.basePrice) updates.base_price = parseFloat(updates.basePrice);
+    if (updates.additionalCost !== undefined) updates.additional_cost = parseFloat(updates.additionalCost) || 0;
+    if (updates.finalPrice !== undefined) updates.final_price = parseFloat(updates.finalPrice) || parseFloat(updates.basePrice || 0);
+
     // Heq fushët që nuk duhet të përditësohen
     delete updates.id;
     delete updates.created_at;
+    delete updates.basePrice; // Remove camelCase version
+    delete updates.additionalCost; // Remove camelCase version
+    delete updates.finalPrice; // Remove camelCase version
 
     const { data, error } = await supabase
       .from('products')
