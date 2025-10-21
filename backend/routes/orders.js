@@ -186,8 +186,100 @@ router.post('/', authenticateUser, async (req, res) => {
         error: 'User ID mungon'
       });
     }
+
+    // Validate required fields
+    if (!customerId && !customerName && !customer) {
+      return res.status(400).json({
+        success: false,
+        error: 'Klienti është i detyrueshëm',
+        details: 'Customer information is required'
+      });
+    }
+
+    // Validate customerId format if provided
+    if (customerId && typeof customerId !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'ID e klientit nuk është e vlefshme',
+        details: 'Customer ID must be a valid string'
+      });
+    }
+
+    // Validate UUID format for customerId
+    if (customerId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(customerId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID e klientit nuk është në formatin e duhur',
+        details: 'Customer ID must be a valid UUID'
+      });
+    }
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Të paktën një produkt është i detyrueshëm',
+        details: 'At least one product is required'
+      });
+    }
+
+    // Validate each item
+    for (const item of items) {
+      if (!item.productId) {
+        return res.status(400).json({
+          success: false,
+          error: 'ID e produktit është e detyrueshme',
+          details: 'Product ID is required for all items'
+        });
+      }
+      if (!item.quantity || item.quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Sasia duhet të jetë më e madhe se 0',
+          details: 'Quantity must be greater than 0'
+        });
+      }
+      
+      // Validate that product exists
+      console.log(`=== VALIDATING PRODUCT ${item.productId} ===`);
+      console.log(`ProductId type: ${typeof item.productId}`);
+      console.log(`ProductId value: ${item.productId}`);
+      
+      const { data: existingProduct, error: productError } = await supabase
+        .from('products')
+        .select('id, title, final_price, source')
+        .eq('id', item.productId)
+        .single();
+      
+      console.log(`Supabase query result:`, {
+        data: existingProduct,
+        error: productError,
+        hasData: !!existingProduct,
+        hasError: !!productError
+      });
+      
+      if (productError || !existingProduct) {
+        console.error(`❌ Product with ID ${item.productId} not found:`, productError);
+        console.error(`ProductError details:`, {
+          message: productError?.message,
+          code: productError?.code,
+          details: productError?.details,
+          hint: productError?.hint
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Produkti nuk u gjet',
+          details: `Product with ID ${item.productId} does not exist`,
+          productError: productError?.message
+        });
+      }
+      
+      console.log(`✅ Product ${item.productId} validated: ${existingProduct.title} - €${existingProduct.final_price} (${existingProduct.source})`);
+      console.log(`=== END VALIDATION FOR PRODUCT ${item.productId} ===`);
+    }
     
     console.log('Order data parsed:', {
+      customerId,
+      customerName,
       customer,
       items,
       shippingAddress,
@@ -220,16 +312,50 @@ router.post('/', authenticateUser, async (req, res) => {
     let finalCustomerId;
     
     if (customerId) {
-      // Use provided customerId
+      // Validate that customer exists
+      console.log(`=== VALIDATING CUSTOMER ${customerId} ===`);
+      console.log(`CustomerId type: ${typeof customerId}`);
+      console.log(`CustomerId value: ${customerId}`);
+      
+      const { data: existingCustomerById, error: customerByIdError } = await supabase
+        .from('customers')
+        .select('id, name')
+        .eq('id', customerId)
+        .single();
+      
+      console.log(`Supabase customer query result:`, {
+        data: existingCustomerById,
+        error: customerByIdError,
+        hasData: !!existingCustomerById,
+        hasError: !!customerByIdError
+      });
+      
+      if (customerByIdError || !existingCustomerById) {
+        console.error(`❌ Customer with ID ${customerId} not found:`, customerByIdError);
+        console.error(`CustomerError details:`, {
+          message: customerByIdError?.message,
+          code: customerByIdError?.code,
+          details: customerByIdError?.details,
+          hint: customerByIdError?.hint
+        });
+        return res.status(400).json({
+          success: false,
+          error: 'Klienti nuk u gjet',
+          details: `Customer with ID ${customerId} does not exist`,
+          customerError: customerByIdError?.message
+        });
+      }
+      
       finalCustomerId = customerId;
-      console.log(`Using provided customerId: ${finalCustomerId}`);
+      console.log(`✅ Using provided customerId: ${finalCustomerId} (${existingCustomerById.name})`);
+      console.log(`=== END CUSTOMER VALIDATION ===`);
     } else {
       // Fallback to old logic for backward compatibility
-      const customerName = customerName || customer;
+      const finalCustomerName = customerName || customer;
       const { data: existingCustomer } = await supabase
         .from('customers')
         .select('id')
-        .eq('name', customerName)
+        .eq('name', finalCustomerName)
         .single();
       
       if (existingCustomer) {
@@ -239,8 +365,8 @@ router.post('/', authenticateUser, async (req, res) => {
         const { data: newCustomer, error: customerError } = await supabase
           .from('customers')
           .insert({
-            name: customerName,
-            email: `${customerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            name: finalCustomerName,
+            email: `${finalCustomerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             source: 'Internal'
           })
           .select('id')
@@ -499,16 +625,30 @@ router.post('/', authenticateUser, async (req, res) => {
       message: 'Porosia u krijua me sukses'
     });
   } catch (error) {
+    console.error('=== ERROR IN ORDER CREATION ===');
     console.error('Gabim në krijimin e porosisë:', error);
     console.error('Error details:', {
       message: error.message,
       stack: error.stack,
-      name: error.name
+      name: error.name,
+      code: error.code,
+      details: error.details,
+      hint: error.hint
     });
+    console.error('Request body was:', req.body);
+    console.error('User info:', {
+      id: req.user?.id,
+      name: req.user?.name,
+      email: req.user?.email
+    });
+    console.error('=== END ERROR DETAILS ===');
+    
     res.status(500).json({
       success: false,
       error: 'Gabim në krijimin e porosisë',
-      details: error.message
+      details: error.message,
+      code: error.code,
+      hint: error.hint
     });
   }
 });
