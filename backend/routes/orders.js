@@ -259,6 +259,8 @@ router.post('/', authenticateUser, async (req, res) => {
     const productDetails = [];
     let hasWooCommerceProducts = false;
     
+    console.log('=== DEBUGGING WOOCOMMERCE DETECTION ===');
+    
     for (const item of items) {
       try {
         console.log(`Fetching product ${item.productId}...`);
@@ -280,9 +282,17 @@ router.post('/', authenticateUser, async (req, res) => {
           });
           
           // Check if this is a WooCommerce product
-          if (manualProduct.source === 'WooCommerce' || manualProduct.woo_commerce_id) {
+          console.log(`Checking if product ${item.productId} is WooCommerce:`);
+          console.log(`- source: ${manualProduct.source}`);
+          console.log(`- woo_commerce_id: ${manualProduct.woo_commerce_id}`);
+          console.log(`- source === 'WooCommerce': ${manualProduct.source === 'WooCommerce'}`);
+          console.log(`- woo_commerce_id exists: ${!!manualProduct.woo_commerce_id}`);
+          
+          if (manualProduct.source === 'WooCommerce' || manualProduct.source === 'Woo' || manualProduct.woo_commerce_id) {
             hasWooCommerceProducts = true;
-            console.log(`Product ${item.productId} is a WooCommerce product`);
+            console.log(`✅ Product ${item.productId} is a WooCommerce product - setting hasWooCommerceProducts = true`);
+          } else {
+            console.log(`❌ Product ${item.productId} is NOT a WooCommerce product`);
           }
           
           productDetails.push({
@@ -342,6 +352,10 @@ router.post('/', authenticateUser, async (req, res) => {
       const product = productDetails.find(p => p.id === item.productId);
       return sum + (product ? product.price * item.quantity : 0);
     }, 0);
+
+    console.log('=== FINAL ORDER SOURCE DETERMINATION ===');
+    console.log(`hasWooCommerceProducts: ${hasWooCommerceProducts}`);
+    console.log(`Final order source will be: ${hasWooCommerceProducts ? 'WooCommerce' : 'Manual'}`);
 
     const orderData = {
       id: orderId,

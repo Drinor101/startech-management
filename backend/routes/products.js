@@ -303,7 +303,7 @@ router.get('/', authenticateUser, async (req, res) => {
             wooCommerceStatus: product.woo_commerce_status || 'draft',
             wooCommerceCategory: product.woo_commerce_category || '',
             lastSyncDate: product.last_sync_date || new Date().toISOString(),
-            source: 'Manual'
+            source: product.source || 'Manual'
           }));
           
           allProducts = [...allProducts, ...transformedManualProducts];
@@ -316,7 +316,7 @@ router.get('/', authenticateUser, async (req, res) => {
     }
 
     // 3. Apply source filter to combined results
-    if (source && source !== 'Manual') {
+    if (source) {
       allProducts = allProducts.filter(product => product.source === source);
     }
 
