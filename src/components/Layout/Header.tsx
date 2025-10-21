@@ -47,31 +47,23 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
 
     setIsSearching(true);
     try {
-      // Search across all entities with improved error handling
-      const [tasksRes, ticketsRes, servicesRes, ordersRes, productsRes, customersRes] = await Promise.all([
+      // Search across tasks, tickets, services, and orders only
+      const [tasksRes, ticketsRes, servicesRes, ordersRes] = await Promise.all([
         apiCall(`${apiConfig.endpoints.tasks}?search=${encodeURIComponent(query)}`).catch((err) => {
           console.error('Tasks search error:', err);
-          return { data: [] };
+          return { success: false, data: [] };
         }),
         apiCall(`${apiConfig.endpoints.tickets}?search=${encodeURIComponent(query)}`).catch((err) => {
           console.error('Tickets search error:', err);
-          return { data: [] };
+          return { success: false, data: [] };
         }),
         apiCall(`${apiConfig.endpoints.services}?search=${encodeURIComponent(query)}`).catch((err) => {
           console.error('Services search error:', err);
-          return { data: [] };
+          return { success: false, data: [] };
         }),
         apiCall(`${apiConfig.endpoints.orders}?search=${encodeURIComponent(query)}`).catch((err) => {
           console.error('Orders search error:', err);
-          return { data: [] };
-        }),
-        apiCall(`${apiConfig.endpoints.products}?search=${encodeURIComponent(query)}`).catch((err) => {
-          console.error('Products search error:', err);
-          return { data: [] };
-        }),
-        apiCall(`${apiConfig.endpoints.customers}?search=${encodeURIComponent(query)}`).catch((err) => {
-          console.error('Customers search error:', err);
-          return { data: [] };
+          return { success: false, data: [] };
         })
       ]);
 
@@ -105,18 +97,6 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
           type: 'order' as const,
           title: `Porosi ${item.id}`,
           status: item.status
-        })),
-        // Products
-        ...(productsRes.data || []).map((item: any) => ({ 
-          ...item, 
-          type: 'product' as const,
-          title: item.title || item.name || `Produkt ${item.id}`
-        })),
-        // Customers
-        ...(customersRes.data || []).map((item: any) => ({ 
-          ...item, 
-          type: 'customer' as const,
-          title: item.name || item.email || `Klient ${item.id}`
         }))
       ];
 
@@ -160,9 +140,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
       task: 'Task',
       ticket: 'Tiket',
       service: 'Shërbim',
-      order: 'Porosi',
-      product: 'Produkt',
-      customer: 'Klient'
+      order: 'Porosi'
     };
     return labels[type as keyof typeof labels] || type;
   };
@@ -172,9 +150,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
       task: 'bg-blue-100 text-blue-800',
       ticket: 'bg-orange-100 text-orange-800',
       service: 'bg-green-100 text-green-800',
-      order: 'bg-purple-100 text-purple-800',
-      product: 'bg-indigo-100 text-indigo-800',
-      customer: 'bg-gray-100 text-gray-800'
+      order: 'bg-purple-100 text-purple-800'
     };
     return colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -205,16 +181,6 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, title, onModuleChange 
           onModuleChange('orders');
           // Store the selected order ID for the orders module to use
           sessionStorage.setItem('selectedOrderId', result.id);
-          break;
-        case 'product':
-          onModuleChange('products');
-          // Store the selected product ID for the products module to use
-          sessionStorage.setItem('selectedProductId', result.id);
-          break;
-        case 'customer':
-          onModuleChange('customers');
-          // Store the selected customer ID for the customers module to use
-          sessionStorage.setItem('selectedCustomerId', result.id);
           break;
         default:
           console.log('Unknown type:', result.type);

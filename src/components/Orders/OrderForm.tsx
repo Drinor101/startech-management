@@ -106,7 +106,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     };
 
     fetchProducts();
-  }, [productSourceFilter]);
+  }, [productSourceFilter, order]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
