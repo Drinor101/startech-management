@@ -66,6 +66,31 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         
         // Handle the correct API response structure
         const data = response.success ? response.data : [];
+        
+        // If we have a pre-filled product from WooCommerce, add it to the list
+        if (order?.products && order.products.length > 0) {
+          const wooCommerceProduct = order.products[0];
+          // Check if the WooCommerce product is not already in the list
+          const existingProduct = data.find(p => p.id === wooCommerceProduct.id);
+          if (!existingProduct) {
+            // Add the WooCommerce product to the list with real data
+            data.unshift({
+              id: wooCommerceProduct.id,
+              title: wooCommerceProduct.title || `WooCommerce Product ${wooCommerceProduct.id}`,
+              category: wooCommerceProduct.category || 'WooCommerce',
+              basePrice: wooCommerceProduct.basePrice || 0,
+              additionalCost: 0,
+              finalPrice: wooCommerceProduct.finalPrice || wooCommerceProduct.basePrice || 0,
+              supplier: 'WooCommerce',
+              wooCommerceStatus: 'active',
+              wooCommerceCategory: wooCommerceProduct.category || '',
+              lastSyncDate: new Date().toISOString(),
+              source: wooCommerceProduct.source || 'WooCommerce',
+              image: wooCommerceProduct.image || ''
+            });
+          }
+        }
+        
         setProducts(data || []);
         
         console.log(`Loaded ${data?.length || 0} products for OrderForm`);
@@ -101,11 +126,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = order ? `/api/orders/${order.id}` : '/api/orders';
-      const method = order ? 'PATCH' : 'POST';
+      // Check if this is an existing order with a valid ID
+      const isExistingOrder = order && order.id && order.id !== undefined;
+      const url = isExistingOrder ? `/api/orders/${order.id}` : '/api/orders';
+      const method = isExistingOrder ? 'PATCH' : 'POST';
       
       console.log('OrderForm - Submitting order:', formData);
       console.log('OrderForm - URL:', url, 'Method:', method);
+      console.log('OrderForm - Is existing order:', isExistingOrder);
       
       const response = await apiCall(url, {
         method,
@@ -119,7 +147,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         setShowSuccess(true);
         setNotification({
           type: 'success',
-          message: order ? 'Porosia u përditësua me sukses' : 'Porosia u shtua me sukses',
+          message: isExistingOrder ? 'Porosia u përditësua me sukses' : 'Porosia u shtua me sukses',
           isVisible: true
         });
         

@@ -21,8 +21,13 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Search functionality - improved search across multiple fields
     if (search) {
-      const searchTerm = `%${search}%`;
-      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},created_by.ilike.${searchTerm},category.ilike.${searchTerm},department.ilike.${searchTerm},source.ilike.${searchTerm}`);
+      try {
+        const searchTerm = `%${search}%`;
+        query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},category.ilike.${searchTerm},department.ilike.${searchTerm},source.ilike.${searchTerm}`);
+      } catch (searchError) {
+        console.error('Tasks search query error:', searchError);
+        // Continue without search if query fails
+      }
     }
 
     // Filtri për taskat e përcaktuar për atë përdorues
@@ -84,8 +89,8 @@ router.get('/', authenticateUser, async (req, res) => {
       customerId: task.customer_id,
       relatedOrderId: task.related_order_id,
       source: task.source,
-      comments: task.comments || [],
-      history: task.history || []
+      comments: Array.isArray(task.comments) ? task.comments : (task.comments ? JSON.parse(task.comments) : []),
+      history: Array.isArray(task.history) ? task.history : (task.history ? JSON.parse(task.history) : [])
     }));
 
     res.json({

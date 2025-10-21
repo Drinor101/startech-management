@@ -23,8 +23,13 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Search functionality - improved search across multiple fields
     if (search) {
-      const searchTerm = `%${search}%`;
-      query = query.or(`problem_description.ilike.${searchTerm},id.ilike.${searchTerm},category.ilike.${searchTerm},assigned_to.ilike.${searchTerm},created_by.ilike.${searchTerm},warranty_info.ilike.${searchTerm}`);
+      try {
+        const searchTerm = `%${search}%`;
+        query = query.or(`problem_description.ilike.${searchTerm},id.ilike.${searchTerm},category.ilike.${searchTerm},assigned_to.ilike.${searchTerm}`);
+      } catch (searchError) {
+        console.error('Services search query error:', searchError);
+        // Continue without search if query fails
+      }
     }
 
     // Filtri për serviset e përcaktuar për atë përdorues

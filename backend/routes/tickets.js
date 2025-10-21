@@ -18,8 +18,13 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Search functionality - improved search across multiple fields
     if (search) {
-      const searchTerm = `%${search}%`;
-      query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},created_by.ilike.${searchTerm},assigned_to.ilike.${searchTerm},source.ilike.${searchTerm}`);
+      try {
+        const searchTerm = `%${search}%`;
+        query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},source.ilike.${searchTerm}`);
+      } catch (searchError) {
+        console.error('Tickets search query error:', searchError);
+        // Continue without search if query fails
+      }
     }
 
     // Filtri për tiketat e përcaktuar për atë përdorues

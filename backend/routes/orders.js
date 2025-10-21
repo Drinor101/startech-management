@@ -24,7 +24,13 @@ router.get('/', authenticateUser, async (req, res) => {
 
     // Search functionality
     if (search) {
-      query = query.or(`id.ilike.%${search}%,notes.ilike.%${search}%,shipping_address.ilike.%${search}%`);
+      try {
+        const searchTerm = `%${search}%`;
+        query = query.or(`id.ilike.${searchTerm},notes.ilike.${searchTerm},shipping_address.ilike.${searchTerm},customer.name.ilike.${searchTerm},customer.email.ilike.${searchTerm}`);
+      } catch (searchError) {
+        console.error('Orders search query error:', searchError);
+        // Continue without search if query fails
+      }
     }
 
     // Filtra

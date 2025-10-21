@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown } from 'lucide-react';
+import { Package, Euro, Tag, Building, FolderSync as Sync, Clock, CheckCircle, AlertCircle, Filter, Plus, ChevronDown, ShoppingCart } from 'lucide-react';
 import { Product } from '../../types';
 import { useProducts, useWooCommerceSync, useCreateProduct, useUpdateProduct, useDeleteProduct } from '../../hooks/useProducts';
 import Modal from '../Common/Modal';
 import ProductForm from './ProductForm';
+import OrderForm from '../Orders/OrderForm';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const ProductsList: React.FC = () => {
@@ -14,6 +15,8 @@ const ProductsList: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string>('WooCommerce');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [productForOrder, setProductForOrder] = useState<Product | null>(null);
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   // React Query hooks
@@ -100,6 +103,16 @@ const ProductsList: React.FC = () => {
     setSelectedProduct(product);
     setIsEditMode(false);
     setIsFormOpen(true);
+  };
+
+  const handleCreateOrderFromProduct = (product: Product) => {
+    setProductForOrder(product);
+    setIsOrderModalOpen(true);
+  };
+
+  const handleOrderSuccess = () => {
+    setIsOrderModalOpen(false);
+    setProductForOrder(null);
   };
 
   const handlePageChange = (page: number) => {
@@ -252,6 +265,9 @@ const ProductsList: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">
                   Sinkronizimi i Fundit
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">
+                  Veprime
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -308,6 +324,20 @@ const ProductsList: React.FC = () => {
                       <span className="text-sm text-gray-600">
                         {new Date(product.lastSyncDate).toLocaleDateString()}
                       </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="flex items-center gap-2">
+                      {product.source === 'WooCommerce' && (
+                        <button
+                          onClick={() => handleCreateOrderFromProduct(product)}
+                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-100 rounded-md hover:bg-blue-200 transition-colors"
+                          title="Dërgo si porosi"
+                        >
+                          <ShoppingCart className="w-3 h-3 mr-1" />
+                          Porosi
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -398,6 +428,30 @@ const ProductsList: React.FC = () => {
           onClose={() => setIsFormOpen(false)}
           onSuccess={isEditMode ? handleUpdateProduct : handleCreateProduct}
           isEditMode={isEditMode}
+        />
+      </Modal>
+
+      {/* Order Form Modal */}
+      <Modal
+        isOpen={isOrderModalOpen}
+        onClose={() => setIsOrderModalOpen(false)}
+        size="lg"
+      >
+        <OrderForm
+          order={productForOrder ? {
+            products: [{ 
+              id: productForOrder.id, 
+              quantity: 1,
+              title: productForOrder.title,
+              basePrice: productForOrder.basePrice,
+              finalPrice: productForOrder.finalPrice,
+              category: productForOrder.category,
+              image: productForOrder.image,
+              source: productForOrder.source
+            }]
+          } : undefined}
+          onClose={() => setIsOrderModalOpen(false)}
+          onSuccess={handleOrderSuccess}
         />
       </Modal>
     </div>
