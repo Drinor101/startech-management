@@ -16,7 +16,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
     phone: customer?.phone || '',
     address: customer?.address || '',
     city: customer?.city || '',
-    neighborhood: customer?.neighborhood || '',
     source: customer?.source || 'Internal'
   });
   const [loading, setLoading] = useState(false);
@@ -144,19 +143,6 @@ const CustomerForm: React.FC<CustomerFormProps> = ({ onClose, onSuccess, custome
           placeholder="Prishtinë, Prizren, Gjakovë..."
         />
       </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Lagjja</label>
-        <input
-          type="text"
-          name="neighborhood"
-          value={formData.neighborhood}
-          onChange={handleChange}
-          className="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors"
-          placeholder="Qendra, Dardania, Ulpiana..."
-        />
-      </div>
-
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Burimi</label>

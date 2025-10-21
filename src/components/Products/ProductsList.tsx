@@ -12,7 +12,7 @@ const ProductsList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedSource, setSelectedSource] = useState<string>('Manual');
+  const [selectedSource, setSelectedSource] = useState<string>('WooCommerce');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
 

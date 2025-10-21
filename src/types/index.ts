@@ -19,6 +19,7 @@ export interface Customer {
   email: string;
   phone: string;
   address: string;
+  city: string;
   source: 'WooCommerce' | 'Internal';
 }
 
