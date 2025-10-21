@@ -515,7 +515,6 @@ const TicketsList: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4 text-gray-400" />
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getPriorityColor(ticket.priority)}`}>
                           {getPriorityText(ticket.priority)}
                         </span>
