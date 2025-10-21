@@ -271,14 +271,28 @@ router.get('/', authenticateUser, async (req, res) => {
             }
           }
         } else {
-          // For 'all' source, use cached products
-          const cachedProducts = await getCachedProducts();
+          // For 'all' source, fetch WooCommerce products with pagination
+          console.log(`🔄 Fetching WooCommerce products for 'all' source - page ${pageNum}, limit ${safeLimit}`);
+          const wooProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, pageNum, safeLimit);
           
-          if (cachedProducts && cachedProducts.length > 0) {
-            allProducts = [...allProducts, ...cachedProducts];
-            console.log(`Added ${cachedProducts.length} cached WooCommerce products`);
-          } else {
-            console.log('No WooCommerce products available');
+          if (wooProducts && wooProducts.length > 0) {
+            const transformedProducts = wooProducts.map(product => ({
+              id: product.id.toString(),
+              image: product.images && product.images.length > 0 ? product.images[0].src : '',
+              title: product.name || 'Untitled Product',
+              category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
+              basePrice: parseFloat(product.price || 0),
+              additionalCost: 0,
+              finalPrice: parseFloat(product.price || 0),
+              supplier: 'WooCommerce',
+              wooCommerceStatus: product.status || 'draft',
+              wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
+              lastSyncDate: product.date_modified || new Date().toISOString(),
+              source: 'WooCommerce'
+            }));
+            
+            allProducts = [...allProducts, ...transformedProducts];
+            console.log(`Added ${transformedProducts.length} WooCommerce products for 'all' source`);
           }
         }
       } catch (wooError) {
@@ -291,6 +305,12 @@ router.get('/', authenticateUser, async (req, res) => {
     if (!source || source === 'all' || source === 'Manual') {
       try {
         let query = supabase.from('products').select('*');
+        
+        // For 'all' source, limit manual products to avoid slow loading
+        if (source === 'all') {
+          query = query.limit(100); // Limit to 100 manual products for 'all' source
+          console.log(`🔄 Fetching limited manual products for 'all' source (max 100)`);
+        }
 
         const { data: manualProducts, error } = await query;
 
@@ -404,13 +424,26 @@ router.get('/', authenticateUser, async (req, res) => {
       };
     } else {
       // For other sources, apply pagination
-      finalProducts = allProducts.slice(startIndex, endIndex);
-      paginationInfo = {
-        page: pageNum,
-        limit: safeLimit,
-        total: allProducts.length,
-        pages: Math.ceil(allProducts.length / safeLimit)
-      };
+      if (source === 'all') {
+        // For 'all' source, products are already paginated from WooCommerce
+        finalProducts = allProducts;
+        paginationInfo = {
+          page: pageNum,
+          limit: safeLimit,
+          total: productsCache.totalProducts || 999999, // Use WooCommerce total
+          pages: Math.ceil((productsCache.totalProducts || 999999) / safeLimit)
+        };
+        console.log(`📊 All source pagination - using WooCommerce total: ${productsCache.totalProducts}`);
+      } else {
+        // For manual products, apply normal pagination
+        finalProducts = allProducts.slice(startIndex, endIndex);
+        paginationInfo = {
+          page: pageNum,
+          limit: safeLimit,
+          total: allProducts.length,
+          pages: Math.ceil(allProducts.length / safeLimit)
+        };
+      }
     }
 
     console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length} (paginated)`);

@@ -759,6 +759,7 @@ const TicketsList: React.FC = () => {
       {/* Comment Modal */}
       {selectedTicketForComment && (
         <CommentModal
+          key={`ticket-${selectedTicketForComment.id}`}
           isOpen={isCommentModalOpen}
           onClose={() => {
             setIsCommentModalOpen(false);

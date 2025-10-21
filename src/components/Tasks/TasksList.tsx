@@ -718,6 +718,7 @@ const TasksList: React.FC = () => {
       {/* Comment Modal */}
       {selectedTaskForComment && (
         <CommentModal
+          key={`task-${selectedTaskForComment.id}`}
           isOpen={isCommentModalOpen}
           onClose={() => {
             setIsCommentModalOpen(false);

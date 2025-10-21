@@ -38,9 +38,10 @@ const CommentModal: React.FC<CommentModalProps> = ({
   const [newComment, setNewComment] = useState('');
   const [notification, setNotification] = useState({ isVisible: false, message: '', type: 'success' });
 
-  // Fetch comments when modal opens
+  // Fetch comments when modal opens or when entity changes
   useEffect(() => {
     if (isOpen) {
+      console.log(`Fetching comments for ${entityType}:${entityId}`);
       fetchComments();
     }
   }, [isOpen, entityType, entityId]);
@@ -48,12 +49,17 @@ const CommentModal: React.FC<CommentModalProps> = ({
   const fetchComments = async () => {
     try {
       setLoading(true);
+      console.log(`Fetching comments for ${entityType}:${entityId}`);
       const response = await apiCall(`/api/comments?entityType=${entityType}&entityId=${entityId}`, {
         method: 'GET'
       });
 
       if (response.success) {
+        console.log(`Found ${response.data?.length || 0} comments`);
         setComments(response.data || []);
+      } else {
+        console.log('No comments found or error:', response.message);
+        setComments([]);
       }
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -62,6 +68,7 @@ const CommentModal: React.FC<CommentModalProps> = ({
         message: 'Gabim në ngarkimin e komenteve',
         type: 'error'
       });
+      setComments([]);
     } finally {
       setLoading(false);
     }
@@ -81,7 +88,8 @@ const CommentModal: React.FC<CommentModalProps> = ({
       });
 
       if (response.success) {
-        setComments(prev => [response.data, ...prev]);
+        // Refresh comments to get the latest data from server
+        await fetchComments();
         setNewComment('');
         setNotification({
           isVisible: true,

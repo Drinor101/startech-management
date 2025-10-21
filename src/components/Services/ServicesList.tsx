@@ -721,6 +721,7 @@ const ServicesList: React.FC = () => {
       {/* Comment Modal */}
       {selectedServiceForComment && (
         <CommentModal
+          key={`service-${selectedServiceForComment.id}`}
           isOpen={isCommentModalOpen}
           onClose={() => {
             setIsCommentModalOpen(false);
