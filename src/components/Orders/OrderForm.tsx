@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, X, ChevronDown } from 'lucide-react';
-import { apiCall } from '../../config/api';
+import { apiCall, apiConfig } from '../../config/api';
 import { Product } from '../../types';
 import Notification from '../Common/Notification';
 import CustomerDropdown from '../Common/CustomerDropdown';
@@ -61,7 +61,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         params.append('source', productSourceFilter);
         
         console.log('Fetching products for OrderForm...');
-        const response = await apiCall(`/api/products?${params.toString()}`);
+        const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
         console.log('OrderForm Products API response:', response);
         
         // Handle the correct API response structure
