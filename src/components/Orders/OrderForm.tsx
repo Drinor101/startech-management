@@ -51,16 +51,14 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         setLoading(true);
         
         // Check if we already have products cached
-        if (products.length > 0 && productSourceFilter === 'all') {
+        if (products.length > 0) {
           setLoading(false);
           return;
         }
         
         const params = new URLSearchParams();
-        // Get all products without limit
-        if (productSourceFilter !== 'all') {
-          params.append('source', productSourceFilter);
-        }
+        // Get products with source filter
+        params.append('source', productSourceFilter);
         
         console.log('Fetching products for OrderForm...');
         const response = await apiCall(`/api/products?${params.toString()}`);
@@ -201,9 +199,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     let filtered = products;
     
     // Apply source filter
-    if (productSourceFilter !== 'all') {
-      filtered = filtered.filter(p => p.source === productSourceFilter);
-    }
+    filtered = filtered.filter(p => p.source === productSourceFilter);
     
     // Apply search filter
     if (productSearchTerm) {
@@ -261,7 +257,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                 onChange={(e) => setProductSourceFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
-                <option value="all">Të gjitha produktet</option>
                 <option value="WooCommerce">Vetëm WooCommerce</option>
                 <option value="Manual">Vetëm Manuale</option>
               </select>

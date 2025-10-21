@@ -27,58 +27,88 @@ router.get('/', authenticateUser, async (req, res) => {
 
     console.log(`Fetching comments for ${entityType}:${entityId}`);
 
-    // Try to get comments from Supabase
-    try {
-      const { data: comments, error } = await supabase
-        .from('comments')
-        .select(`
-          id,
-          content,
-          created_at,
-          updated_at,
-          upvotes,
-          downvotes,
-          parent_id,
-          user_id,
-          users:user_id (
-            id,
-            name,
-            email,
-            avatar_url
-          )
-        `)
-        .eq('entity_type', entityType)
-        .eq('entity_id', entityId)
-        .order('created_at', { ascending: false });
-
+    // Get comments from the appropriate table's comments column
+    let comments = [];
+    
+    if (entityType === 'task') {
+      const { data: taskData, error } = await supabase
+        .from('tasks')
+        .select('comments')
+        .eq('id', entityId)
+        .single();
+      
       if (error) {
-        console.error('Supabase error:', error);
-        // If table doesn't exist, return empty array
-        if (error.code === 'PGRST116' || error.message.includes('relation "comments" does not exist')) {
-          return res.json({
-            success: true,
-            data: []
-          });
-        }
-        throw error;
+        console.error('Error fetching task comments:', error);
+        return res.json({ success: true, data: [] });
       }
-
-      // Transform comments to include replies
-      const transformedComments = transformCommentsWithReplies(comments || []);
-
-      res.json({
-        success: true,
-        data: transformedComments
-      });
-
-    } catch (supabaseError) {
-      console.error('Supabase connection error:', supabaseError);
-      // Fallback: return empty array if Supabase is not available
-      res.json({
-        success: true,
-        data: []
-      });
+      
+      if (taskData.comments) {
+        try {
+          comments = JSON.parse(taskData.comments);
+        } catch (e) {
+          comments = [];
+        }
+      }
+    } else if (entityType === 'ticket') {
+      const { data: ticketData, error } = await supabase
+        .from('tickets')
+        .select('comments')
+        .eq('id', entityId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching ticket comments:', error);
+        return res.json({ success: true, data: [] });
+      }
+      
+      if (ticketData.comments) {
+        try {
+          comments = JSON.parse(ticketData.comments);
+        } catch (e) {
+          comments = [];
+        }
+      }
+    } else if (entityType === 'service') {
+      const { data: serviceData, error } = await supabase
+        .from('services')
+        .select('comments')
+        .eq('id', entityId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching service comments:', error);
+        return res.json({ success: true, data: [] });
+      }
+      
+      if (serviceData.comments) {
+        try {
+          comments = JSON.parse(serviceData.comments);
+        } catch (e) {
+          comments = [];
+        }
+      }
     }
+
+    // Transform comments to match expected format
+    const transformedComments = comments.map(comment => ({
+      id: comment.id,
+      content: comment.message || comment.content,
+      author: {
+        id: comment.user_id,
+        name: comment.user_name,
+        avatar: null
+      },
+      createdAt: comment.created_at,
+      upvotes: 0,
+      downvotes: 0,
+      parentId: null,
+      replies: []
+    }));
+
+    res.json({
+      success: true,
+      data: transformedComments
+    });
 
   } catch (error) {
     console.error('Error in comments GET:', error);
@@ -114,98 +144,92 @@ router.post('/', authenticateUser, async (req, res) => {
 
     console.log(`Creating comment for ${entityType}:${entityId} by user:${userId}`);
 
-    // Try to create comment in Supabase
-    try {
-      const { data: newComment, error } = await supabase
-        .from('comments')
-        .insert({
-          entity_type: entityType,
-          entity_id: entityId,
-          content: content.trim(),
-          user_id: userId,
-          parent_id: parentId || null,
-          upvotes: 0,
-          downvotes: 0
-        })
-        .select(`
-          id,
-          content,
-          created_at,
-          updated_at,
-          upvotes,
-          downvotes,
-          parent_id,
-          user_id,
-          users:user_id (
-            id,
-            name,
-            email,
-            avatar_url
-          )
-        `)
-        .single();
+    // Add comment to the appropriate table's comments column
+    let tableName = '';
+    if (entityType === 'task') {
+      tableName = 'tasks';
+    } else if (entityType === 'ticket') {
+      tableName = 'tickets';
+    } else if (entityType === 'service') {
+      tableName = 'services';
+    }
 
-      if (error) {
-        console.error('Supabase error:', error);
-        // If table doesn't exist, return success with mock data
-        if (error.code === 'PGRST116' || error.message.includes('relation "comments" does not exist')) {
-          const mockComment = {
-            id: `temp-${Date.now()}`,
-            content: content.trim(),
-            author: {
-              id: userId,
-              name: req.user.name || req.user.email || 'Përdorues',
-              avatar: req.user.avatar_url || null
-            },
-            createdAt: new Date().toISOString(),
-            upvotes: 0,
-            downvotes: 0,
-            parentId: parentId || null,
-            replies: []
-          };
-          
-          return res.status(201).json({
-            success: true,
-            data: mockComment,
-            message: 'Komenti u krijua me sukses (temporary)'
-          });
-        }
-        throw error;
-      }
+    // Get existing comments
+    const { data: entityData, error: fetchError } = await supabase
+      .from(tableName)
+      .select('comments')
+      .eq('id', entityId)
+      .single();
 
-      // Transform comment
-      const transformedComment = transformComment(newComment);
-
-      res.status(201).json({
-        success: true,
-        data: transformedComment,
-        message: 'Komenti u krijua me sukses'
-      });
-
-    } catch (supabaseError) {
-      console.error('Supabase connection error:', supabaseError);
-      // Fallback: return mock comment if Supabase is not available
-      const mockComment = {
-        id: `temp-${Date.now()}`,
-        content: content.trim(),
-        author: {
-          id: userId,
-          name: req.user.name || req.user.email || 'Përdorues',
-          avatar: req.user.avatar_url || null
-        },
-        createdAt: new Date().toISOString(),
-        upvotes: 0,
-        downvotes: 0,
-        parentId: parentId || null,
-        replies: []
-      };
-      
-      res.status(201).json({
-        success: true,
-        data: mockComment,
-        message: 'Komenti u krijua me sukses (temporary)'
+    if (fetchError) {
+      console.error(`Error fetching ${entityType} comments:`, fetchError);
+      return res.status(500).json({
+        success: false,
+        message: 'Gabim në ngarkimin e komenteve ekzistuese'
       });
     }
+
+    // Parse existing comments or create new array
+    let comments = [];
+    if (entityData.comments) {
+      try {
+        comments = JSON.parse(entityData.comments);
+      } catch (e) {
+        comments = [];
+      }
+    }
+
+    // Add new comment
+    const newComment = {
+      id: Date.now().toString(),
+      message: content.trim(),
+      user_id: userId,
+      user_name: req.user.email.split('@')[0],
+      created_at: new Date().toISOString()
+    };
+
+    comments.push(newComment);
+
+    // Update the entity with new comments
+    const { data, error } = await supabase
+      .from(tableName)
+      .update({ 
+        comments: JSON.stringify(comments),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', entityId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error(`Error updating ${entityType} comments:`, error);
+      return res.status(500).json({
+        success: false,
+        message: 'Gabim në ruajtjen e komentit'
+      });
+    }
+
+    // Transform comment to match expected format
+    const transformedComment = {
+      id: newComment.id,
+      content: newComment.message,
+      author: {
+        id: newComment.user_id,
+        name: newComment.user_name,
+        avatar: null
+      },
+      createdAt: newComment.created_at,
+      upvotes: 0,
+      downvotes: 0,
+      parentId: null,
+      replies: []
+    };
+
+    res.status(201).json({
+      success: true,
+      data: transformedComment,
+      message: 'Komenti u krijua me sukses'
+    });
 
   } catch (error) {
     console.error('Error in comments POST:', error);

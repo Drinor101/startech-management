@@ -12,7 +12,7 @@ const ProductsList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [selectedSource, setSelectedSource] = useState<string>('Manual');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const { canCreate, canEdit, canDelete } = usePermissions();
 
@@ -181,7 +181,6 @@ const ProductsList: React.FC = () => {
               onChange={(e) => handleSourceChange(e.target.value)}
               className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
-              <option value="all">Të gjitha produktet</option>
               <option value="WooCommerce">Vetëm WooCommerce</option>
               <option value="Manual">Vetëm Manuale</option>
             </select>

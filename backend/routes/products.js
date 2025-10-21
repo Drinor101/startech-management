@@ -179,12 +179,12 @@ router.get('/', authenticateUser, async (req, res) => {
     const maxLimit = 100; // Maximum products per request
     const safeLimit = Math.min(limitNum, maxLimit);
     
-    console.log(`Request: page=${pageNum}, limit=${safeLimit}, source=${source || 'all'}`);
+    console.log(`Request: page=${pageNum}, limit=${safeLimit}, source=${source || 'Manual'}`);
 
     let allProducts = [];
 
-    // 1. Fetch WooCommerce products if source is 'all' or 'WooCommerce'
-    if (!source || source === 'all' || source === 'WooCommerce') {
+    // 1. Fetch WooCommerce products if source is 'WooCommerce'
+    if (source === 'WooCommerce') {
       try {
         console.log('Attempting to fetch WooCommerce products...');
         
@@ -270,30 +270,6 @@ router.get('/', authenticateUser, async (req, res) => {
               productsCache.totalProducts = 999999;
             }
           }
-        } else {
-          // For 'all' source, fetch WooCommerce products with pagination
-          console.log(`🔄 Fetching WooCommerce products for 'all' source - page ${pageNum}, limit ${safeLimit}`);
-          const wooProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, pageNum, safeLimit);
-          
-          if (wooProducts && wooProducts.length > 0) {
-            const transformedProducts = wooProducts.map(product => ({
-              id: product.id.toString(),
-              image: product.images && product.images.length > 0 ? product.images[0].src : '',
-              title: product.name || 'Untitled Product',
-              category: product.categories && product.categories.length > 0 ? product.categories[0].name : 'Uncategorized',
-              basePrice: parseFloat(product.price || 0),
-              additionalCost: 0,
-              finalPrice: parseFloat(product.price || 0),
-              supplier: 'WooCommerce',
-              wooCommerceStatus: product.status || 'draft',
-              wooCommerceCategory: product.categories && product.categories.length > 0 ? product.categories[0].name : '',
-              lastSyncDate: product.date_modified || new Date().toISOString(),
-              source: 'WooCommerce'
-            }));
-            
-            allProducts = [...allProducts, ...transformedProducts];
-            console.log(`Added ${transformedProducts.length} WooCommerce products for 'all' source`);
-          }
         }
       } catch (wooError) {
         console.error('Error fetching WooCommerce products:', wooError);
@@ -301,22 +277,18 @@ router.get('/', authenticateUser, async (req, res) => {
       }
     }
 
-    // 2. Fetch Manual products if source is 'all' or 'Manual'
-    if (!source || source === 'all' || source === 'Manual') {
+    // 2. Fetch Manual products if source is 'Manual'
+    if (source === 'Manual') {
       try {
         let query = supabase.from('products').select('*');
-        
-        // For 'all' source, limit manual products to avoid slow loading
-        if (source === 'all') {
-          query = query.limit(100); // Limit to 100 manual products for 'all' source
-          console.log(`🔄 Fetching limited manual products for 'all' source (max 100)`);
-        }
 
         const { data: manualProducts, error } = await query;
 
         if (error) {
           throw error;
         }
+
+        console.log(`📦 Manual products received:`, manualProducts ? manualProducts.length : 'null');
 
         if (manualProducts && manualProducts.length > 0) {
           const transformedManualProducts = manualProducts.map(product => ({
@@ -335,7 +307,8 @@ router.get('/', authenticateUser, async (req, res) => {
           }));
           
           allProducts = [...allProducts, ...transformedManualProducts];
-          console.log(`Added ${transformedManualProducts.length} Manual products`);
+          console.log(`✅ Added ${transformedManualProducts.length} Manual products`);
+          console.log(`📊 Total products after adding manual: ${allProducts.length}`);
         }
       } catch (manualError) {
         console.error('Error fetching Manual products:', manualError);
@@ -343,7 +316,7 @@ router.get('/', authenticateUser, async (req, res) => {
     }
 
     // 3. Apply source filter to combined results
-    if (source && source !== 'all') {
+    if (source && source !== 'Manual') {
       allProducts = allProducts.filter(product => product.source === source);
     }
 
@@ -424,26 +397,13 @@ router.get('/', authenticateUser, async (req, res) => {
       };
     } else {
       // For other sources, apply pagination
-      if (source === 'all') {
-        // For 'all' source, products are already paginated from WooCommerce
-        finalProducts = allProducts;
-        paginationInfo = {
-          page: pageNum,
-          limit: safeLimit,
-          total: productsCache.totalProducts || 999999, // Use WooCommerce total
-          pages: Math.ceil((productsCache.totalProducts || 999999) / safeLimit)
-        };
-        console.log(`📊 All source pagination - using WooCommerce total: ${productsCache.totalProducts}`);
-      } else {
-        // For manual products, apply normal pagination
-        finalProducts = allProducts.slice(startIndex, endIndex);
-        paginationInfo = {
-          page: pageNum,
-          limit: safeLimit,
-          total: allProducts.length,
-          pages: Math.ceil(allProducts.length / safeLimit)
-        };
-      }
+      finalProducts = allProducts.slice(startIndex, endIndex);
+      paginationInfo = {
+        page: pageNum,
+        limit: safeLimit,
+        total: allProducts.length,
+        pages: Math.ceil(allProducts.length / safeLimit)
+      };
     }
 
     console.log(`Total products found: ${allProducts.length}, returning: ${finalProducts.length} (paginated)`);

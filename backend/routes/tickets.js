@@ -104,12 +104,15 @@ router.get('/:id', authenticateUser, async (req, res) => {
       });
     }
 
-    // Fetch comments
-    const { data: comments } = await supabase
-      .from('ticket_comments')
-      .select('*')
-      .eq('ticket_id', id)
-      .order('created_at', { ascending: true });
+    // Fetch comments from comments column
+    let comments = [];
+    if (ticket.comments) {
+      try {
+        comments = JSON.parse(ticket.comments);
+      } catch (e) {
+        comments = [];
+      }
+    }
 
     // Fetch history
     const { data: history } = await supabase
@@ -414,14 +417,46 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
       userName = userData.name || userData.email || userName;
     }
 
+    // Shto komentin në kolonën comments të ticket-it
+    const { data: ticketData, error: ticketError } = await supabase
+      .from('tickets')
+      .select('comments')
+      .eq('id', id)
+      .single();
+
+    if (ticketError) {
+      throw ticketError;
+    }
+
+    // Parse komentet ekzistuese ose krijo array të ri
+    let comments = [];
+    if (ticketData.comments) {
+      try {
+        comments = JSON.parse(ticketData.comments);
+      } catch (e) {
+        comments = [];
+      }
+    }
+
+    // Shto komentin e ri
+    const newComment = {
+      id: Date.now().toString(), // ID i thjeshtë për frontend
+      message: message,
+      user_id: userId,
+      user_name: userName,
+      created_at: new Date().toISOString()
+    };
+
+    comments.push(newComment);
+
+    // Përditëso ticket-in me komentet e reja
     const { data, error } = await supabase
-      .from('ticket_comments')
-      .insert({
-        ticket_id: id,
-        user_id: userId,
-        user_name: userName,
-        message
+      .from('tickets')
+      .update({ 
+        comments: JSON.stringify(comments),
+        updated_at: new Date().toISOString()
       })
+      .eq('id', id)
       .select()
       .single();
 
