@@ -243,21 +243,30 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`=== VALIDATING PRODUCT ${item.productId} ===`);
       console.log(`ProductId type: ${typeof item.productId}`);
       console.log(`ProductId value: ${item.productId}`);
+      console.log(`ProductId length: ${item.productId?.length}`);
       
       // Try to find product by ID (could be UUID or numeric)
       let existingProduct, productError;
       
       // First try exact match
+      console.log(`🔍 Trying exact ID match for: ${item.productId}`);
       const { data: exactMatch, error: exactError } = await supabase
         .from('products')
         .select('id, title, final_price, source')
         .eq('id', item.productId)
         .single();
       
+      console.log(`Exact match result:`, {
+        data: exactMatch,
+        error: exactError,
+        hasData: !!exactMatch,
+        hasError: !!exactError
+      });
+      
       if (exactMatch && !exactError) {
         existingProduct = exactMatch;
         productError = null;
-        console.log(`✅ Found product by exact ID match`);
+        console.log(`✅ Found product by exact ID match: ${exactMatch.title}`);
       } else {
         // If not found by exact match, try to find by WooCommerce ID
         console.log(`❌ Product not found by exact ID, trying WooCommerce ID...`);
@@ -267,10 +276,17 @@ router.post('/', authenticateUser, async (req, res) => {
           .eq('woo_commerce_id', item.productId)
           .single();
         
+        console.log(`WooCommerce match result:`, {
+          data: wooMatch,
+          error: wooError,
+          hasData: !!wooMatch,
+          hasError: !!wooError
+        });
+        
         if (wooMatch && !wooError) {
           existingProduct = wooMatch;
           productError = null;
-          console.log(`✅ Found product by WooCommerce ID match`);
+          console.log(`✅ Found product by WooCommerce ID match: ${wooMatch.title}`);
         } else {
           existingProduct = null;
           productError = wooError || exactError;
@@ -344,7 +360,9 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`=== VALIDATING CUSTOMER ${customerId} ===`);
       console.log(`CustomerId type: ${typeof customerId}`);
       console.log(`CustomerId value: ${customerId}`);
+      console.log(`CustomerId length: ${customerId?.length}`);
       
+      console.log(`🔍 Trying to find customer with ID: ${customerId}`);
       const { data: existingCustomerById, error: customerByIdError } = await supabase
         .from('customers')
         .select('id, name')
