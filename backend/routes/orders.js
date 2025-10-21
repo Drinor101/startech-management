@@ -244,11 +244,39 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`ProductId type: ${typeof item.productId}`);
       console.log(`ProductId value: ${item.productId}`);
       
-      const { data: existingProduct, error: productError } = await supabase
+      // Try to find product by ID (could be UUID or numeric)
+      let existingProduct, productError;
+      
+      // First try exact match
+      const { data: exactMatch, error: exactError } = await supabase
         .from('products')
         .select('id, title, final_price, source')
         .eq('id', item.productId)
         .single();
+      
+      if (exactMatch && !exactError) {
+        existingProduct = exactMatch;
+        productError = null;
+        console.log(`✅ Found product by exact ID match`);
+      } else {
+        // If not found by exact match, try to find by WooCommerce ID
+        console.log(`❌ Product not found by exact ID, trying WooCommerce ID...`);
+        const { data: wooMatch, error: wooError } = await supabase
+          .from('products')
+          .select('id, title, final_price, source')
+          .eq('woo_commerce_id', item.productId)
+          .single();
+        
+        if (wooMatch && !wooError) {
+          existingProduct = wooMatch;
+          productError = null;
+          console.log(`✅ Found product by WooCommerce ID match`);
+        } else {
+          existingProduct = null;
+          productError = wooError || exactError;
+          console.log(`❌ Product not found by WooCommerce ID either`);
+        }
+      }
       
       console.log(`Supabase query result:`, {
         data: existingProduct,
