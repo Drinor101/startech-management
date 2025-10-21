@@ -434,49 +434,6 @@ router.post('/:id/comments', authenticateUser, async (req, res) => {
       throw error;
     }
 
-    // Shto komentin në kolonën comments të task-ut
-    const { data: taskData, error: taskError } = await supabase
-      .from('tasks')
-      .select('comments')
-      .eq('id', id)
-      .single();
-
-    if (taskError) {
-      throw taskError;
-    }
-
-    // Parse komentet ekzistuese ose krijo array të ri
-    let comments = [];
-    if (taskData.comments) {
-      try {
-        comments = JSON.parse(taskData.comments);
-      } catch (e) {
-        comments = [];
-      }
-    }
-
-    // Shto komentin e ri
-    const newComment = {
-      id: Date.now().toString(), // ID i thjeshtë për frontend
-      message: req.body.message,
-      user_id: req.user.id,
-      user_name: req.user.email.split('@')[0],
-      created_at: new Date().toISOString()
-    };
-
-    comments.push(newComment);
-
-    // Përditëso task-un me komentet e reja
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({ 
-        comments: JSON.stringify(comments),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .select()
-      .single();
-
     res.status(201).json({
       success: true,
       data: data,
