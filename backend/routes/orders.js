@@ -451,12 +451,39 @@ router.post('/', authenticateUser, async (req, res) => {
       try {
         console.log(`Processing validated product ${item.productId}...`);
         
-        // Get the product we already validated
-        const { data: validatedProduct, error: validatedError } = await supabase
+        // Get the product we already validated (could be by ID or WooCommerce ID)
+        let validatedProduct, validatedError;
+        
+        // First try by exact ID
+        const { data: exactMatch, error: exactError } = await supabase
           .from('products')
           .select('*')
           .eq('id', item.productId)
           .single();
+        
+        if (exactMatch && !exactError) {
+          validatedProduct = exactMatch;
+          validatedError = null;
+          console.log(`✅ Found product by exact ID match`);
+        } else {
+          // If not found by exact match, try to find by WooCommerce ID
+          console.log(`❌ Product not found by exact ID, trying WooCommerce ID...`);
+          const { data: wooMatch, error: wooError } = await supabase
+            .from('products')
+            .select('*')
+            .eq('woo_commerce_id', item.productId)
+            .single();
+          
+          if (wooMatch && !wooError) {
+            validatedProduct = wooMatch;
+            validatedError = null;
+            console.log(`✅ Found product by WooCommerce ID match`);
+          } else {
+            validatedProduct = null;
+            validatedError = wooError || exactError;
+            console.log(`❌ Product not found by WooCommerce ID either`);
+          }
+        }
         
         if (validatedProduct && !validatedError) {
           console.log(`✅ Product ${item.productId} found in database:`, {
@@ -487,9 +514,61 @@ router.post('/', authenticateUser, async (req, res) => {
             name: validatedProduct.title || 'Unknown Product'
           });
         } else {
-          // This should not happen since we already validated products above
-          console.error(`❌ Product ${item.productId} not found in database - this should not happen!`);
-          throw new Error(`Product ${item.productId} not found in database`);
+          // Product not found in database - try to fetch from WooCommerce API
+          console.log(`❌ Product ${item.productId} not found in database, trying WooCommerce API...`);
+          
+          try {
+            const wooCommerceConfig = {
+              url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+              consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+              consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+            };
+            
+            console.log(`🔍 Fetching product ${item.productId} from WooCommerce API...`);
+            const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Basic ${Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64')}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log(`WooCommerce API response: ${response.status} ${response.statusText}`);
+            
+            if (response.ok) {
+              const wooProduct = await response.json();
+              console.log(`✅ Product ${item.productId} fetched from WooCommerce:`, {
+                id: wooProduct.id,
+                name: wooProduct.name,
+                price: wooProduct.price
+              });
+              
+              // Add to productDetails for order creation
+              productDetails.push({
+                id: wooProduct.id.toString(),
+                price: parseFloat(wooProduct.price || 0),
+                name: wooProduct.name || 'Unknown Product'
+              });
+              
+              hasWooCommerceProducts = true;
+              console.log(`✅ Product ${item.productId} added to order from WooCommerce API`);
+            } else {
+              console.error(`❌ Failed to fetch product ${item.productId} from WooCommerce: ${response.status}`);
+              return res.status(400).json({
+                success: false,
+                error: 'Produkti nuk u gjet',
+                details: `Product with ID ${item.productId} not found in database or WooCommerce`,
+                suggestion: 'Please check if the product exists in WooCommerce'
+              });
+            }
+          } catch (wooError) {
+            console.error(`❌ Error fetching product ${item.productId} from WooCommerce:`, wooError);
+            return res.status(400).json({
+              success: false,
+              error: 'Gabim në marrjen e produktit',
+              details: `Failed to fetch product ${item.productId} from WooCommerce: ${wooError.message}`
+            });
+          }
         }
       } catch (error) {
         console.error(`Error fetching product ${item.productId}:`, error);
