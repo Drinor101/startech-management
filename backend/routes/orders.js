@@ -267,16 +267,23 @@ router.post('/', authenticateUser, async (req, res) => {
         const { data: manualProduct, error: manualError } = await supabase
           .from('products')
           .select('*')
-          .eq('id', item.productId)
+          .or(`id.eq.${item.productId},woo_commerce_id.eq.${item.productId}`)
           .single();
         
         if (manualProduct && !manualError) {
-          console.log(`Product ${item.productId} found in database (Manual):`, {
+          console.log(`Product ${item.productId} found in database:`, {
             id: manualProduct.id,
             title: manualProduct.title,
             final_price: manualProduct.final_price,
-            source: manualProduct.source
+            source: manualProduct.source,
+            woo_commerce_id: manualProduct.woo_commerce_id
           });
+          
+          // Check if this is a WooCommerce product
+          if (manualProduct.source === 'WooCommerce' || manualProduct.woo_commerce_id) {
+            hasWooCommerceProducts = true;
+            console.log(`Product ${item.productId} is a WooCommerce product`);
+          }
           
           productDetails.push({
             id: manualProduct.id,

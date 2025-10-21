@@ -9,6 +9,7 @@ interface OrderFormProps {
   order?: any;
   onClose: () => void;
   onSuccess?: () => void;
+  isFromWooCommerce?: boolean; // Flag to indicate if opened from WooCommerce products
 }
 
 interface OrderItem {
@@ -16,7 +17,7 @@ interface OrderItem {
   quantity: number;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess, isFromWooCommerce = false }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -278,17 +279,19 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         <div className="flex items-center justify-between mb-3">
           <label className="block text-sm font-medium text-gray-700">Produktet</label>
           <div className="flex items-center gap-3">
-            {/* Product Source Filter */}
-            <div className="relative">
-              <select
-                value={productSourceFilter}
-                onChange={(e) => setProductSourceFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="Manual">Vetëm Manuale</option>
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-            </div>
+            {/* Product Source Filter - Only show for manual orders */}
+            {!isFromWooCommerce && (
+              <div className="relative">
+                <select
+                  value={productSourceFilter}
+                  onChange={(e) => setProductSourceFilter(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="Manual">Vetëm Manuale</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+            )}
             <button
               type="button"
               onClick={addItem}

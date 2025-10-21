@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
   customer_id UUID REFERENCES customers(id) ON DELETE CASCADE,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
-  source TEXT DEFAULT 'Manual' CHECK (source IN ('Manual', 'Woo')),
+  source TEXT DEFAULT 'Manual' CHECK (source IN ('Manual', 'WooCommerce')),
   shipping_address TEXT,
   shipping_city TEXT,
   shipping_zip_code TEXT,
