@@ -65,19 +65,19 @@ const ProductsList: React.FC = () => {
   };
 
   // Handle product creation
-  const handleCreateProduct = async (productData: Partial<Product>) => {
-    await createProductMutation.mutateAsync(productData);
+  const handleCreateProduct = async () => {
+    // Refetch products to get the latest data
+    await refetch();
     setIsFormOpen(false);
   };
 
   // Handle product update
-  const handleUpdateProduct = async (productData: Partial<Product>) => {
-    if (selectedProduct) {
-      await updateProductMutation.mutateAsync({ id: selectedProduct.id, ...productData });
-      setIsFormOpen(false);
-      setSelectedProduct(null);
-      setIsEditMode(false);
-    }
+  const handleUpdateProduct = async () => {
+    // Refetch products to get the latest data
+    await refetch();
+    setIsFormOpen(false);
+    setSelectedProduct(null);
+    setIsEditMode(false);
   };
 
   // Handle product deletion
@@ -452,3 +452,4 @@ const ProductsList: React.FC = () => {
 };
 
 export default ProductsList;
+ 

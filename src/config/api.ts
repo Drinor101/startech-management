@@ -52,9 +52,20 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
     
-    const responseData = await response.json();
-    console.log('API Call - Response data:', responseData);
-    return responseData;
+    // Check if response has content before trying to parse JSON
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const responseData = await response.json();
+      console.log('API Call - Response data:', responseData);
+      return responseData;
+    } else {
+      // If no JSON content, return success for 201/204 responses
+      if (response.status === 201 || response.status === 204) {
+        console.log('API Call - Success without JSON content');
+        return { success: true, message: 'Operation completed successfully' };
+      }
+      throw new Error('Invalid response format');
+    }
   } catch (error) {
     console.error('API Call - Network Error:', error);
     
