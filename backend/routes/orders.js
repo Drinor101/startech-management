@@ -321,6 +321,7 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`=== END VALIDATION FOR PRODUCT ${item.productId} ===`);
     }
     
+    console.log('=== ORDER DATA PARSED ===');
     console.log('Order data parsed:', {
       customerId,
       customerName,
@@ -333,9 +334,13 @@ router.post('/', authenticateUser, async (req, res) => {
       notes,
       teamNotes
     });
+    console.log('=== END ORDER DATA PARSED ===');
     
     // Generate PRS-YYYY-NNN ID
+    console.log('=== GENERATING ORDER ID ===');
     const currentYear = new Date().getFullYear();
+    console.log(`Current year: ${currentYear}`);
+    
     const { data: lastOrder } = await supabase
       .from('orders')
       .select('id')
@@ -344,15 +349,23 @@ router.post('/', authenticateUser, async (req, res) => {
       .limit(1)
       .single();
     
+    console.log(`Last order found:`, lastOrder);
+    
     let orderNumber = 1;
     if (lastOrder?.id) {
       const lastNumber = parseInt(lastOrder.id.split('-')[2]);
       orderNumber = lastNumber + 1;
+      console.log(`Last order number: ${lastNumber}, new number: ${orderNumber}`);
+    } else {
+      console.log(`No previous orders found, starting with: ${orderNumber}`);
     }
     
     const orderId = `PRS-${currentYear}-${orderNumber.toString().padStart(3, '0')}`;
+    console.log(`Generated order ID: ${orderId}`);
+    console.log('=== END ORDER ID GENERATION ===');
     
     // Use customerId if provided, otherwise create or find customer by name
+    console.log('=== CUSTOMER VALIDATION START ===');
     let finalCustomerId;
     
     if (customerId) {
@@ -396,6 +409,7 @@ router.post('/', authenticateUser, async (req, res) => {
       console.log(`✅ Using provided customerId: ${finalCustomerId} (${existingCustomerById.name})`);
       console.log(`=== END CUSTOMER VALIDATION ===`);
     } else {
+      console.log(`=== CREATING/FINDING CUSTOMER BY NAME ===`);
       // Fallback to old logic for backward compatibility
       const finalCustomerName = customerName || customer;
       const { data: existingCustomer } = await supabase
@@ -425,42 +439,42 @@ router.post('/', authenticateUser, async (req, res) => {
       }
     }
     
-    // Fetch product details (from Database or WooCommerce)
-    console.log('=== FETCHING PRODUCT DETAILS ===');
-    console.log('Fetching product details for items:', JSON.stringify(items, null, 2));
+    console.log(`=== FINAL CUSTOMER ID: ${finalCustomerId} ===`);
+    
+    // Use the validated products from earlier validation
+    console.log('=== USING VALIDATED PRODUCTS ===');
     const productDetails = [];
     let hasWooCommerceProducts = false;
     
-    console.log('=== DEBUGGING WOOCOMMERCE DETECTION ===');
-    
+    // We already validated products above, so we can use that data
     for (const item of items) {
       try {
-        console.log(`Fetching product ${item.productId}...`);
+        console.log(`Processing validated product ${item.productId}...`);
         
-        // First, try to get from database (for manual products)
-        const { data: manualProduct, error: manualError } = await supabase
+        // Get the product we already validated
+        const { data: validatedProduct, error: validatedError } = await supabase
           .from('products')
           .select('*')
-          .or(`id.eq.${item.productId},woo_commerce_id.eq.${item.productId}`)
+          .eq('id', item.productId)
           .single();
         
-        if (manualProduct && !manualError) {
-          console.log(`Product ${item.productId} found in database:`, {
-            id: manualProduct.id,
-            title: manualProduct.title,
-            final_price: manualProduct.final_price,
-            source: manualProduct.source,
-            woo_commerce_id: manualProduct.woo_commerce_id
+        if (validatedProduct && !validatedError) {
+          console.log(`✅ Product ${item.productId} found in database:`, {
+            id: validatedProduct.id,
+            title: validatedProduct.title,
+            final_price: validatedProduct.final_price,
+            source: validatedProduct.source,
+            woo_commerce_id: validatedProduct.woo_commerce_id
           });
           
           // Check if this is a WooCommerce product
           console.log(`Checking if product ${item.productId} is WooCommerce:`);
-          console.log(`- source: ${manualProduct.source}`);
-          console.log(`- woo_commerce_id: ${manualProduct.woo_commerce_id}`);
-          console.log(`- source === 'WooCommerce': ${manualProduct.source === 'WooCommerce'}`);
-          console.log(`- woo_commerce_id exists: ${!!manualProduct.woo_commerce_id}`);
+          console.log(`- source: ${validatedProduct.source}`);
+          console.log(`- woo_commerce_id: ${validatedProduct.woo_commerce_id}`);
+          console.log(`- source === 'WooCommerce': ${validatedProduct.source === 'WooCommerce'}`);
+          console.log(`- woo_commerce_id exists: ${!!validatedProduct.woo_commerce_id}`);
           
-          if (manualProduct.source === 'WooCommerce' || manualProduct.source === 'Woo' || manualProduct.woo_commerce_id) {
+          if (validatedProduct.source === 'WooCommerce' || validatedProduct.source === 'Woo' || validatedProduct.woo_commerce_id) {
             hasWooCommerceProducts = true;
             console.log(`✅ Product ${item.productId} is a WooCommerce product - setting hasWooCommerceProducts = true`);
           } else {
@@ -468,48 +482,14 @@ router.post('/', authenticateUser, async (req, res) => {
           }
           
           productDetails.push({
-            id: manualProduct.id,
-            price: parseFloat(manualProduct.final_price || 0),
-            name: manualProduct.title || 'Unknown Product'
+            id: validatedProduct.id,
+            price: parseFloat(validatedProduct.final_price || 0),
+            name: validatedProduct.title || 'Unknown Product'
           });
         } else {
-          // If not found in database, try WooCommerce API
-          console.log(`Product ${item.productId} not found in database, trying WooCommerce API...`);
-          
-          const wooCommerceConfig = {
-            url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
-            consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
-            consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
-          };
-          
-          const response = await fetch(`${wooCommerceConfig.url}/wp-json/wc/v3/products/${item.productId}`, {
-            method: 'GET',
-            headers: {
-              'Authorization': `Basic ${Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64')}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          console.log(`WooCommerce response for product ${item.productId}:`, response.status, response.statusText);
-          
-          if (response.ok) {
-            const product = await response.json();
-            console.log(`Product ${item.productId} fetched from WooCommerce:`, {
-              id: product.id,
-              name: product.name,
-              price: product.price
-            });
-            
-            productDetails.push({
-              id: product.id.toString(),
-              price: parseFloat(product.price || 0),
-              name: product.name || 'Unknown Product'
-            });
-            hasWooCommerceProducts = true;
-          } else {
-            console.error(`Failed to fetch product ${item.productId} from WooCommerce: ${response.status}`);
-            throw new Error(`Product ${item.productId} not found in database or WooCommerce`);
-          }
+          // This should not happen since we already validated products above
+          console.error(`❌ Product ${item.productId} not found in database - this should not happen!`);
+          throw new Error(`Product ${item.productId} not found in database`);
         }
       } catch (error) {
         console.error(`Error fetching product ${item.productId}:`, error);
