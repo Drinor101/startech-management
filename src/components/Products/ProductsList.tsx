@@ -445,7 +445,6 @@ const ProductsList: React.FC = () => {
           } : undefined}
           onClose={() => setIsOrderModalOpen(false)}
           onSuccess={handleOrderSuccess}
-          isFromWooCommerce={true}
         />
       </Modal>
     </div>

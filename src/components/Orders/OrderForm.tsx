@@ -9,7 +9,6 @@ interface OrderFormProps {
   order?: any;
   onClose: () => void;
   onSuccess?: () => void;
-  isFromWooCommerce?: boolean; // Flag to indicate if opened from WooCommerce products
 }
 
 interface OrderItem {
@@ -17,7 +16,7 @@ interface OrderItem {
   quantity: number;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess, isFromWooCommerce = false }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -68,30 +67,8 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess, isFrom
         // Handle the correct API response structure
         const data = response.success ? response.data : [];
         
-        // If we have a pre-filled product from WooCommerce, add it to the list
-        if (order?.products && order.products.length > 0) {
-          const wooCommerceProduct = order.products[0];
-          // Check if the WooCommerce product is not already in the list
-          const existingProduct = data.find(p => p.id === wooCommerceProduct.id);
-          if (!existingProduct) {
-            // Add the WooCommerce product to the list with real data
-            data.unshift({
-              id: wooCommerceProduct.id,
-              title: wooCommerceProduct.title || `WooCommerce Product ${wooCommerceProduct.id}`,
-              category: wooCommerceProduct.category || 'WooCommerce',
-              basePrice: wooCommerceProduct.basePrice || 0,
-              additionalCost: 0,
-              finalPrice: wooCommerceProduct.finalPrice || wooCommerceProduct.basePrice || 0,
-              supplier: 'WooCommerce',
-              wooCommerceStatus: 'active',
-              wooCommerceCategory: wooCommerceProduct.category || '',
-              lastSyncDate: new Date().toISOString(),
-              source: wooCommerceProduct.source || 'WooCommerce',
-              image: wooCommerceProduct.image || ''
-            });
-          }
-        }
-        
+        // Don't add WooCommerce products to the dropdown list
+        // They should be pre-filled separately
         setProducts(data || []);
         
         console.log(`Loaded ${data?.length || 0} products for OrderForm`);
@@ -279,19 +256,6 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess, isFrom
         <div className="flex items-center justify-between mb-3">
           <label className="block text-sm font-medium text-gray-700">Produktet</label>
           <div className="flex items-center gap-3">
-            {/* Product Source Filter - Only show for manual orders */}
-            {!isFromWooCommerce && (
-              <div className="relative">
-                <select
-                  value={productSourceFilter}
-                  onChange={(e) => setProductSourceFilter(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                >
-                  <option value="Manual">Vetëm Manuale</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-            )}
             <button
               type="button"
               onClick={addItem}
