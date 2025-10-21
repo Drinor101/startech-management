@@ -26,7 +26,13 @@ router.get('/', authenticateUser, async (req, res) => {
     if (search) {
       try {
         const searchTerm = `%${search}%`;
-        query = query.or(`id.ilike.${searchTerm},notes.ilike.${searchTerm},shipping_address.ilike.${searchTerm},customer.name.ilike.${searchTerm},customer.email.ilike.${searchTerm}`);
+        // Only search in ID field for exact prefix matching (PRS, etc.)
+        if (search.match(/^[A-Z]{3}/)) {
+          query = query.ilike('id', searchTerm);
+        } else {
+          // For other searches, search in all fields
+          query = query.or(`id.ilike.${searchTerm},notes.ilike.${searchTerm},shipping_address.ilike.${searchTerm},customer.name.ilike.${searchTerm},customer.email.ilike.${searchTerm}`);
+        }
       } catch (searchError) {
         console.error('Orders search query error:', searchError);
         // Continue without search if query fails
@@ -251,6 +257,7 @@ router.post('/', authenticateUser, async (req, res) => {
     console.log('=== FETCHING PRODUCT DETAILS ===');
     console.log('Fetching product details for items:', JSON.stringify(items, null, 2));
     const productDetails = [];
+    let hasWooCommerceProducts = false;
     
     for (const item of items) {
       try {
@@ -309,6 +316,7 @@ router.post('/', authenticateUser, async (req, res) => {
               price: parseFloat(product.price || 0),
               name: product.name || 'Unknown Product'
             });
+            hasWooCommerceProducts = true;
           } else {
             console.error(`Failed to fetch product ${item.productId} from WooCommerce: ${response.status}`);
             throw new Error(`Product ${item.productId} not found in database or WooCommerce`);
@@ -332,7 +340,7 @@ router.post('/', authenticateUser, async (req, res) => {
       id: orderId,
       customer_id: finalCustomerId,
       status: 'pending',
-      source: 'Manual',
+      source: hasWooCommerceProducts ? 'WooCommerce' : 'Manual',
       shipping_address: shippingAddress,
       shipping_city: shippingCity,
       shipping_zip_code: shippingZipCode,
@@ -398,6 +406,7 @@ router.post('/', authenticateUser, async (req, res) => {
           woo_commerce_category: '',
           last_sync_date: new Date().toISOString(),
           woo_commerce_id: parseInt(item.productId),
+          source: 'WooCommerce',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };

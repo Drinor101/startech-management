@@ -23,7 +23,13 @@ router.get('/', authenticateUser, async (req, res) => {
     if (search) {
       try {
         const searchTerm = `%${search}%`;
-        query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},category.ilike.${searchTerm},department.ilike.${searchTerm},source.ilike.${searchTerm}`);
+        // Only search in ID field for exact prefix matching (TSK, TIK, etc.)
+        if (search.match(/^[A-Z]{3}/)) {
+          query = query.ilike('id', searchTerm);
+        } else {
+          // For other searches, search in all fields
+          query = query.or(`title.ilike.${searchTerm},description.ilike.${searchTerm},id.ilike.${searchTerm},assigned_to.ilike.${searchTerm},category.ilike.${searchTerm},department.ilike.${searchTerm},source.ilike.${searchTerm}`);
+        }
       } catch (searchError) {
         console.error('Tasks search query error:', searchError);
         // Continue without search if query fails

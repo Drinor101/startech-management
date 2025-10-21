@@ -25,7 +25,13 @@ router.get('/', authenticateUser, async (req, res) => {
     if (search) {
       try {
         const searchTerm = `%${search}%`;
-        query = query.or(`problem_description.ilike.${searchTerm},id.ilike.${searchTerm},category.ilike.${searchTerm},assigned_to.ilike.${searchTerm}`);
+        // Only search in ID field for exact prefix matching (SRV, TSK, etc.)
+        if (search.match(/^[A-Z]{3}/)) {
+          query = query.ilike('id', searchTerm);
+        } else {
+          // For other searches, search in all fields
+          query = query.or(`problem_description.ilike.${searchTerm},id.ilike.${searchTerm},category.ilike.${searchTerm},assigned_to.ilike.${searchTerm}`);
+        }
       } catch (searchError) {
         console.error('Services search query error:', searchError);
         // Continue without search if query fails
