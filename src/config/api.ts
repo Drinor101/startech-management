@@ -25,9 +25,6 @@ export const getCurrentUser = () => {
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const user = getCurrentUser();
   
-  console.log('API Call - User from localStorage:', user);
-  console.log('API Call - User ID:', user?.id);
-  
   const config: RequestInit = {
     ...options,
     headers: {
@@ -37,18 +34,11 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     },
   };
 
-  console.log('API Call - Headers:', config.headers);
-
   try {
     const response = await fetch(`${apiConfig.baseURL}${endpoint}`, config);
     
-    console.log('API Call - Response status:', response.status, response.statusText);
-    console.log('API Call - Response ok:', response.ok);
-    
     if (!response.ok) {
-      console.error(`API Error: ${response.status} ${response.statusText}`);
       const errorText = await response.text();
-      console.error('API Error Response:', errorText);
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
     
@@ -56,12 +46,10 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       const responseData = await response.json();
-      console.log('API Call - Response data:', responseData);
       return responseData;
     } else {
       // If no JSON content, return success for 201/204 responses
       if (response.status === 201 || response.status === 204) {
-        console.log('API Call - Success without JSON content');
         return { success: true, message: 'Operation completed successfully' };
       }
       throw new Error('Invalid response format');

@@ -62,33 +62,24 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
         lastSyncDate: new Date().toISOString()
       };
 
-      console.log('ProductForm - Sending data:', productData);
-
-      let response;
       if (product) {
         // Update existing product
-        console.log('ProductForm - Updating existing product:', product.id);
-        response = await apiCall(`${apiConfig.endpoints.products}/${product.id}`, {
+        await apiCall(`${apiConfig.endpoints.products}/${product.id}`, {
           method: 'PUT',
           body: JSON.stringify(productData)
         });
       } else {
         // Create new product
-        console.log('ProductForm - Creating new product');
-        response = await apiCall(apiConfig.endpoints.products, {
+        await apiCall(apiConfig.endpoints.products, {
           method: 'POST',
           body: JSON.stringify(productData)
         });
       }
 
-      console.log('ProductForm - API Response:', response);
-      console.log('ProductForm - Calling onSuccess()');
-      
       // Call onSuccess - the parent component will handle closing the form
       onSuccess();
     } catch (err: any) {
-      console.error('ProductForm - Error saving product:', err);
-      console.error('ProductForm - Error details:', err.message);
+      console.error('Error saving product:', err);
       setError(err.message || 'Gabim në ruajtjen e produktit');
     } finally {
       setLoading(false);
