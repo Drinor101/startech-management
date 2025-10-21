@@ -7,8 +7,10 @@ const router = express.Router();
 // Merr të gjithë përdoruesit
 router.get('/', authenticateUser, async (req, res) => {
   try {
-    const { page = 1, limit = 10, role, department } = req.query;
-    const offset = (page - 1) * limit;
+    const { page, limit, role, department } = req.query;
+    
+    console.log('Users API - Query params:', { page, limit, role, department });
+    console.log('Users API - User making request:', req.user);
 
     let query = supabase
       .from('users')
@@ -23,25 +25,46 @@ router.get('/', authenticateUser, async (req, res) => {
       query = query.eq('department', department);
     }
 
-    // Paginimi
-    query = query.range(offset, offset + limit - 1);
+    // Paginimi vetëm nëse është specifikuar
+    if (page && limit) {
+      const offset = (page - 1) * limit;
+      query = query.range(offset, offset + limit - 1);
+    }
 
-    const { data, error, count } = await query;
+    console.log('Users API - Executing query...');
+    const { data, error, count } = await query.select('*', { count: 'exact' });
+    
+    console.log('Users API - Query result:', { data, error, count });
+    console.log('Users API - Data length:', data?.length);
 
     if (error) {
+      console.error('Users API - Supabase error:', error);
       throw error;
     }
 
-    res.json({
-      success: true,
-      data: data,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: count,
-        pages: Math.ceil(count / limit)
-      }
-    });
+    // Kthe pagination vetëm nëse është kërkuar
+    if (page && limit) {
+      const response = {
+        success: true,
+        data: data,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count || 0,
+          pages: Math.ceil((count || 0) / limit)
+        }
+      };
+      console.log('Users API - Paginated response:', response);
+      res.json(response);
+    } else {
+      const response = {
+        success: true,
+        data: data,
+        total: count || data?.length || 0
+      };
+      console.log('Users API - Non-paginated response:', response);
+      res.json(response);
+    }
   } catch (error) {
     console.error('Gabim në marrjen e përdoruesve:', error);
     res.status(500).json({

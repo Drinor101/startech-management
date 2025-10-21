@@ -39,11 +39,27 @@ const UsersList: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('Fetching users from API...');
+        console.log('API endpoint:', apiConfig.endpoints.users);
+        console.log('Full URL:', `${apiConfig.baseURL}${apiConfig.endpoints.users}`);
+        
         const response = await apiCall(apiConfig.endpoints.users);
-        setUsers(response.data || []);
+        console.log('Users API response:', response);
+        console.log('Users data:', response.data);
+        console.log('Users data length:', response.data?.length);
+        console.log('Users array:', Array.isArray(response.data));
+        
+        if (response.data && Array.isArray(response.data)) {
+          setUsers(response.data);
+          console.log('Users set successfully:', response.data.length, 'users');
+        } else {
+          console.error('Invalid response data:', response.data);
+          setUsers([]);
+        }
       } catch (err) {
         console.error('Error fetching users:', err);
         setError('Gabim në ngarkimin e përdoruesve');
+        setUsers([]);
       } finally {
         setLoading(false);
       }

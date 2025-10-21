@@ -8,6 +8,7 @@ const authenticateUser = async (req, res, next) => {
     console.log('Auth middleware - Headers:', req.headers);
     console.log('Auth middleware - User ID:', userId);
     console.log('Auth middleware - URL:', req.url);
+    console.log('Auth middleware - Method:', req.method);
     
     if (!userId) {
       console.log('Auth middleware - No user ID provided');
@@ -17,6 +18,7 @@ const authenticateUser = async (req, res, next) => {
     }
 
     // Merr profilin e përdoruesit nga tabela users
+    console.log('Auth middleware - Fetching user profile for ID:', userId);
     const { data: userProfile, error: profileError } = await supabase
       .from('users')
       .select('*')
@@ -27,6 +29,7 @@ const authenticateUser = async (req, res, next) => {
     console.log('Auth middleware - Profile error:', profileError);
 
     if (profileError || !userProfile) {
+      console.log('Auth middleware - User profile not found or error');
       return res.status(401).json({ 
         error: 'Profili i përdoruesit nuk u gjet' 
       });
@@ -34,6 +37,7 @@ const authenticateUser = async (req, res, next) => {
 
     // Shton të dhënat e përdoruesit në req për t'u përdorur në routes
     req.user = userProfile;
+    console.log('Auth middleware - User authenticated successfully:', userProfile.email);
     next();
   } catch (error) {
     console.error('Gabim në autentifikim:', error);
