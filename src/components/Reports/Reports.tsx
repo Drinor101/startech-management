@@ -29,9 +29,9 @@ const Reports: React.FC = () => {
   const [reportData, setReportData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // const [userActivity, setUserActivity] = useState<any[]>([]); // COMMENTED OUT FOR NOW
-  // const [selectedUser, setSelectedUser] = useState<string>('');
-  // const [users, setUsers] = useState<any[]>([]);
+  const [userActivity, setUserActivity] = useState<any[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string>('');
+  const [users, setUsers] = useState<any[]>([]);
 
   const tabs = [
     { id: 'services', label: 'Servisi' },
@@ -70,52 +70,163 @@ const Reports: React.FC = () => {
   }, [dateRange]);
 
   // Fetch users list
-  // useEffect(() => {
-  //   const fetchUsers = async () => {
-  //     try {
-  //       const response = await apiCall('/api/users');
-  //       console.log('Users API response:', response);
-  //       if (response.success) {
-  //         setUsers(response.data || []);
-  //       }
-  //     } catch (err) {
-  //       console.error('Error fetching users:', err);
-  //     }
-  //   };
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await apiCall('/api/users');
+        console.log('Users API response:', response);
+        if (response.success) {
+          setUsers(response.data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
 
-  //   if (activeTab === 'users') {
-  //     fetchUsers();
-  //   }
-  // }, [activeTab]);
+    if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab]);
 
-  // Fetch user activity - COMMENTED OUT FOR NOW
-  // useEffect(() => {
-  //   const fetchUserActivity = async () => {
-  //     try {
-  //       const params = new URLSearchParams();
-  //       params.append('limit', '50');
-  //       // if (selectedUser) {
-  //       //   params.append('userId', selectedUser);
-  //       // }
-  //       console.log('Fetching user activity with params:', params.toString());
-  //       const response = await apiCall(`/api/activity/activity-logs?${params.toString()}`);
-  //       console.log('User activity response:', response);
-  //       if (response.success) {
-  //         setUserActivity(response.data || []);
-  //       } else {
-  //         console.error('Failed to fetch user activity:', response.error);
-  //         setUserActivity([]);
-  //       }
-  //     } catch (err) {
-  //       console.error('Error fetching user activity:', err);
-  //       setUserActivity([]);
-  //     }
-  //   };
+  // Fetch user activity from file logs
+  useEffect(() => {
+    const fetchUserActivity = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.append('limit', '50');
+        if (selectedUser) {
+          params.append('userId', selectedUser);
+        }
+        console.log('Fetching user activity with params:', params.toString());
+        const response = await apiCall(`/api/file-activity/file-activity-logs?${params.toString()}`);
+        console.log('User activity response:', response);
+        if (response.success) {
+          setUserActivity(response.data || []);
+        } else {
+          console.error('Failed to fetch user activity:', response.error);
+          setUserActivity([]);
+        }
+      } catch (err) {
+        console.error('Error fetching user activity:', err);
+        setUserActivity([]);
+      }
+    };
 
-  //   if (activeTab === 'users') {
-  //     fetchUserActivity();
-  //   }
-  // }, [activeTab]);
+    if (activeTab === 'users') {
+      fetchUserActivity();
+    }
+  }, [activeTab, selectedUser]);
+
+  // Helper function to create readable activity text
+  const getActivityText = (action: string, module: string, details: any) => {
+    const moduleNames: { [key: string]: string } = {
+      'USERS': 'përdorues',
+      'ORDERS': 'porosi',
+      'PRODUCTS': 'produkt',
+      'TASKS': 'task',
+      'SERVICES': 'servis',
+      'TICKETS': 'tiket',
+      'CUSTOMERS': 'klient'
+    };
+
+    const actionNames: { [key: string]: string } = {
+      'CREATE': 'u shtua',
+      'UPDATE': 'u përditësua',
+      'DELETE': 'u fshi',
+      'VIEW': 'u shikua',
+      'LOGIN': 'u kyç',
+      'LOGOUT': 'u çkyç'
+    };
+
+    const moduleName = moduleNames[module] || module.toLowerCase();
+    const actionName = actionNames[action] || action.toLowerCase();
+
+    // Try to get more specific details from the details object
+    let specificInfo = '';
+    if (details && typeof details === 'object') {
+      if (details.title) specificInfo = ` "${details.title}"`;
+      else if (details.name) specificInfo = ` "${details.name}"`;
+      else if (details.email) specificInfo = ` "${details.email}"`;
+      else if (details.problem_description) specificInfo = ` "${details.problem_description.substring(0, 30)}..."`;
+    }
+
+    // Create more natural Albanian text
+    if (action === 'CREATE') {
+      if (module === 'CUSTOMERS') {
+        return `klient i ri${specificInfo} u shtua`;
+      } else if (module === 'TASKS') {
+        return `task i ri${specificInfo} u shtua`;
+      } else if (module === 'SERVICES') {
+        return `servis i ri${specificInfo} u shtua`;
+      } else if (module === 'ORDERS') {
+        return `porosi e re${specificInfo} u shtua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt i ri${specificInfo} u shtua`;
+      } else if (module === 'TICKETS') {
+        return `tiket i ri${specificInfo} u shtua`;
+      } else if (module === 'USERS') {
+        return `përdorues i ri${specificInfo} u shtua`;
+      } else {
+        return `${moduleName} i ri${specificInfo} u shtua`;
+      }
+    } else if (action === 'UPDATE') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u përditësua`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u përditësua`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u përditësua`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u përditësua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u përditësua`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u përditësua`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u përditësua`;
+      } else {
+        return `${moduleName}${specificInfo} u përditësua`;
+      }
+    } else if (action === 'DELETE') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u fshi`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u fshi`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u fshi`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u fshi`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u fshi`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u fshi`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u fshi`;
+      } else {
+        return `${moduleName}${specificInfo} u fshi`;
+      }
+    } else if (action === 'VIEW') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u shikua`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u shikua`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u shikua`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u shikua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u shikua`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u shikua`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u shikua`;
+      } else {
+        return `${moduleName}${specificInfo} u shikua`;
+      }
+    } else {
+      return `${actionName} ${moduleName}${specificInfo}`;
+    }
+  };
 
   const mockReportData = {
     services: {
@@ -830,8 +941,8 @@ const Reports: React.FC = () => {
           </div>
         </div>
 
-        {/* User Activity Reports - COMMENTED OUT FOR NOW */}
-        {/* {activeTab === 'users' && (
+        {/* User Activity Reports */}
+        {activeTab === 'users' && (
           <div className="space-y-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center justify-between mb-4">
@@ -862,25 +973,33 @@ const Reports: React.FC = () => {
                   userActivity.map((activity, index) => (
                     <div key={index} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                       <div className={`w-2 h-2 rounded-full ${
-                        activity.type === 'order' ? 'bg-blue-500' :
-                        activity.type === 'service' ? 'bg-green-500' :
-                        activity.type === 'task' ? 'bg-purple-500' :
-                        activity.type === 'customer' ? 'bg-orange-500' :
-                        activity.type === 'product' ? 'bg-red-500' :
+                        activity.module === 'ORDERS' ? 'bg-blue-500' :
+                        activity.module === 'SERVICES' ? 'bg-green-500' :
+                        activity.module === 'TASKS' ? 'bg-purple-500' :
+                        activity.module === 'CUSTOMERS' ? 'bg-orange-500' :
+                        activity.module === 'PRODUCTS' ? 'bg-red-500' :
+                        activity.module === 'TICKETS' ? 'bg-pink-500' :
+                        activity.module === 'USERS' ? 'bg-indigo-500' :
                         'bg-gray-500'
                       }`}></div>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-900">
-                          {activity.user || 'Unknown User'}
+                          {activity.user_name || 'Unknown User'}
                         </p>
-                        <p className="text-xs text-gray-500">{activity.action}</p>
+                        <p className="text-xs text-gray-500">
+                          {getActivityText(activity.action, activity.module, activity.details)}
+                        </p>
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-gray-400">Moduli: {activity.module}</p>
-                          {activity.userRole && (
-                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
-                              {activity.userRole}
-                            </span>
-                          )}
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            activity.action === 'CREATE' ? 'bg-green-100 text-green-800' :
+                            activity.action === 'UPDATE' ? 'bg-blue-100 text-blue-800' :
+                            activity.action === 'DELETE' ? 'bg-red-100 text-red-800' :
+                            activity.action === 'VIEW' ? 'bg-gray-100 text-gray-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {activity.action}
+                          </span>
                         </div>
                       </div>
                       <div className="text-right">
@@ -903,7 +1022,7 @@ const Reports: React.FC = () => {
             </div>
 
           </div>
-        )} */}
+        )}
       </div>
     </div>
   );

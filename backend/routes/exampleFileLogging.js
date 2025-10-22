@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logUserActivityToFile, logActivityToFile } from '../middleware/fileActivityLogger.js';
+import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
 
 const router = express.Router();
 
@@ -71,7 +71,9 @@ router.post('/generate-sample-logs', authenticateUser, requireAdmin, async (req,
         module,
         { 
           sampleData: `Sample log entry ${i + 1}`,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          title: `Sample ${module} ${i + 1}`,
+          name: `Sample Name ${i + 1}`
         },
         req.ip
       );
@@ -86,6 +88,50 @@ router.post('/generate-sample-logs', authenticateUser, requireAdmin, async (req,
     res.status(500).json({
       success: false,
       error: 'Error generating sample logs'
+    });
+  }
+});
+
+// Test route to generate realistic activity logs
+router.post('/generate-realistic-logs', authenticateUser, requireAdmin, async (req, res) => {
+  try {
+    const realisticActivities = [
+      { action: 'CREATE', module: 'TASKS', details: { title: 'Fix website bug', name: 'Website Bug Fix' } },
+      { action: 'UPDATE', module: 'SERVICES', details: { title: 'Laptop repair', name: 'Laptop Repair Service' } },
+      { action: 'CREATE', module: 'ORDERS', details: { title: 'Order #1234', name: 'Customer Order' } },
+      { action: 'VIEW', module: 'CUSTOMERS', details: { name: 'John Doe', email: 'john@example.com' } },
+      { action: 'UPDATE', module: 'PRODUCTS', details: { title: 'iPhone 15', name: 'iPhone 15 Pro' } },
+      { action: 'CREATE', module: 'TICKETS', details: { title: 'Support ticket', name: 'Customer Support' } },
+      { action: 'DELETE', module: 'TASKS', details: { title: 'Old task', name: 'Completed Task' } },
+      { action: 'UPDATE', module: 'USERS', details: { name: 'Admin User', email: 'admin@startech.com' } },
+      { action: 'VIEW', module: 'ORDERS', details: { title: 'Order #1235', name: 'Another Order' } },
+      { action: 'CREATE', module: 'SERVICES', details: { title: 'Phone repair', name: 'Phone Repair Service' } }
+    ];
+    
+    // Generate realistic log entries
+    for (const activity of realisticActivities) {
+      await logActivityToFile(
+        req.user.id,
+        req.user.email?.split('@')[0] || req.user.name || 'Unknown',
+        activity.action,
+        activity.module,
+        activity.details,
+        req.ip
+      );
+      
+      // Add small delay between logs
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    res.json({
+      success: true,
+      message: 'Generated realistic activity logs'
+    });
+  } catch (error) {
+    console.error('Error generating realistic logs:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Error generating realistic logs'
     });
   }
 });

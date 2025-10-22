@@ -1,11 +1,12 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
 
 const router = express.Router();
 
 // Merr të gjithë taskat
-router.get('/', authenticateUser, async (req, res) => {
+router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async (req, res) => {
   try {
     const { page = 1, limit = 10, type, status, priority, search } = req.query;
     const offset = (page - 1) * limit;
@@ -119,7 +120,7 @@ router.get('/', authenticateUser, async (req, res) => {
 });
 
 // Merr një task specifik
-router.get('/:id', authenticateUser, async (req, res) => {
+router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -157,7 +158,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një task të ri
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'TASKS'), async (req, res) => {
   try {
     console.log('Task creation request body:', req.body);
     
@@ -271,7 +272,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një task
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'TASKS'), async (req, res) => {
   try {
     console.log('Task update request body:', req.body);
     
@@ -368,7 +369,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një task (vetëm admin)
-router.delete('/:id', authenticateUser, async (req, res) => {
+router.delete('/:id', authenticateUser, logUserActivityToFileAfter('DELETE', 'TASKS'), async (req, res) => {
   try {
     const { id } = req.params;
 

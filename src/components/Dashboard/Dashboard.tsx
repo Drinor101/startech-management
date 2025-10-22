@@ -62,6 +62,117 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
     fetchDashboardData();
   }, []);
 
+  // Helper function to create readable activity text
+  const getActivityText = (action: string, module: string, details: any) => {
+    const moduleNames: { [key: string]: string } = {
+      'USERS': 'përdorues',
+      'ORDERS': 'porosi',
+      'PRODUCTS': 'produkt',
+      'TASKS': 'task',
+      'SERVICES': 'servis',
+      'TICKETS': 'tiket',
+      'CUSTOMERS': 'klient'
+    };
+
+    const actionNames: { [key: string]: string } = {
+      'CREATE': 'u shtua',
+      'UPDATE': 'u përditësua',
+      'DELETE': 'u fshi',
+      'VIEW': 'u shikua',
+      'LOGIN': 'u kyç',
+      'LOGOUT': 'u çkyç'
+    };
+
+    const moduleName = moduleNames[module] || module.toLowerCase();
+    const actionName = actionNames[action] || action.toLowerCase();
+
+    // Try to get more specific details from the details object
+    let specificInfo = '';
+    if (details && typeof details === 'object') {
+      if (details.title) specificInfo = ` "${details.title}"`;
+      else if (details.name) specificInfo = ` "${details.name}"`;
+      else if (details.email) specificInfo = ` "${details.email}"`;
+      else if (details.problem_description) specificInfo = ` "${details.problem_description.substring(0, 30)}..."`;
+    }
+
+    // Create more natural Albanian text
+    if (action === 'CREATE') {
+      if (module === 'CUSTOMERS') {
+        return `klient i ri${specificInfo} u shtua`;
+      } else if (module === 'TASKS') {
+        return `task i ri${specificInfo} u shtua`;
+      } else if (module === 'SERVICES') {
+        return `servis i ri${specificInfo} u shtua`;
+      } else if (module === 'ORDERS') {
+        return `porosi e re${specificInfo} u shtua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt i ri${specificInfo} u shtua`;
+      } else if (module === 'TICKETS') {
+        return `tiket i ri${specificInfo} u shtua`;
+      } else if (module === 'USERS') {
+        return `përdorues i ri${specificInfo} u shtua`;
+      } else {
+        return `${moduleName} i ri${specificInfo} u shtua`;
+      }
+    } else if (action === 'UPDATE') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u përditësua`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u përditësua`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u përditësua`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u përditësua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u përditësua`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u përditësua`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u përditësua`;
+      } else {
+        return `${moduleName}${specificInfo} u përditësua`;
+      }
+    } else if (action === 'DELETE') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u fshi`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u fshi`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u fshi`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u fshi`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u fshi`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u fshi`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u fshi`;
+      } else {
+        return `${moduleName}${specificInfo} u fshi`;
+      }
+    } else if (action === 'VIEW') {
+      if (module === 'CUSTOMERS') {
+        return `klient${specificInfo} u shikua`;
+      } else if (module === 'TASKS') {
+        return `task${specificInfo} u shikua`;
+      } else if (module === 'SERVICES') {
+        return `servis${specificInfo} u shikua`;
+      } else if (module === 'ORDERS') {
+        return `porosi${specificInfo} u shikua`;
+      } else if (module === 'PRODUCTS') {
+        return `produkt${specificInfo} u shikua`;
+      } else if (module === 'TICKETS') {
+        return `tiket${specificInfo} u shikua`;
+      } else if (module === 'USERS') {
+        return `përdorues${specificInfo} u shikua`;
+      } else {
+        return `${moduleName}${specificInfo} u shikua`;
+      }
+    } else {
+      return `${actionName} ${moduleName}${specificInfo}`;
+    }
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -78,20 +189,22 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       console.log('User from localStorage:', user);
       
       // Fetch all data in parallel
-      const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes] = await Promise.all([
+      const [servicesRes, tasksRes, ticketsRes, ordersRes, customersRes, activitiesRes] = await Promise.all([
         fetch(`${apiUrl}/api/services`, { headers }),
         fetch(`${apiUrl}/api/tasks`, { headers }),
         fetch(`${apiUrl}/api/tickets`, { headers }),
         fetch(`${apiUrl}/api/orders`, { headers }),
-        fetch(`${apiUrl}/api/customers`, { headers })
+        fetch(`${apiUrl}/api/customers`, { headers }),
+        fetch(`${apiUrl}/api/file-activity/file-activity-logs?limit=10`, { headers })
       ]);
 
-      const [servicesData, tasksData, ticketsData, ordersData, customersData] = await Promise.all([
+      const [servicesData, tasksData, ticketsData, ordersData, customersData, activitiesData] = await Promise.all([
         servicesRes.ok ? servicesRes.json() : { data: [] },
         tasksRes.ok ? tasksRes.json() : { data: [] },
         ticketsRes.ok ? ticketsRes.json() : { data: [] },
         ordersRes.ok ? ordersRes.json() : { data: [] },
-        customersRes.ok ? customersRes.json() : { data: [] }
+        customersRes.ok ? customersRes.json() : { data: [] },
+        activitiesRes.ok ? activitiesRes.json() : { data: [] }
       ]);
 
       console.log('API Responses:', {
@@ -99,7 +212,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         tasks: tasksData,
         tickets: ticketsData,
         orders: ordersData,
-        customers: customersData
+        customers: customersData,
+        activities: activitiesData
       });
 
       const servicesDataArray = servicesData.data || servicesData || [];
@@ -107,6 +221,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       const ticketsDataArray = ticketsData.data || ticketsData || [];
       const ordersDataArray = ordersData.data || ordersData || [];
       const customers = customersData.data || customersData || [];
+      const activities = activitiesData.data || activitiesData || [];
       
       // Set state for chart data
       setServices(servicesDataArray);
@@ -168,53 +283,29 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         },
       ]);
 
-      // Fetch recent activities from activity logs API
-      try {
-        const activityResponse = await fetch(`${apiConfig.baseURL}/api/activity/activity-logs?limit=6`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (activityResponse.ok) {
-          const activityData = await activityResponse.json();
-          if (activityData.success && activityData.data) {
-            const formattedActivities = activityData.data.map((activity: any) => ({
-              id: activity.id,
-              action: activity.action,
-              user: activity.user_name || 'Sistemi',
-              time: new Date(activity.timestamp).toLocaleString('sq-AL'),
-              module: activity.module
-            }));
-            setRecentActivities(formattedActivities);
-          } else {
-            // Fallback to old method if API fails
-            setRecentActivities([{
-              id: 'no-activity',
-              action: 'Nuk ka aktivitet të fundit',
-              user: 'Sistemi',
-              time: new Date().toLocaleString('sq-AL')
-            }]);
-          }
-        } else {
-          // Fallback to old method if API fails
-          setRecentActivities([{
-            id: 'no-activity',
-            action: 'Nuk ka aktivitet të fundit',
-            user: 'Sistemi',
-            time: new Date().toLocaleString('sq-AL')
-          }]);
-        }
-      } catch (error) {
-        console.error('Error fetching activity logs:', error);
-        // Fallback to old method if API fails
+      // Process recent activities from file logs
+      const formattedActivities = activities.map((activity: any) => {
+        const actionText = getActivityText(activity.action, activity.module, activity.details);
+        return {
+          id: activity.timestamp + activity.user_id,
+          action: actionText,
+          user: activity.user_name || 'Sistemi',
+          time: new Date(activity.timestamp).toLocaleString('sq-AL'),
+          module: activity.module,
+          actionType: activity.action
+        };
+      });
+      
+      // If no activities, show a default message
+      if (formattedActivities.length === 0) {
         setRecentActivities([{
           id: 'no-activity',
           action: 'Nuk ka aktivitet të fundit',
           user: 'Sistemi',
           time: new Date().toLocaleString('sq-AL')
         }]);
+      } else {
+        setRecentActivities(formattedActivities);
       }
 
     } catch (error) {

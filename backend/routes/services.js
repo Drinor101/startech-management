@@ -1,11 +1,12 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
 
 const router = express.Router();
 
 // Merr të gjithë shërbimet
-router.get('/', authenticateUser, async (req, res) => {
+router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, search } = req.query;
     const offset = (page - 1) * limit;
@@ -116,7 +117,7 @@ router.get('/', authenticateUser, async (req, res) => {
 });
 
 // Merr një shërbim specifik
-router.get('/:id', authenticateUser, async (req, res) => {
+router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -155,7 +156,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një shërbim të ri
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'SERVICES'), async (req, res) => {
   try {
     console.log('Service creation request body:', req.body);
     
@@ -309,7 +310,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një shërbim
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -487,7 +488,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një shërbim (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, requireAdmin, logUserActivityToFileAfter('DELETE', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
 

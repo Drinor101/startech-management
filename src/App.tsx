@@ -13,7 +13,6 @@ import ProductsList from './components/Products/ProductsList';
 import Reports from './components/Reports/Reports';
 import UsersList from './components/Users/UsersList';
 import CustomersList from './components/Customers/CustomersList';
-import FileActivityLogs from './components/ActivityLogs/FileActivityLogs';
 
 // New component for "Të gjitha" (All Tasks) - Uses real data like Dashboard
 const AllTasks: React.FC = () => {
@@ -297,8 +296,6 @@ const AppContent: React.FC = () => {
       reports: 'Raportet',
       users: 'Përdoruesit',
       customers: 'Klientët',
-      'file-activity-logs': 'File Activity Logs',
-      'activity-logs': 'Database Activity Logs',
       settings: 'Cilësimet'
     };
     return titles[module as keyof typeof titles] || 'Startech';
@@ -326,17 +323,6 @@ const AppContent: React.FC = () => {
         return <UsersList />;
       case 'customers':
         return <CustomersList />;
-      case 'file-activity-logs':
-        return <FileActivityLogs />;
-      case 'activity-logs':
-        return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Database Activity Logs</h2>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-              <p className="text-gray-600">Database activity logs will be implemented here.</p>
-            </div>
-          </div>
-        );
       case 'settings':
         return (
           <div className="p-6">

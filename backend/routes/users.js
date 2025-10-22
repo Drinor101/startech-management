@@ -1,11 +1,12 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
 
 const router = express.Router();
 
 // Merr të gjithë përdoruesit
-router.get('/', authenticateUser, async (req, res) => {
+router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'USERS'), async (req, res) => {
   try {
     const { page, limit, role, department } = req.query;
     
@@ -75,7 +76,7 @@ router.get('/', authenticateUser, async (req, res) => {
 });
 
 // Merr një përdorues specifik
-router.get('/:id', authenticateUser, async (req, res) => {
+router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'USERS'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -110,7 +111,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një përdorues të ri (vetëm admin)
-router.post('/', authenticateUser, requireAdmin, async (req, res) => {
+router.post('/', authenticateUser, requireAdmin, logUserActivityToFileAfter('CREATE', 'USERS'), async (req, res) => {
   try {
     const { name, email, role, phone, department, password } = req.body;
 
@@ -177,7 +178,7 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
 });
 
 // Përditëson një përdorues
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'USERS'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, phone, department, password } = req.body;
@@ -244,7 +245,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një përdorues (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, requireAdmin, logUserActivityToFileAfter('DELETE', 'USERS'), async (req, res) => {
   try {
     const { id } = req.params;
 
