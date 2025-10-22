@@ -201,7 +201,9 @@ export const ROLE_PERMISSIONS = {
     reports: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     users: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    'file-activity-logs': { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true },
+    activity: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true }
   },
   'Menaxher': {
     // Menaxher - Çasje e plotë përveç Users (vetëm view) dhe Reports (tash për tash)
@@ -212,7 +214,9 @@ export const ROLE_PERMISSIONS = {
     reports: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // Tash për tash
     users: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: false }, // View only
     products: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
-    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true }
+    customers: { canView: true, canCreate: true, canEdit: true, canDelete: true, canExport: true },
+    'file-activity-logs': { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true },
+    activity: { canView: true, canCreate: false, canEdit: false, canDelete: false, canExport: true }
   },
   'Agjent shitjeje': {
     // Agjent shitjeje - Tasks, Tiketat, Servisi, Porositë, Products, Customers
@@ -224,7 +228,9 @@ export const ROLE_PERMISSIONS = {
     users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    'file-activity-logs': { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    activity: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false }
   },
   'Agjent mbështetje': {
     // Agjent mbështetje - Tasks, Tiketat, Servisi, Porositë, Products, Customers
@@ -236,7 +242,9 @@ export const ROLE_PERMISSIONS = {
     users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    'file-activity-logs': { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    activity: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false }
   },
   'Serviser': {
     // Serviser - Tasks, Tiketat, Servisi, Porositë, Products, Customers
@@ -248,7 +256,9 @@ export const ROLE_PERMISSIONS = {
     users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    'file-activity-logs': { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    activity: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false }
   },
   'Marketer': {
     // Marketer - Vetëm Tasks, Products, Customers
@@ -260,7 +270,9 @@ export const ROLE_PERMISSIONS = {
     users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    'file-activity-logs': { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    activity: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false }
   },
   'Dizajner': {
     // Dizajner - Vetëm Tasks, Products, Customers
@@ -272,7 +284,9 @@ export const ROLE_PERMISSIONS = {
     users: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
     products: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
     customers: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
-    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false }
+    comments: { canView: true, canCreate: true, canEdit: true, canDelete: false, canExport: false },
+    'file-activity-logs': { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false },
+    activity: { canView: false, canCreate: false, canEdit: false, canDelete: false, canExport: false }
   }
 } as const;
 

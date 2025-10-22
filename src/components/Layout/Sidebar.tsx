@@ -14,7 +14,9 @@ import {
   Wrench,
   MessageSquare,
   List,
-  LogOut
+  LogOut,
+  FileText,
+  Activity
 } from 'lucide-react';
 import { User } from '../../types';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -46,6 +48,16 @@ const menuItems = [
   { id: 'customers', label: 'Klientët', icon: Users, module: 'customers' },
   { id: 'reports', label: 'Raportet', icon: BarChart3, module: 'reports' },
   { id: 'users', label: 'Përdoruesit', icon: Users, module: 'users' },
+  { 
+    id: 'activity', 
+    label: 'Aktiviteti', 
+    icon: Activity, 
+    module: 'activity',
+    subItems: [
+      { id: 'file-activity-logs', label: 'File Logs', icon: FileText, module: 'file-activity-logs' },
+      { id: 'activity-logs', label: 'Database Logs', icon: Activity, module: 'activity' }
+    ]
+  },
   { id: 'settings', label: 'Cilësimet', icon: Settings, module: 'settings' },
 ];
 
@@ -82,6 +94,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentUser, activeModule, onModuleCh
   const isItemActive = (itemId: string) => {
     if (itemId === 'detyra') {
       return ['all-tasks', 'services', 'tasks', 'tickets'].includes(activeModule);
+    }
+    if (itemId === 'activity') {
+      return ['file-activity-logs', 'activity-logs'].includes(activeModule);
     }
     return activeModule === itemId;
   };
