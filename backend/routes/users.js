@@ -6,7 +6,7 @@ import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } 
 const router = express.Router();
 
 // Merr të gjithë përdoruesit
-router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'USERS'), async (req, res) => {
+router.get('/', authenticateUser, async (req, res) => {
   try {
     const { page, limit, role, department } = req.query;
     
@@ -76,7 +76,7 @@ router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'USERS'), async 
 });
 
 // Merr një përdorues specifik
-router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'USERS'), async (req, res) => {
+router.get('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
 

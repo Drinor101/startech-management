@@ -168,9 +168,6 @@ To migrate from database-based logging to file-based logging:
 
 3. **Update API endpoints**:
    ```javascript
-   // Old
-   GET /api/activity/activity-logs
-   
    // New
    GET /api/file-activity/file-activity-logs
    ```

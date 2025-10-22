@@ -6,7 +6,7 @@ import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } 
 const router = express.Router();
 
 // Merr të gjithë taskat
-router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async (req, res) => {
+router.get('/', authenticateUser, async (req, res) => {
   try {
     const { page = 1, limit = 10, type, status, priority, search } = req.query;
     const offset = (page - 1) * limit;
@@ -48,9 +48,9 @@ router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async 
     const isManager = userRole === 'menaxher' || userRole === 'manager';
     
     if (!isAdmin && !isManager) {
-      // Të tjerët shohin vetëm taskat e përcaktuar për ta
+      // Të tjerët shohin vetëm taskat e përcaktuar për ta, që janë në visible_to, ose që kanë krijuar vetë
       console.log('Applying filter for user:', currentUser.name);
-      query = query.eq('assigned_to', currentUser.name);
+      query = query.or(`assigned_to.eq.${currentUser.name},visible_to.cs.{${currentUser.name}},created_by.eq.${currentUser.name}`);
     } else {
       console.log('No filter applied - user is Admin or Manager');
     }
@@ -120,7 +120,7 @@ router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async 
 });
 
 // Merr një task specifik
-router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), async (req, res) => {
+router.get('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -142,6 +142,26 @@ router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'TASKS'), asy
         success: false,
         error: 'Tasku nuk u gjet'
       });
+    }
+
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can see this task
+      const canSee = data.assigned_to === currentUser.name || 
+                    (data.visible_to && data.visible_to.includes(currentUser.name)) ||
+                    data.created_by === currentUser.name;
+      
+      if (!canSee) {
+        return res.status(403).json({
+          success: false,
+          error: 'Nuk keni të drejtë të shikoni këtë task'
+        });
+      }
     }
 
     res.json({
@@ -211,10 +231,11 @@ router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'TASKS')
       description: req.body.description,
       priority: req.body.priority || 'medium',
       status: req.body.status || 'todo',
-      assigned_to: req.body.assignedToName || req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo || userName, // Default to creator if not specified
       assigned_by: req.body.assignedBy || userName,
       created_by: userName,
       department: req.body.department,
+      visible_to: req.body.visibleTo || [userName], // Include creator in visible_to
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -299,6 +320,34 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'TASKS
       userName = userData.name || userData.email || userName;
     }
 
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can update this task
+      const { data: existingTask } = await supabase
+        .from('tasks')
+        .select('assigned_to, visible_to, created_by')
+        .eq('id', id)
+        .single();
+      
+      if (existingTask) {
+        const canUpdate = existingTask.assigned_to === currentUser.name || 
+                         (existingTask.visible_to && existingTask.visible_to.includes(currentUser.name)) ||
+                         existingTask.created_by === currentUser.name;
+        
+        if (!canUpdate) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të përditësoni këtë task'
+          });
+        }
+      }
+    }
+
     const updates = {
       title: req.body.title,
       description: req.body.description,
@@ -372,6 +421,34 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'TASKS
 router.delete('/:id', authenticateUser, logUserActivityToFileAfter('DELETE', 'TASKS'), async (req, res) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user;
+
+    // Check role access
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can delete this task
+      const { data: existingTask } = await supabase
+        .from('tasks')
+        .select('assigned_to, visible_to, created_by')
+        .eq('id', id)
+        .single();
+      
+      if (existingTask) {
+        const canDelete = existingTask.assigned_to === currentUser.name || 
+                         (existingTask.visible_to && existingTask.visible_to.includes(currentUser.name)) ||
+                         existingTask.created_by === currentUser.name;
+        
+        if (!canDelete) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të fshini këtë task'
+          });
+        }
+      }
+    }
 
     const { error } = await supabase
       .from('tasks')

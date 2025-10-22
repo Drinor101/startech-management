@@ -6,7 +6,7 @@ import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } 
 const router = express.Router();
 
 // Merr të gjithë shërbimet
-router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), async (req, res) => {
+router.get('/', authenticateUser, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, category, search } = req.query;
     const offset = (page - 1) * limit;
@@ -50,9 +50,9 @@ router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), asy
     const isManager = userRole === 'menaxher' || userRole === 'manager';
     
     if (!isAdmin && !isManager) {
-      // Të tjerët shohin vetëm serviset e përcaktuar për ta
+      // Të tjerët shohin vetëm serviset e përcaktuar për ta, që janë në visible_to, ose që kanë krijuar vetë
       console.log('Services - Applying filter for user:', currentUser.name);
-      query = query.eq('assigned_to', currentUser.name);
+      query = query.or(`assigned_to.eq.${currentUser.name},visible_to.cs.{${currentUser.name}},created_by.eq.${currentUser.name}`);
     } else {
       console.log('Services - No filter applied - user is Admin or Manager');
     }
@@ -117,7 +117,7 @@ router.get('/', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), asy
 });
 
 // Merr një shërbim specifik
-router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), async (req, res) => {
+router.get('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -140,6 +140,26 @@ router.get('/:id', authenticateUser, logUserActivityToFile('VIEW', 'SERVICES'), 
         success: false,
         error: 'Shërbimi nuk u gjet'
       });
+    }
+
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can see this service
+      const canSee = data.assigned_to === currentUser.name || 
+                    (data.visible_to && data.visible_to.includes(currentUser.name)) ||
+                    data.created_by === currentUser.name;
+      
+      if (!canSee) {
+        return res.status(403).json({
+          success: false,
+          error: 'Nuk keni të drejtë të shikoni këtë shërbim'
+        });
+      }
     }
 
     res.json({
@@ -244,11 +264,12 @@ router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'SERVICE
       id: serviceId,
       problem_description: req.body.problem || req.body.problemDescription,
       status: req.body.status || 'received',
-      assigned_to: req.body.assignedToName || req.body.assignedTo,
+      assigned_to: req.body.assignedToName || req.body.assignedTo || userName, // Default to creator if not specified
       warranty_info: req.body.warranty || req.body.warrantyInfo,
       customer_id: customerId,
       created_by: userName,
       assigned_by: req.body.assignedToName || req.body.assignedTo || userName,
+      visible_to: req.body.visibleTo || [userName], // Include creator in visible_to
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -326,6 +347,34 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVI
     // Update userName with actual user data if available
     if (userData?.name || userData?.email) {
       userName = userData.name || userData.email || userName;
+    }
+
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can update this service
+      const { data: existingService } = await supabase
+        .from('services')
+        .select('assigned_to, visible_to, created_by')
+        .eq('id', id)
+        .single();
+      
+      if (existingService) {
+        const canUpdate = existingService.assigned_to === currentUser.name || 
+                         (existingService.visible_to && existingService.visible_to.includes(currentUser.name)) ||
+                         existingService.created_by === currentUser.name;
+        
+        if (!canUpdate) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të përditësoni këtë shërbim'
+          });
+        }
+      }
     }
 
     // Handle customer - create if doesn't exist or use existing

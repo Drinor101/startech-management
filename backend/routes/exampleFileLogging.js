@@ -6,7 +6,7 @@ import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } 
 const router = express.Router();
 
 // Example route that uses file-based logging
-router.get('/example-with-file-logging', authenticateUser, logUserActivityToFile('VIEW', 'EXAMPLE'), async (req, res) => {
+router.get('/example-with-file-logging', authenticateUser, async (req, res) => {
   try {
     // Your business logic here
     const result = { message: 'This is an example with file-based logging' };
@@ -56,7 +56,7 @@ router.post('/example-post-with-file-logging', authenticateUser, logUserActivity
 // Test route to generate some sample logs
 router.post('/generate-sample-logs', authenticateUser, requireAdmin, async (req, res) => {
   try {
-    const sampleActions = ['CREATE', 'UPDATE', 'DELETE', 'VIEW', 'LOGIN', 'LOGOUT'];
+    const sampleActions = ['CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT'];
     const sampleModules = ['USERS', 'ORDERS', 'PRODUCTS', 'TASKS', 'SERVICES', 'TICKETS', 'CUSTOMERS'];
     
     // Generate 10 sample log entries
@@ -99,12 +99,10 @@ router.post('/generate-realistic-logs', authenticateUser, requireAdmin, async (r
       { action: 'CREATE', module: 'TASKS', details: { title: 'Fix website bug', name: 'Website Bug Fix' } },
       { action: 'UPDATE', module: 'SERVICES', details: { title: 'Laptop repair', name: 'Laptop Repair Service' } },
       { action: 'CREATE', module: 'ORDERS', details: { title: 'Order #1234', name: 'Customer Order' } },
-      { action: 'VIEW', module: 'CUSTOMERS', details: { name: 'John Doe', email: 'john@example.com' } },
       { action: 'UPDATE', module: 'PRODUCTS', details: { title: 'iPhone 15', name: 'iPhone 15 Pro' } },
       { action: 'CREATE', module: 'TICKETS', details: { title: 'Support ticket', name: 'Customer Support' } },
       { action: 'DELETE', module: 'TASKS', details: { title: 'Old task', name: 'Completed Task' } },
       { action: 'UPDATE', module: 'USERS', details: { name: 'Admin User', email: 'admin@startech.com' } },
-      { action: 'VIEW', module: 'ORDERS', details: { title: 'Order #1235', name: 'Another Order' } },
       { action: 'CREATE', module: 'SERVICES', details: { title: 'Phone repair', name: 'Phone Repair Service' } }
     ];
     

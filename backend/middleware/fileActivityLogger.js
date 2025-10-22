@@ -114,6 +114,12 @@ const cleanupOldLogs = async () => {
 export const logUserActivityToFile = (action, module, details = null) => {
   return async (req, res, next) => {
     try {
+      // Skip logging VIEW actions to reduce noise
+      if (action === 'VIEW') {
+        next();
+        return;
+      }
+
       // Log activity if user is authenticated
       if (req.user && req.user.id) {
         const activityData = {
@@ -145,6 +151,12 @@ export const logUserActivityToFile = (action, module, details = null) => {
 // Middleware for logging user activity after response
 export const logUserActivityToFileAfter = (action, module, details = null) => {
   return async (req, res, next) => {
+    // Skip logging VIEW actions to reduce noise
+    if (action === 'VIEW') {
+      next();
+      return;
+    }
+
     // Log activity after response
     res.on('finish', async () => {
       try {
@@ -179,6 +191,11 @@ export const logUserActivityToFileAfter = (action, module, details = null) => {
 // Function for manual activity logging to files
 export const logActivityToFile = async (userId, userName, action, module, details = null, ipAddress = null) => {
   try {
+    // Skip logging VIEW actions to reduce noise
+    if (action === 'VIEW') {
+      return;
+    }
+
     // Check if userId is valid
     if (!userId) {
       console.warn('File activity logging skipped: userId is null or undefined');
