@@ -44,9 +44,10 @@ router.get('/', authenticateUser, async (req, res) => {
     const isManager = userRole === 'menaxher' || userRole === 'manager';
     
     if (!isAdmin && !isManager) {
-      // Të tjerët shohin vetëm tiketat e përcaktuar për ta
+      // Të tjerët shohin vetëm tiketat e përcaktuar për ta ose që kanë krijuar vetë
       console.log('Tickets - Applying filter for user:', currentUser.name);
-      query = query.eq('assigned_to', currentUser.name);
+      const userName = currentUser.name.replace(/"/g, '\\"'); // Escape quotes
+      query = query.or(`assigned_to.eq."${userName}",created_by.eq."${userName}"`);
     } else {
       console.log('Tickets - No filter applied - user is Admin or Manager');
     }
@@ -113,6 +114,25 @@ router.get('/:id', authenticateUser, async (req, res) => {
         success: false,
         error: 'Tiketa nuk u gjet'
       });
+    }
+
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can see this ticket
+      const canSee = ticket.assigned_to === currentUser.name || 
+                    ticket.created_by === currentUser.name;
+      
+      if (!canSee) {
+        return res.status(403).json({
+          success: false,
+          error: 'Nuk keni të drejtë të shikoni këtë tiketë'
+        });
+      }
     }
 
     // Fetch comments from comments column
@@ -304,6 +324,33 @@ router.put('/:id', authenticateUser, async (req, res) => {
       userName = userData.name || userData.email || userName;
     }
 
+    // Check role access
+    const currentUser = req.user;
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+    
+    if (!isAdmin && !isManager) {
+      // Check if user can update this ticket
+      const { data: existingTicket } = await supabase
+        .from('tickets')
+        .select('assigned_to, created_by')
+        .eq('id', id)
+        .single();
+      
+      if (existingTicket) {
+        const canUpdate = existingTicket.assigned_to === currentUser.name || 
+                         existingTicket.created_by === currentUser.name;
+        
+        if (!canUpdate) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të përditësoni këtë tiketë'
+          });
+        }
+      }
+    }
+
     const updateData = {
       title,
       source,
@@ -370,10 +417,37 @@ router.put('/:id', authenticateUser, async (req, res) => {
   }
 });
 
-// Fshin një tiketë (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+// Fshin një tiketë
+router.delete('/:id', authenticateUser, async (req, res) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user;
+
+    // Check role access
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+
+    if (!isAdmin && !isManager) {
+      // Check if user can delete this ticket
+      const { data: existingTicket } = await supabase
+        .from('tickets')
+        .select('assigned_to, created_by')
+        .eq('id', id)
+        .single();
+
+      if (existingTicket) {
+        const canDelete = existingTicket.assigned_to === currentUser.name ||
+                         existingTicket.created_by === currentUser.name;
+
+        if (!canDelete) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të fshini këtë tiketë'
+          });
+        }
+      }
+    }
 
     const { error } = await supabase
       .from('tickets')

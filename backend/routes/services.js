@@ -50,9 +50,10 @@ router.get('/', authenticateUser, async (req, res) => {
     const isManager = userRole === 'menaxher' || userRole === 'manager';
     
     if (!isAdmin && !isManager) {
-      // Të tjerët shohin vetëm serviset e përcaktuar për ta, që janë në visible_to, ose që kanë krijuar vetë
+      // Të tjerët shohin vetëm serviset e përcaktuar për ta ose që kanë krijuar vetë
       console.log('Services - Applying filter for user:', currentUser.name);
-      query = query.or(`assigned_to.eq.${currentUser.name},visible_to.cs.{${currentUser.name}},created_by.eq.${currentUser.name}`);
+      const userName = currentUser.name.replace(/"/g, '\\"'); // Escape quotes
+      query = query.or(`assigned_to.eq."${userName}",created_by.eq."${userName}"`);
     } else {
       console.log('Services - No filter applied - user is Admin or Manager');
     }
@@ -151,7 +152,6 @@ router.get('/:id', authenticateUser, async (req, res) => {
     if (!isAdmin && !isManager) {
       // Check if user can see this service
       const canSee = data.assigned_to === currentUser.name || 
-                    (data.visible_to && data.visible_to.includes(currentUser.name)) ||
                     data.created_by === currentUser.name;
       
       if (!canSee) {
@@ -359,13 +359,12 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVI
       // Check if user can update this service
       const { data: existingService } = await supabase
         .from('services')
-        .select('assigned_to, visible_to, created_by')
+        .select('assigned_to, created_by')
         .eq('id', id)
         .single();
       
       if (existingService) {
         const canUpdate = existingService.assigned_to === currentUser.name || 
-                         (existingService.visible_to && existingService.visible_to.includes(currentUser.name)) ||
                          existingService.created_by === currentUser.name;
         
         if (!canUpdate) {
@@ -536,10 +535,37 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVI
   }
 });
 
-// Fshin një shërbim (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, logUserActivityToFileAfter('DELETE', 'SERVICES'), async (req, res) => {
+// Fshin një shërbim
+router.delete('/:id', authenticateUser, logUserActivityToFileAfter('DELETE', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user;
+
+    // Check role access
+    const userRole = currentUser.role?.toLowerCase();
+    const isAdmin = userRole === 'administrator' || userRole === 'admin';
+    const isManager = userRole === 'menaxher' || userRole === 'manager';
+
+    if (!isAdmin && !isManager) {
+      // Check if user can delete this service
+      const { data: existingService } = await supabase
+        .from('services')
+        .select('assigned_to, created_by')
+        .eq('id', id)
+        .single();
+
+      if (existingService) {
+        const canDelete = existingService.assigned_to === currentUser.name ||
+                         existingService.created_by === currentUser.name;
+
+        if (!canDelete) {
+          return res.status(403).json({
+            success: false,
+            error: 'Nuk keni të drejtë të fshini këtë shërbim'
+          });
+        }
+      }
+    }
 
     const { error } = await supabase
       .from('services')

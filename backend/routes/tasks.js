@@ -48,9 +48,10 @@ router.get('/', authenticateUser, async (req, res) => {
     const isManager = userRole === 'menaxher' || userRole === 'manager';
     
     if (!isAdmin && !isManager) {
-      // Të tjerët shohin vetëm taskat e përcaktuar për ta, që janë në visible_to, ose që kanë krijuar vetë
+      // Të tjerët shohin vetëm taskat e përcaktuar për ta ose që kanë krijuar vetë
       console.log('Applying filter for user:', currentUser.name);
-      query = query.or(`assigned_to.eq.${currentUser.name},visible_to.cs.{${currentUser.name}},created_by.eq.${currentUser.name}`);
+      const userName = currentUser.name.replace(/"/g, '\\"'); // Escape quotes
+      query = query.or(`assigned_to.eq."${userName}",created_by.eq."${userName}"`);
     } else {
       console.log('No filter applied - user is Admin or Manager');
     }
