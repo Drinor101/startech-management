@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js';
 
-// Middleware për të ruajtur aktivitetet e përdoruesve
+// Middleware për të ruajtur aktivitetet e përdoruesve në tabelën activity_logs
 export const logUserActivity = (action, module, details = null) => {
   return async (req, res, next) => {
     try {
@@ -9,16 +9,20 @@ export const logUserActivity = (action, module, details = null) => {
         const activityData = {
           user_id: req.user.id,
           user_name: req.user.email?.split('@')[0] || req.user.name || 'Unknown',
+          user_email: req.user.email || null,
           action: action,
           module: module,
           details: details,
-          timestamp: new Date().toISOString(),
-          ip_address: req.ip || req.connection.remoteAddress
+          ip_address: req.ip || req.connection.remoteAddress,
+          user_agent: req.get('User-Agent') || null,
+          method: req.method,
+          url: req.originalUrl,
+          created_at: new Date().toISOString()
         };
 
-        // Ruaj në user_actions tabelën
+        // Ruaj në activity_logs tabelën
         await supabase
-          .from('user_actions')
+          .from('activity_logs')
           .insert(activityData);
       }
     } catch (error) {
@@ -30,7 +34,7 @@ export const logUserActivity = (action, module, details = null) => {
   };
 };
 
-// Middleware për të ruajtur aktivitetet pas përgjigjes
+// Middleware për të ruajtur aktivitetet pas përgjigjes në activity_logs
 export const logUserActivityAfter = (action, module, details = null) => {
   return async (req, res, next) => {
     // Ruaj aktivitetin pas përgjigjes
@@ -40,15 +44,19 @@ export const logUserActivityAfter = (action, module, details = null) => {
           const activityData = {
             user_id: req.user.id,
             user_name: req.user.email?.split('@')[0] || req.user.name || 'Unknown',
+            user_email: req.user.email || null,
             action: action,
             module: module,
             details: details,
-            timestamp: new Date().toISOString(),
-            ip_address: req.ip || req.connection.remoteAddress
+            ip_address: req.ip || req.connection.remoteAddress,
+            user_agent: req.get('User-Agent') || null,
+            method: req.method,
+            url: req.originalUrl,
+            created_at: new Date().toISOString()
           };
 
           await supabase
-            .from('user_actions')
+            .from('activity_logs')
             .insert(activityData);
         }
       } catch (error) {
@@ -60,7 +68,7 @@ export const logUserActivityAfter = (action, module, details = null) => {
   };
 };
 
-// Funksion për të ruajtur aktivitetin manualisht
+// Funksion për të ruajtur aktivitetin manualisht në activity_logs
 export const logActivity = async (userId, userName, action, module, details = null, ipAddress = null) => {
   try {
     // Kontrollo nëse userId është valid
@@ -72,17 +80,21 @@ export const logActivity = async (userId, userName, action, module, details = nu
     const activityData = {
       user_id: userId,
       user_name: userName || 'Unknown',
+      user_email: null,
       action: action,
       module: module,
       details: details,
-      timestamp: new Date().toISOString(),
-      ip_address: ipAddress
+      ip_address: ipAddress,
+      user_agent: null,
+      method: null,
+      url: null,
+      created_at: new Date().toISOString()
     };
 
     console.log('Logging activity:', activityData);
 
     const { error } = await supabase
-      .from('user_actions')
+      .from('activity_logs')
       .insert(activityData);
 
     if (error) {
