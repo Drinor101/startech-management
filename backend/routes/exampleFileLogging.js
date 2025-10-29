@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
+import { logUserActivity, logUserActivityAfter, logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ router.get('/example-with-file-logging', authenticateUser, async (req, res) => {
     const result = { message: 'This is an example with file-based logging' };
     
     // Manual logging example
-    await logActivityToFile(
+    await logActivity(
       req.user.id,
       req.user.email?.split('@')[0] || req.user.name || 'Unknown',
       'CUSTOM_ACTION',
@@ -35,7 +35,7 @@ router.get('/example-with-file-logging', authenticateUser, async (req, res) => {
 });
 
 // Example route that logs after response
-router.post('/example-post-with-file-logging', authenticateUser, logUserActivityToFileAfter('CREATE', 'EXAMPLE'), async (req, res) => {
+router.post('/example-post-with-file-logging', authenticateUser, logUserActivityAfter('CREATE', 'EXAMPLE'), async (req, res) => {
   try {
     // Your business logic here
     const result = { message: 'This is a POST example with file-based logging after response' };
@@ -108,7 +108,7 @@ router.post('/generate-realistic-logs', authenticateUser, requireAdmin, async (r
     
     // Generate realistic log entries
     for (const activity of realisticActivities) {
-      await logActivityToFile(
+      await logActivity(
         req.user.id,
         req.user.email?.split('@')[0] || req.user.name || 'Unknown',
         activity.action,

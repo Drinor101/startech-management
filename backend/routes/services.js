@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
+import { logUserActivity, logUserActivityAfter, logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -176,7 +176,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një shërbim të ri
-router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'SERVICES'), async (req, res) => {
+router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'SERVICES'), async (req, res) => {
   try {
     console.log('Service creation request body:', req.body);
     
@@ -269,7 +269,6 @@ router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'SERVICE
       customer_id: customerId,
       created_by: userName,
       assigned_by: req.body.assignedToName || req.body.assignedTo || userName,
-      visible_to: req.body.visibleTo || [userName], // Include creator in visible_to
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -331,7 +330,7 @@ router.post('/', authenticateUser, logUserActivityToFileAfter('CREATE', 'SERVICE
 });
 
 // Përditëson një shërbim
-router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVICES'), async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -536,7 +535,7 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'SERVI
 });
 
 // Fshin një shërbim
-router.delete('/:id', authenticateUser, logUserActivityToFileAfter('DELETE', 'SERVICES'), async (req, res) => {
+router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'SERVICES'), async (req, res) => {
   try {
     const { id } = req.params;
     const currentUser = req.user;

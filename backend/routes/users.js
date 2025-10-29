@@ -1,7 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
-import { logUserActivityToFile, logUserActivityToFileAfter, logActivityToFile } from '../middleware/fileActivityLogger.js';
+import { logUserActivity, logUserActivityAfter, logActivity } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -111,7 +111,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një përdorues të ri (vetëm admin)
-router.post('/', authenticateUser, requireAdmin, logUserActivityToFileAfter('CREATE', 'USERS'), async (req, res) => {
+router.post('/', authenticateUser, requireAdmin, logUserActivityAfter('CREATE', 'USERS'), async (req, res) => {
   try {
     const { name, email, role, phone, department, password } = req.body;
 
@@ -178,7 +178,7 @@ router.post('/', authenticateUser, requireAdmin, logUserActivityToFileAfter('CRE
 });
 
 // Përditëson një përdorues
-router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'USERS'), async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'USERS'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, phone, department, password } = req.body;
@@ -245,7 +245,7 @@ router.put('/:id', authenticateUser, logUserActivityToFileAfter('UPDATE', 'USERS
 });
 
 // Fshin një përdorues (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, logUserActivityToFileAfter('DELETE', 'USERS'), async (req, res) => {
+router.delete('/:id', authenticateUser, requireAdmin, logUserActivityAfter('DELETE', 'USERS'), async (req, res) => {
   try {
     const { id } = req.params;
 
