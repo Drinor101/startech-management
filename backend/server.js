@@ -84,6 +84,7 @@ const setupRoutes = async () => {
   const customerRoutes = (await import('./routes/customers.js')).default;
   const reportRoutes = (await import('./routes/reports.js')).default;
   const fileActivityLogRoutes = (await import('./routes/fileActivityLogs.js')).default;
+  const activityRoutes = (await import('./routes/activity.js')).default;
   const exampleFileLoggingRoutes = (await import('./routes/exampleFileLogging.js')).default;
   const commentRoutes = (await import('./routes/comments.js')).default;
 
@@ -97,6 +98,7 @@ const setupRoutes = async () => {
   app.use('/api/customers', customerRoutes);
   app.use('/api/reports', reportRoutes);
   app.use('/api/file-activity', fileActivityLogRoutes);
+  app.use('/api/activity', activityRoutes);
   app.use('/api/example-file-logging', exampleFileLoggingRoutes);
   app.use('/api/comments', commentRoutes);
 };

@@ -94,11 +94,12 @@ const Reports: React.FC = () => {
       try {
         const params = new URLSearchParams();
         params.append('limit', '50');
+        params.append('order', 'desc');
         if (selectedUser) {
           params.append('userId', selectedUser);
         }
         console.log('Fetching user activity with params:', params.toString());
-        const response = await apiCall(`/api/file-activity/file-activity-logs?${params.toString()}`);
+        const response = await apiCall(`/api/activity/activity-logs?${params.toString()}`);
         console.log('User activity response:', response);
         if (response.success) {
           setUserActivity(response.data || []);

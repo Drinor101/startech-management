@@ -195,7 +195,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         fetch(`${apiUrl}/api/tickets`, { headers }),
         fetch(`${apiUrl}/api/orders`, { headers }),
         fetch(`${apiUrl}/api/customers`, { headers }),
-        fetch(`${apiUrl}/api/file-activity/file-activity-logs?limit=10`, { headers })
+        fetch(`${apiUrl}/api/activity/activity-logs?limit=10&order=desc`, { headers })
       ]);
 
       const [servicesData, tasksData, ticketsData, ordersData, customersData, activitiesData] = await Promise.all([
