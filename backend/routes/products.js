@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityAfter } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -482,7 +483,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një produkt të ri (vetëm admin)
-router.post('/', authenticateUser, requireAdmin, async (req, res) => {
+router.post('/', authenticateUser, requireAdmin, logUserActivityAfter('CREATE', 'PRODUCTS'), async (req, res) => {
   try {
     // Validate required fields
     if (!req.body.title || req.body.title.trim() === '') {
@@ -535,6 +536,13 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
       throw error;
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'PRODUCT',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.status(201).json({
       success: true,
       data: data,
@@ -551,7 +559,7 @@ router.post('/', authenticateUser, requireAdmin, async (req, res) => {
 });
 
 // Përditëson një produkt (vetëm admin)
-router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.put('/:id', authenticateUser, requireAdmin, logUserActivityAfter('UPDATE', 'PRODUCTS'), async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -610,6 +618,13 @@ router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
       throw error;
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'PRODUCT',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.json({
       success: true,
       data: data,
@@ -625,7 +640,7 @@ router.put('/:id', authenticateUser, requireAdmin, async (req, res) => {
 });
 
 // Fshin një produkt (vetëm admin)
-router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
+router.delete('/:id', authenticateUser, requireAdmin, logUserActivityAfter('DELETE', 'PRODUCTS'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -637,6 +652,13 @@ router.delete('/:id', authenticateUser, requireAdmin, async (req, res) => {
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'PRODUCT',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

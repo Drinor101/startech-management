@@ -163,6 +163,13 @@ router.post('/', authenticateUser, requireAdmin, logUserActivityAfter('CREATE', 
     // Heq fjalëkalimin nga përgjigjja
     const { password: _, ...userWithoutPassword } = data;
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'USER',
+      entity_id: data.id,
+      title: data.email
+    };
+
     res.status(201).json({
       success: true,
       data: userWithoutPassword,
@@ -230,6 +237,13 @@ router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'USERS'), as
     // Heq fjalëkalimin nga përgjigjja
     const { password: _, ...userWithoutPassword } = data;
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'USER',
+      entity_id: data.id,
+      title: data.email
+    };
+
     res.json({
       success: true,
       data: userWithoutPassword,
@@ -265,6 +279,13 @@ router.delete('/:id', authenticateUser, requireAdmin, logUserActivityAfter('DELE
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'USER',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

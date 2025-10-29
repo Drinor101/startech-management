@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityAfter } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -182,7 +183,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një tiketë të re
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'TICKETS'), async (req, res) => {
   try {
     const {
       title,
@@ -264,6 +265,13 @@ router.post('/', authenticateUser, async (req, res) => {
         details: `Tiketa "${title}" u krijua me prioritet ${priority}`
       });
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TICKET',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.status(201).json({
       success: true,
       data: {
@@ -291,7 +299,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një tiketë
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'TICKETS'), async (req, res) => {
   try {
     const { id } = req.params;
     const {
@@ -392,6 +400,13 @@ router.put('/:id', authenticateUser, async (req, res) => {
         details: `Tiketa u përditësua nga ${userName}`
       });
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TICKET',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.json({
       success: true,
       data: {
@@ -418,7 +433,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një tiketë
-router.delete('/:id', authenticateUser, async (req, res) => {
+router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'TICKETS'), async (req, res) => {
   try {
     const { id } = req.params;
     const currentUser = req.user;
@@ -461,6 +476,13 @@ router.delete('/:id', authenticateUser, async (req, res) => {
         error: 'Gabim në fshirjen e tiketës'
       });
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TICKET',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

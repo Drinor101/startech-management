@@ -63,7 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
   }, []);
 
   // Helper function to create readable activity text
-  const getActivityText = (action: string, module: string, details: any) => {
+  const getActivityText = (action: string, module: string, details: any, entityId?: string) => {
     const moduleNames: { [key: string]: string } = {
       'USERS': 'përdorues',
       'ORDERS': 'porosi',
@@ -93,6 +93,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
       else if (details.name) specificInfo = ` "${details.name}"`;
       else if (details.email) specificInfo = ` "${details.email}"`;
       else if (details.problem_description) specificInfo = ` "${details.problem_description.substring(0, 30)}..."`;
+    }
+
+    // Prefer showing entity ID when available
+    const idPart = entityId || details?.entity_id;
+    if (idPart) {
+      specificInfo = ` ${idPart}`;
     }
 
     // Create more natural Albanian text
@@ -285,7 +291,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
 
       // Process recent activities from file logs
       const formattedActivities = activities.map((activity: any) => {
-        const actionText = getActivityText(activity.action, activity.module, activity.details);
+        const actionText = getActivityText(activity.action, activity.module, activity.details, activity.entity_id);
         return {
           id: activity.timestamp + activity.user_id,
           action: actionText,

@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser } from '../middleware/auth.js';
+import { logUserActivityAfter } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -93,7 +94,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një klient të ri
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'CUSTOMERS'), async (req, res) => {
   try {
     const { name, email, phone, address, city, source } = req.body;
 
@@ -151,6 +152,13 @@ router.post('/', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'CUSTOMER',
+      entity_id: data.id,
+      title: data.name
+    };
+
     res.status(201).json({
       success: true,
       data: data,
@@ -166,7 +174,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një klient
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'CUSTOMERS'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, address, city, source } = req.body;
@@ -196,6 +204,13 @@ router.put('/:id', authenticateUser, async (req, res) => {
       throw error;
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'CUSTOMER',
+      entity_id: data.id,
+      title: data.name
+    };
+
     res.json({
       success: true,
       data: data,
@@ -211,7 +226,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një klient
-router.delete('/:id', authenticateUser, async (req, res) => {
+router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'CUSTOMERS'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -248,6 +263,13 @@ router.delete('/:id', authenticateUser, async (req, res) => {
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'CUSTOMER',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

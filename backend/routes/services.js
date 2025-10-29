@@ -295,6 +295,13 @@ router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'SERVICES'), a
         notes: `Shërbimi u krijua për klientin ${data.customer_id}`
       });
 
+    // Set activity details for logger
+    res.locals.activityDetails = {
+      entity_type: 'SERVICE',
+      entity_id: data.id,
+      title: data.id
+    };
+
     res.status(201).json({
       success: true,
       data: {
@@ -490,20 +497,12 @@ router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'SERVICES'),
       // Don't throw here, just log the error
     }
 
-    // Log user activity
-    try {
-      await logActivity(
-        userId,
-        userName,
-        `Përditësoi shërbimin ${updatedService.id}`,
-        'services',
-        `Shërbimi u përditësua nga ${userName}`,
-        req.ip
-      );
-    } catch (logError) {
-      console.error('Log activity error:', logError);
-      // Don't throw here, just log the error
-    }
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'SERVICE',
+      entity_id: updatedService.id,
+      title: updatedService.id
+    };
 
     // Transform response data to camelCase
     const transformedData = {
@@ -574,6 +573,13 @@ router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'SERVICES
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'SERVICE',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

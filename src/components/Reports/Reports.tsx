@@ -119,7 +119,7 @@ const Reports: React.FC = () => {
   }, [activeTab, selectedUser]);
 
   // Helper function to create readable activity text
-  const getActivityText = (action: string, module: string, details: any) => {
+  const getActivityText = (action: string, module: string, details: any, entityId?: string) => {
     const moduleNames: { [key: string]: string } = {
       'USERS': 'përdorues',
       'ORDERS': 'porosi',
@@ -149,6 +149,12 @@ const Reports: React.FC = () => {
       else if (details.name) specificInfo = ` "${details.name}"`;
       else if (details.email) specificInfo = ` "${details.email}"`;
       else if (details.problem_description) specificInfo = ` "${details.problem_description.substring(0, 30)}..."`;
+    }
+
+    // Prefer showing entity ID when available
+    const idPart = entityId || details?.entity_id;
+    if (idPart) {
+      specificInfo = ` ${idPart}`;
     }
 
     // Create more natural Albanian text
@@ -988,7 +994,7 @@ const Reports: React.FC = () => {
                           {activity.user_name || 'Unknown User'}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {getActivityText(activity.action, activity.module, activity.details)}
+                          {getActivityText(activity.action, activity.module, activity.details, activity.entity_id)}
                         </p>
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-gray-400">Moduli: {activity.module}</p>

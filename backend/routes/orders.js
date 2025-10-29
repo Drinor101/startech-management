@@ -1,6 +1,7 @@
 import express from 'express';
 import { supabase } from '../config/supabase.js';
 import { authenticateUser, requireAdmin } from '../middleware/auth.js';
+import { logUserActivityAfter } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
@@ -172,7 +173,7 @@ router.get('/:id', authenticateUser, async (req, res) => {
 });
 
 // Krijon një porosi të re
-router.post('/', authenticateUser, async (req, res) => {
+router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'ORDERS'), async (req, res) => {
   try {
     console.log('Creating new order with data:', req.body);
     const { customerId, customerName, customer, items, shippingAddress, shippingCity, shippingZipCode, shippingMethod, notes, teamNotes } = req.body;
@@ -533,6 +534,13 @@ router.post('/', authenticateUser, async (req, res) => {
 
     console.log('Order products inserted successfully');
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'ORDER',
+      entity_id: orderId,
+      title: orderId
+    };
+
     res.status(201).json({
       success: true,
       data: order,
@@ -568,7 +576,7 @@ router.post('/', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një porosi
-router.patch('/:id', authenticateUser, async (req, res) => {
+router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'), async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -683,6 +691,13 @@ router.patch('/:id', authenticateUser, async (req, res) => {
         .eq('id', id);
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'ORDER',
+      entity_id: id,
+      title: id
+    };
+
     res.json({
       success: true,
       data: data,
@@ -698,7 +713,7 @@ router.patch('/:id', authenticateUser, async (req, res) => {
 });
 
 // Përditëson një porosi (PUT - alias për PATCH)
-router.put('/:id', authenticateUser, async (req, res) => {
+router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'), async (req, res) => {
   try {
     const { id } = req.params;
     const { 
@@ -810,6 +825,13 @@ router.put('/:id', authenticateUser, async (req, res) => {
         .eq('id', id);
     }
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'ORDER',
+      entity_id: id,
+      title: id
+    };
+
     res.json({
       success: true,
       data: data,
@@ -832,7 +854,7 @@ router.put('/:id', authenticateUser, async (req, res) => {
 });
 
 // Fshin një porosi
-router.delete('/:id', authenticateUser, async (req, res) => {
+router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'ORDERS'), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -844,6 +866,13 @@ router.delete('/:id', authenticateUser, async (req, res) => {
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'ORDER',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,

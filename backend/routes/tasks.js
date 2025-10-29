@@ -263,6 +263,13 @@ router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'TASKS'), asyn
         details: `Tasku "${data.title}" u krijua me prioritet ${data.priority}`
       });
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TASK',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.status(201).json({
       success: true,
       data: {
@@ -404,6 +411,13 @@ router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'TASKS'), as
       completedAt: data.completed_at
     };
 
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TASK',
+      entity_id: data.id,
+      title: data.title
+    };
+
     res.json({
       success: true,
       data: transformedData,
@@ -459,6 +473,13 @@ router.delete('/:id', authenticateUser, logUserActivityAfter('DELETE', 'TASKS'),
     if (error) {
       throw error;
     }
+
+    // Provide activity metadata for middleware logger
+    res.locals.activityDetails = {
+      entity_type: 'TASK',
+      entity_id: id,
+      title: id
+    };
 
     res.json({
       success: true,
