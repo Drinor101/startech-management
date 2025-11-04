@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight, ChevronDown } from 'lucide-react';
+import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight, ChevronDown, Filter } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig, getCurrentUser } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -19,7 +19,6 @@ const OrdersList: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
   const [selectedSource, setSelectedSource] = useState<string>('Manual'); // Filter by source: Manual or WooCommerce
-  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState<{
     page: number;
@@ -342,68 +341,21 @@ const OrdersList: React.FC = () => {
         <div className="flex items-center gap-4">
           <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
           
-          {/* Source Filter Dropdown */}
+          {/* Source Filter Dropdown - Matching Products Design */}
           <div className="relative">
-            <button
-              onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              value={selectedSource}
+              onChange={(e) => {
+                setSelectedSource(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-sm font-medium text-gray-700 appearance-none cursor-pointer hover:border-gray-400 transition-colors min-w-[180px]"
             >
-              {selectedSource === 'Manual' ? (
-                <ShoppingCart className="w-4 h-4 text-gray-600" />
-              ) : (
-                <Globe className="w-4 h-4 text-gray-600" />
-              )}
-              <span className="text-sm font-medium text-gray-700">
-                {selectedSource === 'Manual' ? 'Porositë Manuale' : 'Porositë WooCommerce'}
-              </span>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
-            </button>
-            
-            {/* Dropdown Menu */}
-            {isSourceDropdownOpen && (
-              <>
-                <div 
-                  className="fixed inset-0 z-0" 
-                  onClick={() => setIsSourceDropdownOpen(false)}
-                />
-                <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
-                  <button
-                    onClick={() => {
-                      setSelectedSource('Manual');
-                      setIsSourceDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                      selectedSource === 'Manual' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    <ShoppingCart className={`w-4 h-4 ${selectedSource === 'Manual' ? 'text-blue-600' : 'text-gray-400'}`} />
-                    <span className="text-sm">Porositë Manuale</span>
-                    {selectedSource === 'Manual' && (
-                      <span className="ml-auto text-xs text-blue-600">✓</span>
-                    )}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedSource('WooCommerce');
-                      setIsSourceDropdownOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
-                      selectedSource === 'WooCommerce' 
-                        ? 'bg-blue-50 text-blue-700' 
-                        : 'hover:bg-gray-50 text-gray-700'
-                    }`}
-                  >
-                    <Globe className={`w-4 h-4 ${selectedSource === 'WooCommerce' ? 'text-blue-600' : 'text-gray-400'}`} />
-                    <span className="text-sm">Porositë WooCommerce</span>
-                    {selectedSource === 'WooCommerce' && (
-                      <span className="ml-auto text-xs text-blue-600">✓</span>
-                    )}
-                  </button>
-                </div>
-              </>
-            )}
+              <option value="Manual">Vetëm Manuale</option>
+              <option value="WooCommerce">Vetëm WooCommerce</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
         
@@ -593,83 +545,61 @@ const OrdersList: React.FC = () => {
           </table>
         </div>
         
-        {/* Pagination */}
+        {/* Pagination - Matching Products Design */}
         {pagination.pages > 1 && (
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 flex justify-between sm:hidden">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Paraardhës
-                </button>
-                <button
-                  onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
-                  disabled={currentPage >= pagination.pages}
-                  className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Tjetër
-                </button>
-              </div>
-              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Duke shfaqur <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> deri{' '}
-                    <span className="font-medium">
-                      {Math.min(pagination.page * pagination.limit, pagination.total)}
-                    </span>{' '}
-                    nga <span className="font-medium">{pagination.total}</span> rezultate
-                  </p>
-                </div>
-                <div>
-                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+          <div className="flex items-center justify-between mt-6 px-4 py-3 bg-white border-t border-gray-200">
+            <div className="flex items-center text-sm text-gray-700">
+              <span>
+                Duke shfaqur {((pagination.page - 1) * pagination.limit) + 1} deri {Math.min(pagination.page * pagination.limit, pagination.total)} 
+                nga {pagination.total} porosi{pagination.total !== 1 ? 'të' : ''}
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage(Math.max(currentPage - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Mëparshëm
+              </button>
+              
+              <div className="flex space-x-1">
+                {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
+                  let pageNum;
+                  if (pagination.pages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= pagination.pages - 2) {
+                    pageNum = pagination.pages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  
+                  return (
                     <button
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                      disabled={currentPage === 1}
-                      className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 text-sm font-medium rounded-md ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                      }`}
                     >
-                      <span className="sr-only">Paraardhës</span>
-                      ←
+                      {pageNum}
                     </button>
-                    {Array.from({ length: Math.min(5, pagination.pages) }, (_, i) => {
-                      let pageNum;
-                      if (pagination.pages <= 5) {
-                        pageNum = i + 1;
-                      } else if (currentPage <= 3) {
-                        pageNum = i + 1;
-                      } else if (currentPage >= pagination.pages - 2) {
-                        pageNum = pagination.pages - 4 + i;
-                      } else {
-                        pageNum = currentPage - 2 + i;
-                      }
-                      
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                            currentPage === pageNum
-                              ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                              : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-                    <button
-                      onClick={() => setCurrentPage(Math.min(pagination.pages, currentPage + 1))}
-                      disabled={currentPage >= pagination.pages}
-                      className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <span className="sr-only">Tjetër</span>
-                      →
-                    </button>
-                  </nav>
-                </div>
+                  );
+                })}
               </div>
+              
+              <button
+                onClick={() => setCurrentPage(Math.min(currentPage + 1, pagination.pages))}
+                disabled={currentPage === pagination.pages}
+                className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Tjetër
+              </button>
             </div>
           </div>
         )}
@@ -846,7 +776,7 @@ const OrdersList: React.FC = () => {
             setIsFormOpen(false);
             setIsEditMode(false);
             setSelectedOrder(null);
-            fetchOrders();
+            fetchOrders(currentPage);
           }}
         />
       </Modal>

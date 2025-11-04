@@ -628,7 +628,7 @@ router.post('/', authenticateUser, logUserActivityAfter('CREATE', 'ORDERS'), asy
       id: orderId,
       customer_id: finalCustomerId,
       status: 'pending',
-      source: hasWooCommerceProducts ? 'WooCommerce' : 'Manual',
+      source: 'Manual', // Orders created through the form are always Manual, regardless of product source
       shipping_address: shippingAddress,
       shipping_city: shippingCity,
       shipping_zip_code: shippingZipCode,
