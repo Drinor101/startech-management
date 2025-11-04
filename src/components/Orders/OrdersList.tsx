@@ -286,24 +286,25 @@ const OrdersList: React.FC = () => {
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     try {
-      await apiCall(`${apiConfig.endpoints.orders}/${orderId}`, {
-        method: 'PUT',
+      // Use PATCH for both Manual and WooCommerce orders
+      const response = await apiCall(`${apiConfig.endpoints.orders}/${orderId}`, {
+        method: 'PATCH',
         body: JSON.stringify({ status: newStatus })
       });
 
-      // Refresh orders
+      // Refresh orders to show updated status
       await fetchOrders(currentPage);
       
       setNotification({
         type: 'success',
-        message: 'Statusi i porosisë u përditësua me sukses',
+        message: response.message || 'Statusi i porosisë u përditësua me sukses',
         isVisible: true
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating order status:', error);
       setNotification({
         type: 'error',
-        message: 'Gabim në përditësimin e statusit',
+        message: error.message || 'Gabim në përditësimin e statusit',
         isVisible: true
       });
     }
