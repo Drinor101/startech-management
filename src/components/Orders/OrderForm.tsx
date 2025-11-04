@@ -85,94 +85,52 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     fetchProducts();
   }, [order]);
 
-  // Fetch WooCommerce products when user searches
+  // Fetch WooCommerce products when user searches - using backend search API
+  // This searches based on the longest/most specific search term from any dropdown
   useEffect(() => {
-    const fetchWooCommerceProducts = async () => {
-      // Check if any dropdown has a search term
-      const hasSearchTerm = Object.values(productSearchTerms).some((term: unknown) => {
-        const searchTerm = term as string;
-        return searchTerm && searchTerm.length > 0;
-      });
-      
-      // If no search term, keep WooCommerce products cached but don't clear them
-      // They'll be filtered out in getFilteredProducts anyway
-      if (!hasSearchTerm) {
-        // Don't fetch if we already have products loaded
-        if (wooCommerceProductsLoaded) {
-          return;
-        }
-        // If no search term and no products loaded, don't fetch
-        return;
-      }
+    // Get all search terms and find the longest one (most specific)
+    const searchTerms = Object.values(productSearchTerms) as string[];
+    const activeSearchTerm = searchTerms
+      .filter(term => term && term.trim().length > 0)
+      .sort((a, b) => b.length - a.length)[0]; // Use longest search term
 
-      // If WooCommerce products already loaded, don't fetch again
-      if (wooCommerceProductsLoaded && wooCommerceProducts.length > 0) {
-        return;
-      }
+    // Only fetch if there's a search term
+    if (!activeSearchTerm || activeSearchTerm.trim().length === 0) {
+      setWooCommerceProducts([]);
+      setWooCommerceProductsLoaded(false);
+      return;
+    }
 
+    // Debounce search - wait 300ms after user stops typing
+    const timeoutId = setTimeout(async () => {
       try {
-        // Fetch ALL WooCommerce products by fetching all pages
-        let allWooProducts: Product[] = [];
-        let page = 1;
-        let hasMore = true;
-        const limit = 100; // Maximum allowed per request (backend limit)
+        console.log(`🔍 Searching WooCommerce API for: "${activeSearchTerm}"`);
         
-        console.log('Fetching all WooCommerce products for search...');
+        // Fetch only matching products from WooCommerce API (search is done on backend)
+        const params = new URLSearchParams();
+        params.append('source', 'WooCommerce');
+        params.append('search', activeSearchTerm.trim());
+        params.append('page', '1');
+        params.append('limit', '100'); // Get up to 100 matching results
         
-        while (hasMore) {
-          const params = new URLSearchParams();
-          params.append('source', 'WooCommerce');
-          params.append('page', page.toString());
-          params.append('limit', limit.toString());
-          
-          const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
-          
-          if (response.success && response.data && response.data.length > 0) {
-            allWooProducts = [...allWooProducts, ...response.data];
-            console.log(`Fetched page ${page}: ${response.data.length} products (total so far: ${allWooProducts.length})`);
-            
-            // Check if there are more pages
-            const pagination = response.pagination;
-            if (pagination) {
-              // If we got less than the limit, we've reached the end
-              if (response.data.length < limit) {
-                hasMore = false;
-                console.log(`Reached end: got ${response.data.length} products (less than limit of ${limit})`);
-              } else if (pagination.pages && page < pagination.pages) {
-                // More pages available
-                page++;
-              } else {
-                // No more pages according to pagination
-                hasMore = false;
-                console.log(`No more pages according to pagination (page ${page} of ${pagination.pages})`);
-              }
-            } else {
-              // If no pagination info and we got full page, try next page
-              if (response.data.length === limit) {
-                page++;
-              } else {
-                hasMore = false;
-                console.log(`No pagination info and got partial page (${response.data.length} products)`);
-              }
-            }
-          } else {
-            // No more products
-            hasMore = false;
-            console.log(`No more products on page ${page}`);
-          }
+        const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
+        
+        if (response.success && response.data) {
+          setWooCommerceProducts(response.data);
+          setWooCommerceProductsLoaded(true);
+          console.log(`✅ Found ${response.data.length} WooCommerce products matching "${activeSearchTerm}"`);
+        } else {
+          setWooCommerceProducts([]);
+          setWooCommerceProductsLoaded(false);
         }
-        
-        setWooCommerceProducts(allWooProducts);
-        setWooCommerceProductsLoaded(true);
-        console.log(`✅ Successfully loaded ALL ${allWooProducts.length} WooCommerce products for search`);
       } catch (err) {
-        console.error('Error fetching WooCommerce products:', err);
+        console.error('Error searching WooCommerce products:', err);
         setWooCommerceProducts([]);
         setWooCommerceProductsLoaded(false);
       }
-    };
+    }, 300); // 300ms debounce
 
-    fetchWooCommerceProducts();
+    return () => clearTimeout(timeoutId);
   }, [productSearchTerms]);
 
   // Close dropdowns when clicking outside
@@ -321,16 +279,16 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     
     // If there's a search term, include both Manual and WooCommerce products
     if (searchTerm) {
-      // Combine Manual and WooCommerce products when searching
-      let allProducts = [...products, ...wooCommerceProducts];
-      
-      // Apply search filter
-      allProducts = allProducts.filter(p => 
-        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchTerm.toLowerCase())
+      // WooCommerce products are already filtered by the backend API search
+      // Manual products need to be filtered on the frontend
+      const filteredManual = products.filter(p => 
+        p.source === productSourceFilter &&
+        (p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         p.category.toLowerCase().includes(searchTerm.toLowerCase()))
       );
       
-      return allProducts;
+      // Combine filtered Manual products with WooCommerce products (already filtered by API)
+      return [...filteredManual, ...wooCommerceProducts];
     }
     
     // No search term - show only Manual products (default behavior)

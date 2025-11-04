@@ -212,7 +212,8 @@ router.get('/', authenticateUser, async (req, res) => {
             consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
           };
           
-          const wooProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, pageNum, safeLimit);
+          // Pass search term directly to WooCommerce API
+          const wooProducts = await fetchWooCommerceProducts(wooCommerceConfig, 0, pageNum, safeLimit, search);
           
           if (wooProducts && wooProducts.length > 0) {
             const transformedProducts = wooProducts.map(product => ({
@@ -321,8 +322,9 @@ router.get('/', authenticateUser, async (req, res) => {
       allProducts = allProducts.filter(product => product.source === source);
     }
 
-    // 4. Apply search filter to combined results
-    if (search) {
+    // 4. Apply search filter to combined results (only for Manual products, WooCommerce is already filtered)
+    // Note: WooCommerce products are already filtered by the API search parameter
+    if (search && source !== 'WooCommerce') {
       const searchLower = search.toLowerCase();
       allProducts = allProducts.filter(product => 
         product.title.toLowerCase().includes(searchLower) ||
@@ -873,15 +875,21 @@ router.post('/sync-woocommerce', authenticateUser, requireAdmin, async (req, res
 });
 
 // Fetch products from WooCommerce API with pagination and memory optimization
-async function fetchWooCommerceProducts(config, retryCount = 0, page = 1, limit = 100) {
+async function fetchWooCommerceProducts(config, retryCount = 0, page = 1, limit = 100, search = null) {
   const maxRetries = 2;
   const timeout = 15000; // Increased to 15s for better reliability
   const perPage = Math.min(limit, 100); // Max 100 per page
   
   try {
-    console.log(`Fetching WooCommerce products page ${page} (${perPage} products)...`);
+    console.log(`Fetching WooCommerce products page ${page} (${perPage} products)${search ? ` with search: "${search}"` : ''}...`);
     
-    const url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
+    // Build WooCommerce API URL with optional search parameter
+    let url = `${config.url}/wp-json/wc/v3/products?per_page=${perPage}&page=${page}&status=publish`;
+    if (search && search.trim()) {
+      // WooCommerce API supports 'search' parameter for searching product names, SKUs, etc.
+      url += `&search=${encodeURIComponent(search.trim())}`;
+    }
+    
     const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
     
     // Create AbortController for timeout
