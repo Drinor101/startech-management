@@ -345,14 +345,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         <div className="flex items-center justify-between mb-3">
           <label className="block text-sm font-medium text-gray-700">Produktet</label>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={addItem}
-              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Plus className="w-4 h-4" />
-              Shto Produkt
-            </button>
+            {!(order?.source === 'WooCommerce') && (
+              <button
+                type="button"
+                onClick={addItem}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
+              >
+                <Plus className="w-4 h-4" />
+                Shto Produkt
+              </button>
+            )}
+            {order?.source === 'WooCommerce' && (
+              <span className="text-xs text-gray-500 italic">
+                Produktet e porosive WooCommerce nuk mund të modifikohen
+              </span>
+            )}
           </div>
         </div>
         
@@ -362,8 +369,13 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
               <div className="col-span-7 relative dropdown-container">
                 <button
                   type="button"
-                  onClick={() => toggleDropdown(index)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-left bg-white flex items-center justify-between"
+                  onClick={() => !(order?.source === 'WooCommerce') && toggleDropdown(index)}
+                  disabled={order?.source === 'WooCommerce'}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm text-left flex items-center justify-between ${
+                    order?.source === 'WooCommerce' 
+                      ? 'bg-gray-100 cursor-not-allowed' 
+                      : 'bg-white'
+                  }`}
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     {item.productId && getSelectedProduct(item.productId)?.image && (
@@ -383,7 +395,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                   <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${openDropdowns[index] ? 'rotate-180' : ''}`} />
                 </button>
                 
-                {openDropdowns[index] && (
+                {openDropdowns[index] && !(order?.source === 'WooCommerce') && (
                   <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {loading ? (
                       <div className="px-3 py-2 text-sm text-gray-500 flex items-center gap-2">
@@ -452,12 +464,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                   min="1"
                   value={item.quantity}
                   onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  disabled={order?.source === 'WooCommerce'}
+                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm ${
+                    order?.source === 'WooCommerce' ? 'bg-gray-100 cursor-not-allowed' : ''
+                  }`}
                   placeholder="Sasi"
                 />
               </div>
               <div className="col-span-2">
-                {formData.items.length > 1 && (
+                {formData.items.length > 1 && !(order?.source === 'WooCommerce') && (
                   <button
                     type="button"
                     onClick={() => removeItem(index)}

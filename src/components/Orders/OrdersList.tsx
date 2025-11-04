@@ -511,7 +511,7 @@ const OrdersList: React.FC = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        {canEdit('orders') && order.source !== 'WooCommerce' && order.isEditable !== false && (
+                        {canEdit('orders') && (
                           <button 
                             onClick={() => handleEditOrder(order)}
                             className="text-green-600 hover:text-green-900 p-1"

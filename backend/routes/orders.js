@@ -82,6 +82,67 @@ function mapWooCommerceStatus(wcStatus) {
   return statusMap[wcStatus] || 'pending';
 }
 
+// Map our status format to WooCommerce status format
+function mapToWooCommerceStatus(ourStatus) {
+  const statusMap = {
+    'pending': 'pending',
+    'processing': 'processing',
+    'shipped': 'processing', // WooCommerce doesn't have 'shipped', use 'processing'
+    'delivered': 'completed',
+    'cancelled': 'cancelled',
+    'accepted': 'processing' // WooCommerce doesn't have 'accepted', use 'processing'
+  };
+  return statusMap[ourStatus] || 'pending';
+}
+
+// Update WooCommerce order via API
+async function updateWooCommerceOrder(config, orderId, updateData) {
+  const timeout = 15000;
+  
+  try {
+    console.log(`Updating WooCommerce order ${orderId} with data:`, updateData);
+    
+    const url = `${config.url}/wp-json/wc/v3/orders/${orderId}`;
+    const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updateData),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText} - ${errorText}`);
+      }
+
+      const updatedOrder = await response.json();
+      console.log(`Successfully updated WooCommerce order ${orderId}`);
+      
+      return updatedOrder;
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
+    
+  } catch (error) {
+    console.error(`Error updating WooCommerce order ${orderId}:`, error);
+    throw error;
+  }
+}
+
 // Transform WooCommerce order to our format
 function transformWooCommerceOrder(wcOrder) {
   return {
@@ -791,6 +852,75 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
       items 
     } = req.body;
 
+    // Check if this is a WooCommerce order (numeric ID) or Manual order (PRS-YYYY-NNN format)
+    const isWooCommerceOrder = /^\d+$/.test(id);
+    
+    if (isWooCommerceOrder) {
+      // Update WooCommerce order via API
+      try {
+        const wooCommerceConfig = {
+          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+        };
+
+        // Build WooCommerce update data
+        const wooUpdateData = {};
+        
+        if (status) {
+          wooUpdateData.status = mapToWooCommerceStatus(status);
+        }
+        
+        if (shippingAddress || shippingCity || shippingZipCode) {
+          wooUpdateData.shipping = {};
+          if (shippingAddress) wooUpdateData.shipping.address_1 = shippingAddress;
+          if (shippingCity) wooUpdateData.shipping.city = shippingCity;
+          if (shippingZipCode) wooUpdateData.shipping.postcode = shippingZipCode;
+        }
+        
+        if (notes) {
+          wooUpdateData.customer_note = notes;
+        }
+        
+        if (shippingMethod) {
+          // WooCommerce stores shipping method in shipping_lines
+          // This would require a more complex update, for now we'll skip it
+          // or add it as a note
+          if (!wooUpdateData.customer_note) {
+            wooUpdateData.customer_note = '';
+          }
+          wooUpdateData.customer_note += (wooUpdateData.customer_note ? '\n' : '') + `Shipping Method: ${shippingMethod}`;
+        }
+
+        // Update WooCommerce order
+        const updatedWooOrder = await updateWooCommerceOrder(wooCommerceConfig, id, wooUpdateData);
+        
+        // Transform the response to match our format
+        const transformedOrder = transformWooCommerceOrder(updatedWooOrder);
+
+        // Provide activity metadata for middleware logger
+        res.locals.activityDetails = {
+          entity_type: 'ORDER',
+          entity_id: id,
+          title: `WooCommerce Order ${id}`
+        };
+
+        return res.json({
+          success: true,
+          data: transformedOrder,
+          message: 'Porosia WooCommerce u përditësua me sukses'
+        });
+      } catch (wooError) {
+        console.error('Error updating WooCommerce order:', wooError);
+        return res.status(500).json({
+          success: false,
+          error: 'Gabim në përditësimin e porosisë WooCommerce',
+          details: wooError.message
+        });
+      }
+    }
+
+    // Handle Manual orders (database orders)
     let updateData = {
       status: status,
       shipping_address: shippingAddress,
@@ -913,6 +1043,7 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
 });
 
 // Përditëson një porosi (PUT - alias për PATCH)
+// Note: PUT uses the same logic as PATCH, so we'll just call the PATCH handler logic
 router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'), async (req, res) => {
   try {
     const { id } = req.params;
@@ -927,6 +1058,71 @@ router.put('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'), a
       teamNotes,
       items 
     } = req.body;
+
+    // Check if this is a WooCommerce order (numeric ID) or Manual order (PRS-YYYY-NNN format)
+    const isWooCommerceOrder = /^\d+$/.test(id);
+    
+    if (isWooCommerceOrder) {
+      // Update WooCommerce order via API
+      try {
+        const wooCommerceConfig = {
+          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+        };
+
+        // Build WooCommerce update data
+        const wooUpdateData = {};
+        
+        if (status) {
+          wooUpdateData.status = mapToWooCommerceStatus(status);
+        }
+        
+        if (shippingAddress || shippingCity || shippingZipCode) {
+          wooUpdateData.shipping = {};
+          if (shippingAddress) wooUpdateData.shipping.address_1 = shippingAddress;
+          if (shippingCity) wooUpdateData.shipping.city = shippingCity;
+          if (shippingZipCode) wooUpdateData.shipping.postcode = shippingZipCode;
+        }
+        
+        if (notes) {
+          wooUpdateData.customer_note = notes;
+        }
+        
+        if (shippingMethod) {
+          if (!wooUpdateData.customer_note) {
+            wooUpdateData.customer_note = '';
+          }
+          wooUpdateData.customer_note += (wooUpdateData.customer_note ? '\n' : '') + `Shipping Method: ${shippingMethod}`;
+        }
+
+        // Update WooCommerce order
+        const updatedWooOrder = await updateWooCommerceOrder(wooCommerceConfig, id, wooUpdateData);
+        
+        // Transform the response to match our format
+        const transformedOrder = transformWooCommerceOrder(updatedWooOrder);
+
+        // Provide activity metadata for middleware logger
+        res.locals.activityDetails = {
+          entity_type: 'ORDER',
+          entity_id: id,
+          title: `WooCommerce Order ${id}`
+        };
+
+        return res.json({
+          success: true,
+          data: transformedOrder,
+          message: 'Porosia WooCommerce u përditësua me sukses'
+        });
+      } catch (wooError) {
+        console.error('Error updating WooCommerce order:', wooError);
+        return res.status(500).json({
+          success: false,
+          error: 'Gabim në përditësimin e porosisë WooCommerce',
+          details: wooError.message
+        });
+      }
+    }
 
     let updateData = {
       status: status,
