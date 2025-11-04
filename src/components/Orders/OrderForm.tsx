@@ -19,6 +19,7 @@ interface OrderItem {
 const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [wooCommerceProducts, setWooCommerceProducts] = useState<Product[]>([]);
+  const [wooCommerceProductsLoaded, setWooCommerceProductsLoaded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [productSourceFilter, setProductSourceFilter] = useState<string>('Manual'); // Only show manual products for orders
@@ -88,28 +89,86 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   useEffect(() => {
     const fetchWooCommerceProducts = async () => {
       // Check if any dropdown has a search term
-      const hasSearchTerm = Object.values(productSearchTerms).some((term: string) => term && term.length > 0);
+      const hasSearchTerm = Object.values(productSearchTerms).some((term: unknown) => {
+        const searchTerm = term as string;
+        return searchTerm && searchTerm.length > 0;
+      });
       
-      // If no search term, clear WooCommerce products
+      // If no search term, keep WooCommerce products cached but don't clear them
+      // They'll be filtered out in getFilteredProducts anyway
       if (!hasSearchTerm) {
-        setWooCommerceProducts([]);
+        // Don't fetch if we already have products loaded
+        if (wooCommerceProductsLoaded) {
+          return;
+        }
+        // If no search term and no products loaded, don't fetch
+        return;
+      }
+
+      // If WooCommerce products already loaded, don't fetch again
+      if (wooCommerceProductsLoaded && wooCommerceProducts.length > 0) {
         return;
       }
 
       try {
-        const params = new URLSearchParams();
-        params.append('source', 'WooCommerce');
+        // Fetch ALL WooCommerce products by fetching all pages
+        let allWooProducts: Product[] = [];
+        let page = 1;
+        let hasMore = true;
+        const limit = 100; // Maximum allowed per request (backend limit)
         
-        console.log('Fetching WooCommerce products for search...');
-        const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
+        console.log('Fetching all WooCommerce products for search...');
         
-        const data = response.success ? response.data : [];
-        setWooCommerceProducts(data || []);
+        while (hasMore) {
+          const params = new URLSearchParams();
+          params.append('source', 'WooCommerce');
+          params.append('page', page.toString());
+          params.append('limit', limit.toString());
+          
+          const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
+          
+          if (response.success && response.data && response.data.length > 0) {
+            allWooProducts = [...allWooProducts, ...response.data];
+            console.log(`Fetched page ${page}: ${response.data.length} products (total so far: ${allWooProducts.length})`);
+            
+            // Check if there are more pages
+            const pagination = response.pagination;
+            if (pagination) {
+              // If we got less than the limit, we've reached the end
+              if (response.data.length < limit) {
+                hasMore = false;
+                console.log(`Reached end: got ${response.data.length} products (less than limit of ${limit})`);
+              } else if (pagination.pages && page < pagination.pages) {
+                // More pages available
+                page++;
+              } else {
+                // No more pages according to pagination
+                hasMore = false;
+                console.log(`No more pages according to pagination (page ${page} of ${pagination.pages})`);
+              }
+            } else {
+              // If no pagination info and we got full page, try next page
+              if (response.data.length === limit) {
+                page++;
+              } else {
+                hasMore = false;
+                console.log(`No pagination info and got partial page (${response.data.length} products)`);
+              }
+            }
+          } else {
+            // No more products
+            hasMore = false;
+            console.log(`No more products on page ${page}`);
+          }
+        }
         
-        console.log(`Loaded ${data?.length || 0} WooCommerce products for search`);
+        setWooCommerceProducts(allWooProducts);
+        setWooCommerceProductsLoaded(true);
+        console.log(`✅ Successfully loaded ALL ${allWooProducts.length} WooCommerce products for search`);
       } catch (err) {
         console.error('Error fetching WooCommerce products:', err);
         setWooCommerceProducts([]);
+        setWooCommerceProductsLoaded(false);
       }
     };
 
