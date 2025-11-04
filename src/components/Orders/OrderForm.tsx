@@ -331,23 +331,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   return (
     <>
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-gray-700">Klienti *</label>
-          {order?.source === 'WooCommerce' && (
-            <span className="text-xs text-gray-500 italic">
-              Klienti i porosive WooCommerce nuk mund të modifikohet
-            </span>
-          )}
+      {/* Hide customer field for WooCommerce orders */}
+      {!(order?.source === 'WooCommerce') && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
+          <CustomerDropdown
+            value={formData.customerId}
+            onChange={handleCustomerChange}
+            placeholder="Zgjidhni klientin"
+            required
+          />
         </div>
-        <CustomerDropdown
-          value={formData.customerId}
-          onChange={handleCustomerChange}
-          placeholder="Zgjidhni klientin"
-          required
-          disabled={order?.source === 'WooCommerce'}
-        />
-      </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-3">
