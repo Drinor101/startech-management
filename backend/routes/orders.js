@@ -933,13 +933,18 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
     };
 
     // Handle customer update if provided
-    if (customer) {
-      // Create or find customer
+    // Frontend can send either customerId or customerName
+    if (req.body.customerId) {
+      // If customerId is provided, use it directly
+      updateData.customer_id = req.body.customerId;
+    } else if (customer || req.body.customerName) {
+      // If customer name is provided, find or create customer
+      const customerNameToUse = customer || req.body.customerName;
       let customerId;
       const { data: existingCustomer } = await supabase
         .from('customers')
         .select('id')
-        .eq('name', customer)
+        .eq('name', customerNameToUse)
         .single();
       
       if (existingCustomer) {
@@ -949,8 +954,8 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
         const { data: newCustomer, error: customerError } = await supabase
           .from('customers')
           .insert({
-            name: customer,
-            email: `${customer.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            name: customerNameToUse,
+            email: `${customerNameToUse.toLowerCase().replace(/\s+/g, '.')}@example.com`,
             source: 'Internal'
           })
           .select('id')
@@ -976,12 +981,46 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
       .from('orders')
       .update(updateData)
       .eq('id', id)
-      .select()
+      .select(`
+        *,
+        customer:customers(*),
+        order_products:order_products(
+          *,
+          product:products(*)
+        )
+      `)
       .single();
 
     if (error) {
       throw error;
     }
+
+    // Transform the response to match frontend expectations (same format as GET endpoint)
+    const transformedData = {
+      id: data.id,
+      customerId: data.customer_id,
+      customer: data.customer,
+      products: data.order_products?.map(op => ({
+        ...op.product,
+        finalPrice: op.product?.final_price || 0,
+        quantity: op.quantity,
+        subtotal: op.subtotal
+      })) || [],
+      status: data.status,
+      source: data.source,
+      shippingInfo: {
+        address: data.shipping_address || '',
+        city: data.shipping_city || '',
+        zipCode: data.shipping_zip_code || '',
+        method: data.shipping_method || ''
+      },
+      total: parseFloat(data.total),
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+      isEditable: data.is_editable,
+      notes: data.notes,
+      teamNotes: data.team_notes
+    };
 
     // If items are provided, update order products
     if (items && items.length > 0) {
@@ -1019,6 +1058,9 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
         .from('orders')
         .update({ total: total })
         .eq('id', id);
+      
+      // Update transformedData with new total
+      transformedData.total = total;
     }
 
     // Provide activity metadata for middleware logger
@@ -1030,7 +1072,7 @@ router.patch('/:id', authenticateUser, logUserActivityAfter('UPDATE', 'ORDERS'),
 
     res.json({
       success: true,
-      data: data,
+      data: transformedData,
       message: 'Porosia u përditësua me sukses'
     });
   } catch (error) {
