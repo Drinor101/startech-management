@@ -18,11 +18,12 @@ interface OrderItem {
 
 const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [wooCommerceProducts, setWooCommerceProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [productSourceFilter, setProductSourceFilter] = useState<string>('Manual'); // Only show manual products for orders
   const [openDropdowns, setOpenDropdowns] = useState<{ [key: number]: boolean }>({});
-  const [productSearchTerm, setProductSearchTerm] = useState<string>('');
+  const [productSearchTerms, setProductSearchTerms] = useState<{ [key: number]: string }>({});
   const [notification, setNotification] = useState<{
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
@@ -44,7 +45,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     teamNotes: order?.teamNotes || ''
   });
 
-  // Fetch products from API with caching
+  // Fetch Manual products from API with caching
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -57,21 +58,18 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
         }
         
         const params = new URLSearchParams();
-        // Get products with source filter
-        params.append('source', productSourceFilter);
+        // Get Manual products by default
+        params.append('source', 'Manual');
         
-        console.log('Fetching products for OrderForm...');
+        console.log('Fetching Manual products for OrderForm...');
         const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
         console.log('OrderForm Products API response:', response);
         
         // Handle the correct API response structure
         const data = response.success ? response.data : [];
-        
-        // Don't add WooCommerce products to the dropdown list
-        // They should be pre-filled separately
         setProducts(data || []);
         
-        console.log(`Loaded ${data?.length || 0} products for OrderForm`);
+        console.log(`Loaded ${data?.length || 0} Manual products for OrderForm`);
       } catch (err) {
         console.error('Error fetching products:', err);
         // Keep existing products if API fails
@@ -84,7 +82,39 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     };
 
     fetchProducts();
-  }, [productSourceFilter, order]);
+  }, [order]);
+
+  // Fetch WooCommerce products when user searches
+  useEffect(() => {
+    const fetchWooCommerceProducts = async () => {
+      // Check if any dropdown has a search term
+      const hasSearchTerm = Object.values(productSearchTerms).some((term: string) => term && term.length > 0);
+      
+      // If no search term, clear WooCommerce products
+      if (!hasSearchTerm) {
+        setWooCommerceProducts([]);
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        params.append('source', 'WooCommerce');
+        
+        console.log('Fetching WooCommerce products for search...');
+        const response = await apiCall(`${apiConfig.endpoints.products}?${params.toString()}`);
+        
+        const data = response.success ? response.data : [];
+        setWooCommerceProducts(data || []);
+        
+        console.log(`Loaded ${data?.length || 0} WooCommerce products for search`);
+      } catch (err) {
+        console.error('Error fetching WooCommerce products:', err);
+        setWooCommerceProducts([]);
+      }
+    };
+
+    fetchWooCommerceProducts();
+  }, [productSearchTerms]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -194,7 +224,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     
     // Reset search when opening dropdown
     if (!openDropdowns[index]) {
-      setProductSearchTerm('');
+      setProductSearchTerms(prev => ({
+        ...prev,
+        [index]: ''
+      }));
     }
   };
 
@@ -210,7 +243,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     // First try to find in products array (Manual products)
     let product = products.find(p => p.id === productId);
     
-    // If not found, check if it's a WooCommerce product from order
+    // If not found, check WooCommerce products
+    if (!product) {
+      product = wooCommerceProducts.find(p => p.id === productId);
+    }
+    
+    // If still not found, check if it's a WooCommerce product from order
     if (!product && order?.products) {
       product = order.products.find(p => p.id === productId);
     }
@@ -219,21 +257,25 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
   };
 
   // Filter products based on search term and source filter
-  const getFilteredProducts = () => {
-    let filtered = products;
+  const getFilteredProducts = (index: number) => {
+    const searchTerm = productSearchTerms[index] || '';
     
-    // Apply source filter
-    filtered = filtered.filter(p => p.source === productSourceFilter);
-    
-    // Apply search filter
-    if (productSearchTerm) {
-      filtered = filtered.filter(p => 
-        p.title.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-        p.category.toLowerCase().includes(productSearchTerm.toLowerCase())
+    // If there's a search term, include both Manual and WooCommerce products
+    if (searchTerm) {
+      // Combine Manual and WooCommerce products when searching
+      let allProducts = [...products, ...wooCommerceProducts];
+      
+      // Apply search filter
+      allProducts = allProducts.filter(p => 
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
       );
+      
+      return allProducts;
     }
     
-    return filtered;
+    // No search term - show only Manual products (default behavior)
+    return products.filter(p => p.source === productSourceFilter);
   };
 
   const addItem = () => {
@@ -255,7 +297,12 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
       // First try to find in products array (Manual products)
       let product = products.find(p => p.id === item.productId);
       
-      // If not found, check if it's a WooCommerce product from order
+      // If not found, check WooCommerce products
+      if (!product) {
+        product = wooCommerceProducts.find(p => p.id === item.productId);
+      }
+      
+      // If still not found, check if it's a WooCommerce product from order
       if (!product && order?.products) {
         product = order.products.find(p => p.id === item.productId);
       }
@@ -333,17 +380,21 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                           <input
                             type="text"
                             placeholder="Kërko produktet..."
-                            value={productSearchTerm}
-                            onChange={(e) => setProductSearchTerm(e.target.value)}
+                            value={productSearchTerms[index] || ''}
+                            onChange={(e) => setProductSearchTerms(prev => ({
+                              ...prev,
+                              [index]: e.target.value
+                            }))}
                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-transparent"
                             onClick={(e) => e.stopPropagation()}
+                            autoFocus
                           />
                         </div>
                         
                         {/* Products list */}
                         <div className="max-h-48 overflow-y-auto">
-                          {getFilteredProducts().length > 0 ? (
-                            getFilteredProducts().map(product => (
+                          {getFilteredProducts(index).length > 0 ? (
+                            getFilteredProducts(index).map(product => (
                               <button
                                 key={product.id}
                                 type="button"
@@ -369,7 +420,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
                             ))
                           ) : (
                             <div className="px-3 py-2 text-sm text-gray-500">
-                              {productSearchTerm ? 'Nuk u gjetën produkte që përputhen me kërkesën' : 'Nuk ka produkte të disponueshme'}
+                              {productSearchTerms[index] ? 'Nuk u gjetën produkte që përputhen me kërkesën' : 'Nuk ka produkte të disponueshme'}
                             </div>
                           )}
                         </div>
