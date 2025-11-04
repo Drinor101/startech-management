@@ -15,6 +15,7 @@ interface CustomerDropdownProps {
   placeholder?: string;
   required?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
@@ -22,7 +23,8 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   onChange,
   placeholder = "Zgjidhni klientin",
   required = false,
-  className = ""
+  className = "",
+  disabled = false
 }) => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -79,8 +81,12 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
   return (
     <div className={`relative ${className}`}>
       <div
-        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer bg-white"
-        onClick={() => setIsOpen(!isOpen)}
+        className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+          disabled 
+            ? 'bg-gray-100 cursor-not-allowed' 
+            : 'cursor-pointer bg-white'
+        }`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -89,7 +95,9 @@ const CustomerDropdown: React.FC<CustomerDropdownProps> = ({
               {selectedCustomer ? selectedCustomer.name : placeholder}
             </span>
           </div>
-          <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          {!disabled && (
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          )}
         </div>
       </div>
 

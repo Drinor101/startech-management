@@ -332,12 +332,20 @@ const OrderForm: React.FC<OrderFormProps> = ({ order, onClose, onSuccess }) => {
     <>
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Klienti *</label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="block text-sm font-medium text-gray-700">Klienti *</label>
+          {order?.source === 'WooCommerce' && (
+            <span className="text-xs text-gray-500 italic">
+              Klienti i porosive WooCommerce nuk mund të modifikohet
+            </span>
+          )}
+        </div>
         <CustomerDropdown
           value={formData.customerId}
           onChange={handleCustomerChange}
           placeholder="Zgjidhni klientin"
           required
+          disabled={order?.source === 'WooCommerce'}
         />
       </div>
 
