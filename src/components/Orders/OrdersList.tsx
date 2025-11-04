@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight } from 'lucide-react';
+import { Eye, Edit, Trash2, User, Calendar, Euro, Globe, ShoppingCart, AlertCircle, Plus, List, Grid3X3, ArrowRight, ChevronDown } from 'lucide-react';
 import { Order } from '../../types';
 import { apiCall, apiConfig, getCurrentUser } from '../../config/api';
 import Modal from '../Common/Modal';
@@ -18,6 +18,8 @@ const OrdersList: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list');
+  const [selectedSource, setSelectedSource] = useState<string>('Manual'); // Filter by source: Manual or WooCommerce
+  const [isSourceDropdownOpen, setIsSourceDropdownOpen] = useState(false);
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Check if there's a selected order from search
@@ -64,7 +66,18 @@ const OrdersList: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await apiCall(apiConfig.endpoints.orders);
+      
+      // Build API URL with source filter
+      const params = new URLSearchParams();
+      if (selectedSource) {
+        params.append('source', selectedSource);
+      }
+      
+      const url = params.toString() 
+        ? `${apiConfig.endpoints.orders}?${params.toString()}` 
+        : apiConfig.endpoints.orders;
+      
+      const response = await apiCall(url);
       console.log('Orders API response:', response);
       
       // Handle the correct API response structure
@@ -80,7 +93,7 @@ const OrdersList: React.FC = () => {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [selectedSource]);
 
   const getStatusColor = (status: string) => {
     const colors = {
@@ -292,7 +305,74 @@ const OrdersList: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">Porositë ({orders.length})</h2>
+          
+          {/* Source Filter Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsSourceDropdownOpen(!isSourceDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+            >
+              {selectedSource === 'Manual' ? (
+                <ShoppingCart className="w-4 h-4 text-gray-600" />
+              ) : (
+                <Globe className="w-4 h-4 text-gray-600" />
+              )}
+              <span className="text-sm font-medium text-gray-700">
+                {selectedSource === 'Manual' ? 'Porositë Manuale' : 'Porositë WooCommerce'}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isSourceDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {/* Dropdown Menu */}
+            {isSourceDropdownOpen && (
+              <>
+                <div 
+                  className="fixed inset-0 z-0" 
+                  onClick={() => setIsSourceDropdownOpen(false)}
+                />
+                <div className="absolute left-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-10">
+                  <button
+                    onClick={() => {
+                      setSelectedSource('Manual');
+                      setIsSourceDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
+                      selectedSource === 'Manual' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <ShoppingCart className={`w-4 h-4 ${selectedSource === 'Manual' ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <span className="text-sm">Porositë Manuale</span>
+                    {selectedSource === 'Manual' && (
+                      <span className="ml-auto text-xs text-blue-600">✓</span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedSource('WooCommerce');
+                      setIsSourceDropdownOpen(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-left transition-colors ${
+                      selectedSource === 'WooCommerce' 
+                        ? 'bg-blue-50 text-blue-700' 
+                        : 'hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    <Globe className={`w-4 h-4 ${selectedSource === 'WooCommerce' ? 'text-blue-600' : 'text-gray-400'}`} />
+                    <span className="text-sm">Porositë WooCommerce</span>
+                    {selectedSource === 'WooCommerce' && (
+                      <span className="ml-auto text-xs text-blue-600">✓</span>
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        
         <div className="flex items-center gap-4">
           {/* View Mode Buttons */}
           <div className="flex bg-gray-100 rounded-lg p-1 shadow-sm">

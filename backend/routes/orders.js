@@ -5,11 +5,209 @@ import { logUserActivityAfter } from '../middleware/activityLogger.js';
 
 const router = express.Router();
 
+// Fetch orders from WooCommerce API
+async function fetchWooCommerceOrders(config, retryCount = 0, page = 1, limit = 100, status = null) {
+  const maxRetries = 2;
+  const timeout = 15000;
+  const perPage = Math.min(limit, 100); // Max 100 per page
+  
+  try {
+    console.log(`Fetching WooCommerce orders page ${page} (${perPage} orders)${status ? ` with status: "${status}"` : ''}...`);
+    
+    // Build WooCommerce API URL
+    let url = `${config.url}/wp-json/wc/v3/orders?per_page=${perPage}&page=${page}`;
+    if (status) {
+      url += `&status=${encodeURIComponent(status)}`;
+    }
+    
+    const auth = Buffer.from(`${config.consumerKey}:${config.consumerSecret}`).toString('base64');
+    
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`WooCommerce API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const orders = await response.json();
+      
+      console.log(`Fetched ${orders.length} orders from WooCommerce page ${page}`);
+      
+      return orders;
+      
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
+    }
+    
+  } catch (error) {
+    console.error(`Error fetching WooCommerce orders page ${page} (attempt ${retryCount + 1}):`, error);
+    
+    // Retry logic
+    if (retryCount < maxRetries) {
+      const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s
+      console.log(`Retrying page ${page} in ${delay}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
+      return fetchWooCommerceOrders(config, retryCount + 1, page, limit, status);
+    }
+    
+    throw error;
+  }
+}
+
+// Map WooCommerce order status to our status format
+function mapWooCommerceStatus(wcStatus) {
+  const statusMap = {
+    'pending': 'pending',
+    'processing': 'processing',
+    'on-hold': 'pending',
+    'completed': 'delivered',
+    'cancelled': 'cancelled',
+    'refunded': 'cancelled',
+    'failed': 'cancelled'
+  };
+  return statusMap[wcStatus] || 'pending';
+}
+
+// Transform WooCommerce order to our format
+function transformWooCommerceOrder(wcOrder) {
+  return {
+    id: wcOrder.id.toString(),
+    customerId: wcOrder.customer_id ? wcOrder.customer_id.toString() : null,
+    customer: {
+      id: wcOrder.customer_id ? wcOrder.customer_id.toString() : null,
+      name: `${wcOrder.billing.first_name} ${wcOrder.billing.last_name}`.trim() || wcOrder.billing.company || 'Klient i panjohur',
+      email: wcOrder.billing.email || '',
+      phone: wcOrder.billing.phone || ''
+    },
+    products: wcOrder.line_items?.map(item => ({
+      id: item.product_id.toString(),
+      title: item.name,
+      quantity: item.quantity,
+      finalPrice: parseFloat(item.price || 0),
+      subtotal: parseFloat(item.total || 0),
+      image: item.image?.src || '',
+      category: item.categories?.map(cat => cat.name).join(', ') || 'Uncategorized'
+    })) || [],
+    status: mapWooCommerceStatus(wcOrder.status),
+    source: 'WooCommerce',
+    shippingInfo: {
+      address: wcOrder.shipping.address_1 || wcOrder.billing.address_1 || '',
+      city: wcOrder.shipping.city || wcOrder.billing.city || '',
+      zipCode: wcOrder.shipping.postcode || wcOrder.billing.postcode || '',
+      method: wcOrder.shipping_lines?.map(s => s.method_title).join(', ') || 'Standard'
+    },
+    total: parseFloat(wcOrder.total || 0),
+    createdAt: wcOrder.date_created || new Date().toISOString(),
+    updatedAt: wcOrder.date_modified || new Date().toISOString(),
+    isEditable: false, // WooCommerce orders are not editable
+    notes: wcOrder.customer_note || '',
+    teamNotes: wcOrder.status_note || ''
+  };
+}
+
 // Merr të gjithë porositë
 router.get('/', authenticateUser, async (req, res) => {
   try {
     const { page = 1, limit = 10, status, source, search } = req.query;
-    const offset = (page - 1) * limit;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const maxLimit = 100;
+    const safeLimit = Math.min(limitNum, maxLimit);
+
+    // If source is WooCommerce, fetch from WooCommerce API
+    if (source === 'WooCommerce') {
+      try {
+        const wooCommerceConfig = {
+          url: process.env.WOOCOMMERCE_URL || 'https://startech24.com',
+          consumerKey: process.env.WOOCOMMERCE_CONSUMER_KEY || 'ck_f2afc9ece7b63c49738ca46ab52b54eceaa05ca2',
+          consumerSecret: process.env.WOOCOMMERCE_CONSUMER_SECRET || 'cs_92042ff7390d319db6fab44226a2af804ca27e9e'
+        };
+
+        console.log('Fetching WooCommerce orders from API...');
+        const wooOrders = await fetchWooCommerceOrders(wooCommerceConfig, 0, pageNum, safeLimit, status || null);
+        
+        // Transform WooCommerce orders to our format
+        let transformedOrders = wooOrders.map(transformWooCommerceOrder);
+        
+        // Apply search filter if provided
+        if (search) {
+          const searchLower = search.toLowerCase();
+          transformedOrders = transformedOrders.filter(order => 
+            order.id.toLowerCase().includes(searchLower) ||
+            order.customer.name.toLowerCase().includes(searchLower) ||
+            order.customer.email.toLowerCase().includes(searchLower) ||
+            order.notes.toLowerCase().includes(searchLower) ||
+            order.shippingInfo.address.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Get total count from WooCommerce API headers for pagination
+        let totalCount = transformedOrders.length;
+        try {
+          const totalCountUrl = `${wooCommerceConfig.url}/wp-json/wc/v3/orders?per_page=1&page=1${status ? `&status=${status}` : ''}`;
+          const auth = Buffer.from(`${wooCommerceConfig.consumerKey}:${wooCommerceConfig.consumerSecret}`).toString('base64');
+          const totalCountResponse = await fetch(totalCountUrl, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Basic ${auth}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (totalCountResponse.ok) {
+            const total = totalCountResponse.headers.get('X-WP-Total') || 
+                          totalCountResponse.headers.get('x-wp-total');
+            if (total) {
+              totalCount = parseInt(total);
+              console.log(`✅ Total WooCommerce orders: ${totalCount}`);
+            }
+          }
+        } catch (totalCountError) {
+          console.log('⚠️ Could not get total count, using fetched count');
+        }
+
+        return res.json({
+          success: true,
+          data: transformedOrders,
+          pagination: {
+            page: pageNum,
+            limit: safeLimit,
+            total: totalCount,
+            pages: Math.ceil(totalCount / safeLimit)
+          }
+        });
+      } catch (wooError) {
+        console.error('Error fetching WooCommerce orders:', wooError);
+        // Fallback to empty array if WooCommerce fetch fails
+        return res.json({
+          success: true,
+          data: [],
+          pagination: {
+            page: pageNum,
+            limit: safeLimit,
+            total: 0,
+            pages: 0
+          }
+        });
+      }
+    }
+
+    // For Manual orders, fetch from database
+    const offset = (pageNum - 1) * safeLimit;
 
     let query = supabase
       .from('orders')
@@ -22,6 +220,11 @@ router.get('/', authenticateUser, async (req, res) => {
         )
       `)
       .order('created_at', { ascending: false });
+
+    // If source is specified and not WooCommerce, filter by source
+    if (source && source !== 'WooCommerce') {
+      query = query.eq('source', source);
+    }
 
     // Search functionality
     if (search) {
@@ -40,16 +243,13 @@ router.get('/', authenticateUser, async (req, res) => {
       }
     }
 
-    // Filtra
+    // Status filter
     if (status) {
       query = query.eq('status', status);
     }
-    if (source) {
-      query = query.eq('source', source);
-    }
 
     // Paginimi
-    query = query.range(offset, offset + limit - 1);
+    query = query.range(offset, offset + safeLimit - 1);
 
     const { data, error, count } = await query;
 
@@ -88,10 +288,10 @@ router.get('/', authenticateUser, async (req, res) => {
       success: true,
       data: transformedData,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total: count,
-        pages: Math.ceil(count / limit)
+        page: pageNum,
+        limit: safeLimit,
+        total: count || 0,
+        pages: Math.ceil((count || 0) / safeLimit)
       }
     });
   } catch (error) {
